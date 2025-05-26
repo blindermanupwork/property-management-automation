@@ -1,8 +1,10 @@
 #!/bin/bash
 # Automated Backup System
 
-BACKUP_DIR="/home/opc/automation/backups"
-AUTOMATION_DIR="/home/opc/automation"
+# Get paths relative to script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKUP_DIR="$SCRIPT_DIR/backups"
+AUTOMATION_DIR="$SCRIPT_DIR"
 DATE=$(date +%Y%m%d-%H%M%S)
 
 # Function to log with timestamp
@@ -33,7 +35,11 @@ tar -czf "$BACKUP_DIR/$data_backup" \
     "$AUTOMATION_DIR/environments" \
     "$AUTOMATION_DIR/config.py" \
     "$AUTOMATION_DIR/scripts/gmail/credentials.json" \
-    "$AUTOMATION_DIR/scripts/gmail/token.pickle"
+    "$AUTOMATION_DIR/scripts/gmail/token.pickle" 2>/dev/null || \
+    tar -czf "$BACKUP_DIR/$data_backup" \
+    "$AUTOMATION_DIR/CSV_process" \
+    "$AUTOMATION_DIR/environments" \
+    "$AUTOMATION_DIR/config.py"
 
 log_message "✅ Data backup created: $data_backup"
 

@@ -22,8 +22,9 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Credentials
+# Credentials (real files, not examples)
 scripts/gmail/credentials.json
+scripts/gmail/credentials.json.backup
 scripts/gmail/token.pickle
 
 # Temporary files

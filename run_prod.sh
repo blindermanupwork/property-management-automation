@@ -2,7 +2,8 @@
 # Production Environment Runner
 
 export ENVIRONMENT=production
-cd ~/automation
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 source environments/prod/.env
 
 echo "🚀 RUNNING IN PRODUCTION MODE"

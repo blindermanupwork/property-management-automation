@@ -62,7 +62,8 @@ nano environments/prod/.env  # Fill in production credentials
 
 #### Gmail (for CSV downloads)
 - **credentials.json**: Download from Google Cloud Console → APIs & Services → Credentials
-- Place in `scripts/gmail/credentials.json`
+- Copy `scripts/gmail/credentials.json.example` to `scripts/gmail/credentials.json`
+- Fill in your actual Google OAuth credentials
 
 #### HousecallPro (optional)
 - **API Key**: Get from HousecallPro developer portal

@@ -3,7 +3,9 @@
 # Master Property Management Automation Runner
 # Runs all components: Gmail → Evolve → CSV → ICS → HCP
 
-cd ~/automation
+# Get script directory and change to it
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 export PATH="$HOME/.local/bin:$PATH"
 
 # Create log file with timestamp
