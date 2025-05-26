@@ -1,8 +1,10 @@
 #!/bin/bash
 # Production Monitoring Script
 
-ALERT_EMAIL="blindermanupwork@gmail.com"
-LOG_DIR="/home/opc/automation/logs"
+# Get paths relative to script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ALERT_EMAIL="${ALERT_EMAIL:-admin@localhost}"
+LOG_DIR="$SCRIPT_DIR/logs"
 HEALTH_LOG="$LOG_DIR/health_check.log"
 ALERT_LOG="$LOG_DIR/alerts.log"
 
@@ -83,7 +85,7 @@ check_csv_processing() {
     log_message "Checking CSV processing..."
     
     # Check if there are stuck files in CSV_process
-    stuck_files=$(find /home/opc/automation/CSV_process -name "*.csv" -mtime +1 | wc -l)
+    stuck_files=$(find "$SCRIPT_DIR/CSV_process" -name "*.csv" -mtime +1 2>/dev/null | wc -l)
     if [ "$stuck_files" -gt 0 ]; then
         send_alert "$stuck_files CSV files stuck in processing folder for over 24 hours"
         return 1

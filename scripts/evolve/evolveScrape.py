@@ -41,11 +41,15 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 
 # ────────────────────────── Configuration ──────────────────────────
-# Load environment variables from .env in working directory
-load_dotenv()
-# Read credentials for Evolve portal login
-# New configuration for Tab 2 CSV filtering (in months)
-TAB2_FILTER_MONTHS_PAST = 2    # Keep check-ins from 2 months ago
+# Import centralized configuration
+sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
+import config
+
+# Validate configuration is available
+config.validate_config()
+
+# Tab 2 CSV filtering configuration
+TAB2_FILTER_MONTHS_PAST = config.FETCH_RESERVATIONS_MONTHS_BEFORE
 TAB2_FILTER_MONTHS_FUTURE = 3  # Keep check-ins up to 3 months ahead
 TAB2_FILTER_ENABLED = True     # Set to False to disable filtering
 USER = os.getenv("EVOLVE_USER")
@@ -67,7 +71,7 @@ DELAY = 0.5
 
 # Directory to store downloaded CSV files
 DOWNLOAD_DIR = pathlib.Path(
-    r"/home/opc/automation/CSV_process"
+    str(config.CSV_PROCESS_DIR)
 ).resolve()
 # Create the directory if it doesn't exist
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)

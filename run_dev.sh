@@ -2,7 +2,8 @@
 # Development Environment Runner
 
 export ENVIRONMENT=development
-cd ~/automation
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 source environments/dev/.env
 
 echo "🔧 RUNNING IN DEVELOPMENT MODE"

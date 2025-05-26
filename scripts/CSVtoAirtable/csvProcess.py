@@ -22,14 +22,21 @@ import config
 import glob
 from pathlib import Path    
 # ---------------------------------------------------------------------------
-# CONFIG — folders & always-copied HCP fields
+# CONFIG — Import centralized configuration
 # ---------------------------------------------------------------------------
-PROCESS_DIR = "/home/opc/automation/CSV_process"
-DONE_DIR    = "/home/opc/automation/CSV_done"
-LOG_FILE    = "/home/opc/automation/scripts/CSVtoAirtable/csv_sync.log"
+import sys
+from pathlib import Path
 
-# Date filter settings
-MONTHS_LOOKBACK = 2    # Only process reservations with start dates from 2 months ago
+# Add the parent directory to the path so we can import the main config
+sys.path.append(str(Path(__file__).parent.parent.parent))
+import config
+
+PROCESS_DIR = str(config.CSV_PROCESS_DIR)
+DONE_DIR    = str(config.CSV_DONE_DIR)
+LOG_FILE    = str(config.CSV_SYNC_LOG)
+
+# Date filter settings from config
+MONTHS_LOOKBACK = config.FETCH_RESERVATIONS_MONTHS_BEFORE
 MONTHS_LOOKAHEAD = 3   # Only process reservations with start dates up to 3 months ahead
 # ────────────────────────────────────────────────────────────────────
 #  Accumulate stats PER ENTRY-SOURCE so we can show iTrip vs Evolve
