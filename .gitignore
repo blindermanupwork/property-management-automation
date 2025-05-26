@@ -1,0 +1,33 @@
+# Environment files with secrets
+.env
+environments/*/.*
+environments/*/.env*
+
+# Logs
+logs/
+*.log
+
+# Processed data
+CSV_done/
+CSV_process/*.csv
+
+# Backups
+backups/
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Credentials
+scripts/gmail/credentials.json
+scripts/gmail/token.pickle
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
