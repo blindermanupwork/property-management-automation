@@ -1,0 +1,19 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Airtable Configuration
+AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
+AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID") 
+AIRTABLE_TABLE_NAME = os.getenv("AIRTABLE_TABLE_NAME", "Reservations")
+PROPERTIES_TABLE_NAME = "Properties"
+ICS_FEEDS_TABLE_NAME = "ICS Feeds"
+PROPERTIES_NAME_FIELD = "Property Name"
+PROPERTY_LINK_FIELD = "Property ID"
+
+# Date Filtering (months)
+FETCH_RESERVATIONS_MONTHS_BEFORE = 2
+IGNORE_BLOCKS_MONTHS_AWAY = 6
+IGNORE_EVENTS_ENDING_MONTHS_AWAY = 6
+IGNORE_EVENTS_ENDING_BEFORE_TODAY = True

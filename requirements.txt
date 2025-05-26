@@ -1,0 +1,11 @@
+selenium
+webdriver-manager
+python-dotenv
+pandas
+aiohttp
+icalendar
+pyairtable
+python-dateutil
+requests
+airtable-python-wrapper
+flask
