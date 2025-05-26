@@ -1,20 +1,22 @@
-# config.py
+import os
+import sys
+from pathlib import Path
 
+# Add the parent directory to the path so we can import the main config
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
+# Import from main config file - all credentials come from environment variables
+from config import *
 
-# Airtable configuration
-AIRTABLE_API_KEY = "patbrTH6yCjhAwd4i.972b74cbf7ea28c84e773759269c291628b5b4f4bfa11989ac4eff5d618f4003"
-AIRTABLE_BASE_ID = "app67yWFv0hKdl6jM"
-AIRTABLE_TABLE_NAME = "Reservations"  # Make sure this table exists in your Airtable base
-PROPERTIES_TABLE_NAME = "Properties"
-ICS_FEEDS_TABLE_NAME = "ICS Feeds"
-ICS_CRON_TABLE_NAME ="ICS Cron"
+# Legacy compatibility - these are now imported from main config
+# AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
+# AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID") 
+# AIRTABLE_TABLE_NAME = os.getenv("AIRTABLE_TABLE_NAME", "Reservations")
 
-PROPERTIES_NAME_FIELD = "Property Name"        # e.g. "Property Name"
-PROPERTY_LINK_FIELD = "Property ID"        # e.g. "Property ID"
+# Additional CSVtoAirtable specific config
+ICS_CRON_TABLE_NAME = "ICS Cron"
 
-# config.py  (new lines)
-IGNORE_PAST_ROWS          = True          # skip rows ending before today
-IGNORE_ROWS_MONTHS_AHEAD  = 6             # skip rows > 6 months out
-FETCH_ROWS_MONTHS_BEFORE  = 0             # include X months historical
-
+# Legacy settings (now controlled by main config)
+IGNORE_PAST_ROWS = IGNORE_EVENTS_ENDING_BEFORE_TODAY
+IGNORE_ROWS_MONTHS_AHEAD = IGNORE_EVENTS_ENDING_MONTHS_AWAY  
+FETCH_ROWS_MONTHS_BEFORE = FETCH_RESERVATIONS_MONTHS_BEFORE
