@@ -5,7 +5,7 @@ Evolve CSV Exporter Script
 This script automates the process of:
   1. Logging in to the Evolve partner portal at
      https://partner.evolve.com/s/booking/Booking__c/Recent?tabset-feb43=3c3e0
-  2. Applying a 'Check-In' / 'Next 60 days' filter to the booking list
+  2. Applying a 'Check-Out' / 'Next 60 days' filter to the booking list
   3. Exporting the filtered booking data as a CSV file
   4. Saving the downloaded CSV into a specified local folder with timestamp
 
@@ -24,7 +24,8 @@ import time
 import pathlib
 import argparse
 import logging
-from datetime import datetime, timedelta  # Only import the class, not the module
+from datetime import datetime, timedelta, timezone  # Import timezone for PST
+import pytz  # For PST timezone
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -41,21 +42,26 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 
 # ────────────────────────── Configuration ──────────────────────────
-# Import centralized configuration
-sys.path.append(str(pathlib.Path(__file__).parent.parent.parent))
-import config
+# Find automation root directory dynamically (no hardcoding!)
+# Walk up from script location until we find .env file
+SCRIPT_DIR = pathlib.Path(__file__).parent
+AUTOMATION_ROOT = SCRIPT_DIR
+while AUTOMATION_ROOT.parent != AUTOMATION_ROOT:  # Stop at filesystem root
+    if (AUTOMATION_ROOT / ".env").exists():
+        break
+    AUTOMATION_ROOT = AUTOMATION_ROOT.parent
 
-# Validate configuration is available
-config.validate_config()
+# Load environment variables from the found .env file
+load_dotenv(AUTOMATION_ROOT / ".env")
 
 # Tab 2 CSV filtering configuration
-TAB2_FILTER_MONTHS_PAST = config.FETCH_RESERVATIONS_MONTHS_BEFORE
+TAB2_FILTER_MONTHS_PAST = int(os.getenv("FETCH_RESERVATIONS_MONTHS_BEFORE", "2"))
 TAB2_FILTER_MONTHS_FUTURE = 3  # Keep check-ins up to 3 months ahead
 TAB2_FILTER_ENABLED = True     # Set to False to disable filtering
-USER = os.getenv("EVOLVE_USER")
-PWD  = os.getenv("EVOLVE_PASS")
+USER = os.getenv("EVOLVE_USERNAME")
+PWD  = os.getenv("EVOLVE_PASSWORD")
 if not USER or not PWD:
-    sys.exit("Error: Add EVOLVE_USER / EVOLVE_PASS to a .env file before running.")
+    sys.exit("Error: Add EVOLVE_USERNAME / EVOLVE_PASSWORD to a .env file before running.")
 
 # URL of the Evolve bookings page with the correct tab parameter
 URL = (
@@ -69,10 +75,8 @@ WAIT = 30
 # Delay between clicks to allow UI to update (in seconds)
 DELAY = 0.5
 
-# Directory to store downloaded CSV files
-DOWNLOAD_DIR = pathlib.Path(
-    str(config.CSV_PROCESS_DIR)
-).resolve()
+# Directory to store downloaded CSV files - use CSV_process in automation root
+DOWNLOAD_DIR = (AUTOMATION_ROOT / "CSV_process").resolve()
 # Create the directory if it doesn't exist
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -83,6 +87,10 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 log = logging.getLogger(__name__)
+
+# Debug logging
+print(f"DEBUG: DOWNLOAD_DIR set to: {DOWNLOAD_DIR}")
+print(f"DEBUG: Directory exists: {DOWNLOAD_DIR.exists()}")
 
 
 def filter_tab2_csv(csv_path):
@@ -119,8 +127,9 @@ def filter_tab2_csv(csv_path):
         # Convert the Check-In column to datetime
         df[checkin_col] = pd.to_datetime(df[checkin_col], errors='coerce')
         
-        # Calculate date ranges
-        today = datetime.now()  # Use datetime.now() instead of datetime.datetime.now()
+        # Calculate date ranges in PST (timezone-naive for pandas comparison)
+        pst = pytz.timezone('US/Pacific')
+        today = datetime.now(pst).replace(tzinfo=None)  # Remove timezone for pandas comparison
         past_date = today - timedelta(days=30 * TAB2_FILTER_MONTHS_PAST)
         future_date = today + timedelta(days=30 * TAB2_FILTER_MONTHS_FUTURE)
         
@@ -163,6 +172,9 @@ def make_driver(headless: bool) -> webdriver.Chrome:
     opts.add_argument("--no-sandbox")
     opts.add_argument("--window-size=1920,1080")
     
+    # Force browser to use Pacific timezone (so it thinks today is May 28)
+    opts.add_argument("--lang=en-US")
+    
     # Additional options to prevent conflicts
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--disable-extensions")
@@ -182,6 +194,10 @@ def make_driver(headless: bool) -> webdriver.Chrome:
         service=Service(ChromeDriverManager().install()),
         options=opts
     )
+    
+    # Override timezone to Pacific Time using Chrome DevTools
+    driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": "America/Los_Angeles"})
+    
     # Implicit wait for element presence
     driver.implicitly_wait(5)
     return driver
@@ -259,8 +275,9 @@ def second_tab_export(headless: bool):
                     filtered_path = filter_tab2_csv(orig)
                     orig = filtered_path
                 
-                # Generate timestamp and rename
-                ts = datetime.now().strftime("%m-%d-%Y--%H-%M-%S") 
+                # Generate timestamp in PST and rename
+                pst = pytz.timezone('US/Pacific')
+                ts = datetime.now(pst).strftime("%m-%d-%Y--%H-%M-%S") 
                 new_name = DOWNLOAD_DIR / f"{ts}_tab2.csv"
                 orig.rename(new_name)
                 log.info(f"Tab 2: Processing complete → {new_name.name}")
@@ -390,11 +407,16 @@ def apply_filter(driver: webdriver.Chrome):
     field_select = WebDriverWait(driver, WAIT).until(
         EC.presence_of_element_located((
             By.XPATH,
-            "//select[contains(@class,'slds-select') and option[text()='Check-In']]"
+            "//select[contains(@class,'slds-select') and option[text()='Check-Out']]"
         ))
     )
-    Select(field_select).select_by_visible_text("Check-In")
-    log.info("Filter field set to: Check-In")
+    Select(field_select).select_by_visible_text("Check-Out")
+    log.info("Filter field set to: Check-Out")
+    
+    # Check what date the browser thinks it is
+    browser_date = driver.execute_script("return new Date().toLocaleDateString('en-US');")
+    browser_timezone = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone;")
+    log.info(f"Browser thinks today is: {browser_date} (timezone: {browser_timezone})")
 
     # Select 'Next 60 days' in the second dropdown
     time.sleep(DELAY)
@@ -460,8 +482,9 @@ def click_export(driver: webdriver.Chrome):
             # Get the original downloaded file
             orig_file = new.pop()
             
-            # Generate timestamp in MM-DD-YYYY--HH-MM-SS format
-            timestamp = datetime.now().strftime("%m-%d-%Y--%H-%M-%S")
+            # Generate timestamp in PST format MM-DD-YYYY--HH-MM-SS
+            pst = pytz.timezone('US/Pacific')
+            timestamp = datetime.now(pst).strftime("%m-%d-%Y--%H-%M-%S")
             
             # Create new filename with timestamp
             new_filename = f"{timestamp}.csv"

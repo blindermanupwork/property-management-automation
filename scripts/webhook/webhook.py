@@ -24,7 +24,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ── Load .env ───────────────────────────────────────────────────────
-load_dotenv(dotenv_path="/home/opc/automation/.env")
+# Load .env from parent directory
+BASE_DIR = Path(__file__).parent.parent.parent
+load_dotenv(dotenv_path=str(BASE_DIR / ".env"))
 
 # Required environment variables
 REQUIRED_VARS = [
