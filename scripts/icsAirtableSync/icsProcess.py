@@ -23,12 +23,15 @@ import re
 import requests
 from icalendar import Calendar
 from pyairtable import Api
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------
 # Load environment variables from .env file
-load_dotenv('/home/opc/automation/.env')
+# Load .env from parent directory
+BASE_DIR = Path(__file__).parent.parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 # Global date threshold variables for filtering events
 today = None
@@ -379,6 +382,11 @@ def get_active_ics_urls_from_airtable(feeds_table):
             fields = record.get("fields", {})
             url = fields.get("ICS URL")
             prop_links = fields.get(property_link_field_name)
+
+            # Skip non-HTTP URLs (CSV feed identifiers, etc.)
+            if url and not (url.startswith("http://") or url.startswith("https://")):
+                logging.debug(f"Skipping non-HTTP URL: '{url}' (likely a CSV feed identifier)")
+                continue
 
             if url and prop_links and isinstance(prop_links, list) and len(prop_links) > 0:
                 # Assumes only ONE property linked per URL in the Feeds table
@@ -1156,8 +1164,15 @@ async def main_async():
         
         # Load environment variables
         AIRTABLE_API_KEY = os.getenv('AIRTABLE_API_KEY')
-        AIRTABLE_BASE_ID = os.getenv('AIRTABLE_BASE_ID')
-        AIRTABLE_TABLE_NAME = os.getenv('AIRTABLE_TABLE_NAME')
+        
+        # Use production or development base ID based on environment
+        environment = os.getenv('ENVIRONMENT', 'development').lower()
+        if environment == 'production':
+            AIRTABLE_BASE_ID = os.getenv('PROD_AIRTABLE_BASE_ID')
+            AIRTABLE_TABLE_NAME = os.getenv('AIRTABLE_TABLE_NAME', 'Reservations')  # Default for prod
+        else:
+            AIRTABLE_BASE_ID = os.getenv('AIRTABLE_BASE_ID')
+            AIRTABLE_TABLE_NAME = os.getenv('AIRTABLE_TABLE_NAME')
         PROPERTIES_TABLE_NAME = os.getenv('PROPERTIES_TABLE_NAME')
         ICS_FEEDS_TABLE_NAME = os.getenv('ICS_FEEDS_TABLE_NAME')
         ICS_CRON_TABLE_NAME = os.getenv('ICS_CRON_TABLE_NAME', 'ICS Cron')  # Default value
@@ -1173,11 +1188,10 @@ async def main_async():
             return
 
         api = Api(AIRTABLE_API_KEY)
-        base = api.base(AIRTABLE_BASE_ID)
-        reservations_table = base.table(AIRTABLE_TABLE_NAME)
-        properties_table = base.table(PROPERTIES_TABLE_NAME)
-        ics_feeds_table = base.table(ICS_FEEDS_TABLE_NAME)
-        ics_cron_table = base.table(ICS_CRON_TABLE_NAME)  # Create the missing table reference
+        reservations_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME)
+        properties_table = api.table(AIRTABLE_BASE_ID, PROPERTIES_TABLE_NAME)
+        ics_feeds_table = api.table(AIRTABLE_BASE_ID, ICS_FEEDS_TABLE_NAME)
+        ics_cron_table = api.table(AIRTABLE_BASE_ID, ICS_CRON_TABLE_NAME)
         
         # 1) Prepare today and thresholds
         today = date.today()

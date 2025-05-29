@@ -1,16 +1,19 @@
 # Property Management Automation
 
-Automated property management system for vacation rentals - CSV processing, calendar sync, and service job creation.
+**Version 1.1.0**
+
+Automated property management system for vacation rentals - CSV processing, calendar sync, and service job creation with production-ready Airtable control system.
 
 ## 🚀 Features
 
-- **Gmail Integration**: Downloads CSV reports from iTrip
-- **Evolve Scraper**: Extracts data from Evolve vacation rental portal  
-- **CSV Processor**: Syncs CSV data to Airtable reservations database
-- **ICS Calendar Sync**: Processes calendar feeds for booking data
-- **HousecallPro Integration**: Creates service jobs based on reservations
-- **Airtable Agent**: AI-powered interface for Airtable operations
-- **Webhook System**: Handles external integrations
+- **Production Automation Control**: Airtable-based automation management system
+- **Gmail Integration**: Downloads CSV reports from iTrip with automated processing
+- **Enhanced Evolve Scraper**: Pacific timezone-aware data extraction with Check-Out filtering
+- **Intelligent CSV Processor**: Separate handling for reservations vs blocks, prevents conflicts
+- **ICS Calendar Sync**: Environment-aware processing with production/development modes
+- **HousecallPro Integration**: Creates service jobs based on reservations and blocks
+- **Smart Path Resolution**: Portable across environments without hardcoded paths
+- **Comprehensive Logging**: Detailed change tracking and debugging information
 
 ## 📋 Prerequisites
 
