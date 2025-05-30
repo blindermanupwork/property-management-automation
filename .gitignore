@@ -30,3 +30,12 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Data directories (local only)
+src/automation/scripts/CSV_done/
+src/automation/scripts/CSV_process/
+backups/
+
+# Node.js dependencies
+node_modules/
+src/automation/scripts/airtable-agent/node_modules/
