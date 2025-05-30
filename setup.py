@@ -31,11 +31,11 @@ setup(
     description="Comprehensive automation system for vacation rental property management",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/property-management-automation",
+    url="https://github.com/blindermanupwork/property-management-automation",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/property-management-automation/issues",
-        "Source": "https://github.com/yourusername/property-management-automation",
-        "Documentation": "https://github.com/yourusername/property-management-automation/blob/main/README.md",
+        "Bug Reports": "https://github.com/blindermanupwork/property-management-automation/issues",
+        "Source": "https://github.com/blindermanupwork/property-management-automation",
+        "Documentation": "https://github.com/blindermanupwork/property-management-automation/blob/main/README.md",
     },
     
     # Package discovery
