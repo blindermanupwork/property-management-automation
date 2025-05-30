@@ -1,0 +1,3 @@
+#!/bin/bash
+# Quick status checker alias
+cd "$(dirname "$0")/.." && ./bin/check_automation_status.sh
