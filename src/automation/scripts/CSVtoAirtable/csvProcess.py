@@ -23,7 +23,9 @@ from pathlib import Path
 import pytz
 
 # Import the automation config
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+script_dir = Path(__file__).parent.absolute()
+project_root = script_dir.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 from src.automation.config import Config
 
 # ---------------------------------------------------------------------------
@@ -320,6 +322,18 @@ def parse_row(row, hdr_map):
             contractor_info = row[hdr_map[key]].strip()
             break
     
+    # Get iTrip Same Day? flag if available
+    itrip_same_day = None
+    same_day_keys = ["Same Day?", "same day?", "Same Day", "same day"]
+    for key in same_day_keys:
+        if key in row:
+            same_day_value = row[key].strip()
+            if same_day_value.lower() in ["yes", "y", "true", "1"]:
+                itrip_same_day = True
+            elif same_day_value.lower() in ["no", "n", "false", "0"]:
+                itrip_same_day = False
+            break
+    
     # Skip blank filler lines
     if not (uid_raw and cin_raw and cout_raw):
         return None
@@ -391,6 +405,7 @@ def parse_row(row, hdr_map):
         "block_type": block_type,
         "overlapping": False,
         "same_day_turnover": False,
+        "itrip_same_day": itrip_same_day,  # Store iTrip's Same Day? value
         "feed_url": None,
         "property_id": None,
         "entry_source": None,
@@ -517,12 +532,18 @@ def calculate_flags(reservations):
         checkin_dates = {parse(res["dtstart_iso"]).date() for res in property_reservations}
         
         for res in property_reservations:
-            checkout_date = parse(res["dtend_iso"]).date()
-            checkin_date = parse(res["dtstart_iso"]).date()
-            
-            # If checkout date equals another reservation's check-in date (and not its own)
-            if checkout_date in checkin_dates and checkout_date != checkin_date:
-                res["same_day_turnover"] = True
+            # Check if iTrip has already flagged this as same-day turnover
+            if res.get("itrip_same_day") is not None:
+                # Use iTrip's determination - it takes precedence
+                res["same_day_turnover"] = res["itrip_same_day"]
+            else:
+                # Calculate same-day turnover locally for non-iTrip or when not specified
+                checkout_date = parse(res["dtend_iso"]).date()
+                checkin_date = parse(res["dtstart_iso"]).date()
+                
+                # If checkout date equals another reservation's check-in date (and not its own)
+                if checkout_date in checkin_dates and checkout_date != checkin_date:
+                    res["same_day_turnover"] = True
 
 # ---------------------------------------------------------------------------
 # Fetch Airtable Data
