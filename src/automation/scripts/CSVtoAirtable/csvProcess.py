@@ -1214,7 +1214,8 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                     f"❌ {os.path.basename(file_path)} is missing required columns "
                     f"(Reservation / Guest Name / Status / Check-In / Check-Out)"
                 )
-                return False
+                # Return False with empty stats to match expected return signature
+                return False, {"new_blocks": 0, "modified_blocks": 0, "unchanged_blocks": 0, "removed_blocks": 0}
 
             for row in reader:
                 stats["total_rows"] += 1
