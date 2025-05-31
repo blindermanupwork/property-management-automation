@@ -827,11 +827,7 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                     "modified": True
                 })
             else:
-                # No changes - just update timestamp
-                update_batch.add({
-                    "id": airtable_record["id"],
-                    "fields": {"Last Updated": now_iso}
-                })
+                # No changes - don't update Airtable at all
                 unchanged_count += 1
                 
                 # Add to summary
@@ -1312,11 +1308,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                             stats["modified_blocks"] += 1
                             logging.debug(f"Modified block for {uid} at {prop_name}")
                         else:
-                            # No changes - just update timestamp
-                            update_batch.add({
-                                "id": latest["id"],
-                                "fields": {"Last Updated": now_iso_str}
-                            })
+                            # No changes - don't update Airtable at all
                             stats["unchanged_blocks"] += 1
                             logging.debug(f"Unchanged block for {uid} at {prop_name}")
                 

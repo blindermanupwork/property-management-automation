@@ -977,12 +977,7 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             
             return "Modified"
         else:
-            # Just update timestamp if needed
-            update_batch.add({
-                "id": latest_active["id"],
-                "fields": {"Last Updated": now_iso}
-            })
-            
+            # No changes - don't update Airtable at all
             return "Unchanged"
     else:
         # Create new record
