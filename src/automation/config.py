@@ -178,8 +178,12 @@ class Config:
     
     @classmethod
     def get_airtable_api_key(cls) -> str:
-        """Get Airtable API key"""
-        return cls.get_env('AIRTABLE_API_KEY', '')
+        """Get Airtable API key (environment-aware)"""
+        environment = cls.get_env('ENVIRONMENT', 'development').lower()
+        if environment == 'production':
+            return cls.get_env('PROD_AIRTABLE_API_KEY', '')
+        else:
+            return cls.get_env('DEV_AIRTABLE_API_KEY', '')
     
     @classmethod
     def get_airtable_base_id(cls) -> str:
@@ -188,12 +192,16 @@ class Config:
         if environment == 'production':
             return cls.get_env('PROD_AIRTABLE_BASE_ID', '')
         else:
-            return cls.get_env('AIRTABLE_BASE_ID', '')
+            return cls.get_env('DEV_AIRTABLE_BASE_ID', '')
     
     @classmethod
     def get_airtable_table_name(cls) -> str:
-        """Get Airtable table name"""
-        return cls.get_env('AIRTABLE_TABLE_NAME', 'Reservations')
+        """Get Airtable table name (environment-aware)"""
+        environment = cls.get_env('ENVIRONMENT', 'development').lower()
+        if environment == 'production':
+            return cls.get_env('AIRTABLE_TABLE_NAME', 'Reservations')
+        else:
+            return cls.get_env('DEV_AIRTABLE_TABLE_NAME', 'Reservations')
     
     @classmethod
     def get_properties_table_name(cls) -> str:
