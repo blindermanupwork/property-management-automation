@@ -12,9 +12,28 @@ function getArizonaTime() {
 }
 
 // ── 1) CONFIG ────────────────────────────────────────────────────────────────
+// Environment-aware Airtable configuration
+const ENVIRONMENT = process.env.ENVIRONMENT || 'development';
+const getAirtableConfig = () => {
+  if (ENVIRONMENT === 'production') {
+    return {
+      API_KEY: process.env.PROD_AIRTABLE_API_KEY,
+      BASE_ID: process.env.PROD_AIRTABLE_BASE_ID
+    };
+  } else {
+    return {
+      API_KEY: process.env.DEV_AIRTABLE_API_KEY,
+      BASE_ID: process.env.DEV_AIRTABLE_BASE_ID
+    };
+  }
+};
+
+const airtableConfig = getAirtableConfig();
+console.log(`Using ${ENVIRONMENT.toUpperCase()} environment`);
+
 const CFG = {
-  AIRTABLE_API_KEY   : process.env.AIRTABLE_API_KEY,
-  AIRTABLE_BASE_ID   : process.env.AIRTABLE_BASE_ID,
+  AIRTABLE_API_KEY   : airtableConfig.API_KEY,
+  AIRTABLE_BASE_ID   : airtableConfig.BASE_ID,
   HCP_TOKEN          : process.env.HCP_TOKEN,
   TABLE              : 'Reservations',
   VIEW               : 'HCP Create Jobs',

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-06-02
+
+### 🚀 New Features
+- **iTrip Info Field**: Added support for syncing contractor info from iTrip CSVs to Airtable
+  - Extracts all contractor information including work orders, door codes, special instructions
+  - Maps to new "iTrip Info" field in Airtable for comprehensive property details
+  - Includes change detection to only update when contractor info changes
+
+### 🔧 Improvements
+- **Environment-Aware Configuration**: Enhanced config.py with development/production awareness
+  - Separate API keys for dev/prod environments (DEV_AIRTABLE_API_KEY, PROD_AIRTABLE_API_KEY)
+  - Environment-specific base IDs and table names
+  - Automatic selection based on ENVIRONMENT variable
+
+### 📝 Scripts
+- **New Service Fields Updater**: Added `update_service_fields.py` script
+  - Updates Service Line Description and Next Guest Date fields
+  - Supports batch processing with configurable parallelism
+  - Can target specific records by ID for testing
+
+### 🐛 Bug Fixes
+- **AI Agent Authentication**: Fixed API key references in airtable-agent.js and hcp_sync.js
+  - Updated to use correct API_KEY environment variable
+  - Added proper authentication headers
+
 ## [1.2.0] - 2025-05-30
 
 ### 🏗️ Major Restructuring

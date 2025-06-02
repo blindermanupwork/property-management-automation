@@ -24,10 +24,29 @@ function getPSTTime() {
   return pstTime.toISOString();
 }
 
+// Environment-aware Airtable configuration
+const ENVIRONMENT = process.env.ENVIRONMENT || 'development';
+const getAirtableConfig = () => {
+  if (ENVIRONMENT === 'production') {
+    return {
+      API_KEY: process.env.PROD_AIRTABLE_API_KEY || "pat-your-prod-key-here",
+      BASE_ID: process.env.PROD_AIRTABLE_BASE_ID || "app-your-prod-base-id-here"
+    };
+  } else {
+    return {
+      API_KEY: process.env.DEV_AIRTABLE_API_KEY || "pat-your-dev-key-here",
+      BASE_ID: process.env.DEV_AIRTABLE_BASE_ID || "app-your-dev-base-id-here"
+    };
+  }
+};
+
+const airtableConfig = getAirtableConfig();
+console.log(`Airtable Agent using ${ENVIRONMENT.toUpperCase()} environment`);
+
 // Environment Constants
 const CONFIG = {
-  AIRTABLE_API_KEY: process.env.AIRTABLE_API_KEY || "pat-your-key-here",
-  AIRTABLE_BASE_ID: process.env.AIRTABLE_BASE_ID || "app-your-base-id-here",
+  AIRTABLE_API_KEY: airtableConfig.API_KEY,
+  AIRTABLE_BASE_ID: airtableConfig.BASE_ID,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || "sk-your-key-here",
   PORT: process.env.lang_PORT || 3000,
   MAX_HISTORY_LENGTH: 20,

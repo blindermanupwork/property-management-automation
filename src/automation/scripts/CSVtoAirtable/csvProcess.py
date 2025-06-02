@@ -400,6 +400,7 @@ def parse_row(row, hdr_map):
         "dtend": dtend_display,
         "property_name": prop_name,
         "property_address": property_address,  # Store the address
+        "contractor_info": contractor_info,  # Store contractor info for iTrip Info field
         "entry_type": entry_type,
         "service_type": service_type,
         "block_type": block_type,
@@ -597,7 +598,7 @@ def fetch_all_reservations(table, feed_urls):
             "Reservation UID", "ICS URL", "Check-in Date", "Check-out Date",
             "Status", "Entry Type", "Service Type", "Entry Source",
             Config.get_env("PROPERTY_LINK_FIELD", "Property ID"), "Last Updated",
-            "Overlapping Dates", "Same-day Turnover"
+            "Overlapping Dates", "Same-day Turnover", "iTrip Info"
         ] + HCP_FIELDS
         
         # Fetch records with minimal filtering to see if we get any results
@@ -767,6 +768,7 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
             at_sameday = convert_flag_value(at_fields.get("Same-day Turnover"))
             at_entry_type = at_fields.get("Entry Type", "")
             at_service_type = at_fields.get("Service Type", "")
+            at_itrip_info = at_fields.get("iTrip Info", "")
             
             # Check if anything important changed
             dates_changed = (at_checkin != res["dtstart"] or at_checkout != res["dtend"])
@@ -774,8 +776,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
             flags_changed = (at_overlap != res["overlapping"] or at_sameday != res["same_day_turnover"])
             entry_type_changed = (at_entry_type != res["entry_type"])
             service_type_changed = (at_service_type != res["service_type"])
+            itrip_info_changed = (res["entry_source"] == "iTrip" and at_itrip_info != res.get("contractor_info", ""))
             
-            if dates_changed or property_changed or flags_changed or entry_type_changed or service_type_changed:
+            if dates_changed or property_changed or flags_changed or entry_type_changed or service_type_changed or itrip_info_changed:
                 # Something changed - create modified record
                 new_fields = {
                     "Check-in Date": res["dtstart"],
@@ -786,6 +789,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                     "Same-day Turnover": res["same_day_turnover"],
                     Config.get_env("PROPERTY_LINK_FIELD", "Property ID"): [res["property_id"]]
                 }
+                # Add iTrip Info if from iTrip and has contractor info
+                if res["entry_source"] == "iTrip" and res.get("contractor_info"):
+                    new_fields["iTrip Info"] = res["contractor_info"]
                 # Add Block Type if it exists
                 if res.get("block_type"):
                     new_fields["Block Type"] = res["block_type"]
@@ -807,6 +813,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                 if service_type_changed:
                     logging.info(f"🔍 SERVICE TYPE CHANGED for {uid}: "
                                 f"'{at_service_type}' vs '{res['service_type']}'")
+                if itrip_info_changed:
+                    logging.info(f"🔍 ITRIP INFO CHANGED for {uid}: "
+                                f"'{at_itrip_info}' vs '{res.get('contractor_info', '')}'")
                 
                 # Mark as old and create new record
                 mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
@@ -860,6 +869,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                 "Overlapping Dates": res["overlapping"],
                 "Same-day Turnover": res["same_day_turnover"],
             }
+            # Add iTrip Info if from iTrip and has contractor info
+            if res["entry_source"] == "iTrip" and res.get("contractor_info"):
+                new_fields["iTrip Info"] = res["contractor_info"]
             # Add Block Type if it exists
             if res.get("block_type"):
                 new_fields["Block Type"] = res["block_type"]
