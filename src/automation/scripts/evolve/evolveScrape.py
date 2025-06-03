@@ -43,7 +43,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 script_dir = pathlib.Path(__file__).parent.absolute()
 project_root = script_dir.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from src.automation.config import Config
+from src.automation.config_wrapper import Config
 
 # ────────────────────────── Configuration ──────────────────────────
 # Use Config class for environment variables and paths

@@ -1,0 +1,21 @@
+[Unit]
+Description=AirScripts API Server
+After=network.target
+
+[Service]
+Type=simple
+User=opc
+WorkingDirectory=/home/opc/automation/src/automation/scripts/airscripts-api
+Environment="NODE_ENV=production"
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/airscripts-api.log
+StandardError=append:/var/log/airscripts-api.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

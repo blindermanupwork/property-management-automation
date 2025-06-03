@@ -24,7 +24,7 @@ import threading
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from automation.config import Config
+from automation.config_wrapper import Config
 from airtable import Airtable
 from dotenv import load_dotenv
 import time

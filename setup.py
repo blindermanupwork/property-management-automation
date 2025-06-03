@@ -57,11 +57,18 @@ setup(
     # Entry points for command-line tools
     entry_points={
         "console_scripts": [
-            "run-automation=automation.scripts.run_automation:main",
-            "evolve-scraper=automation.scripts.evolve_scraper:main",
-            "csv-processor=automation.scripts.csv_processor:main",
-            "ics-sync=automation.scripts.ics_sync:main",
-            "gmail-downloader=automation.scripts.gmail_downloader:main",
+            # Environment-specific automation runners (FIXED paths)
+            "run-automation-dev=src.run_automation_dev:main",
+            "run-automation-prod=src.run_automation_prod:main",
+            
+            # Individual automation scripts
+            "evolve-scraper=automation.scripts.evolve.evolveScrape:main",
+            "csv-processor=automation.scripts.CSVtoAirtable.csvProcess:main",
+            "ics-sync=automation.scripts.icsAirtableSync.icsProcess:main",
+            "gmail-downloader=automation.scripts.gmail.gmail_downloader:main",
+            
+            # Universal runner (detects environment) (FIXED path)
+            "run-automation=src.run_anywhere:main",
         ],
     },
     

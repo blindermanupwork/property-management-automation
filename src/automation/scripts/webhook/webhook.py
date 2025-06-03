@@ -10,12 +10,12 @@ import sys
 from pathlib import Path
 from datetime import datetime, timezone
 from flask import Flask, request, abort, jsonify
-from pyairtable import Api
+from pyairtable import Table
 import logging
 
 # Import the automation config
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-from src.automation.config import Config
+from src.automation.config_wrapper import Config
 
 # ── Configure logging with PST timezone ──────────────────────────────
 # PST timezone for logging
@@ -102,10 +102,8 @@ except ImportError:
 
 # Initialize Airtable API and tables
 try:
-    api = Api(AIRTABLE_API_KEY)
-    base = api.base(AIRTABLE_BASE_ID)
-    reservations_table = base.table(AIRTABLE_TABLE_NAME)
-    properties_table = base.table(AIRTABLE_PROPERTIES_TABLE)
+    reservations_table = Table(AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME)
+    properties_table = Table(AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_PROPERTIES_TABLE)
     logger.info("✅ Airtable connection initialized")
 except Exception as e:
     logger.error(f"❌ Failed to initialize Airtable: {e}")

@@ -225,26 +225,35 @@ async function createJob(rec, finalTime, sameDayTurnover, allRecords) {
   
   const propertyName = propRec.fields['Property Name'] || propId;
   
-  // Create service name
+  // Check for Custom Service Line Description first
   let svcName;
-if (sameDayTurnover) {
-  svcName = `${serviceType} STR SAME DAY`;
-  console.log(`Same-day ${serviceType} -- Setting service name to: ${svcName}`);
-} else {
-  const checkOutDate = rec.fields['Check-out Date'];
-  console.log(`Finding next reservation for ${propertyName}`);
-  const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+  const customServiceLine = rec.fields['Custom Service Line Description'];
   
-  if (nextReservation) {
-    const nextCheckInDate = nextReservation.fields['Check-in Date'];
-    const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
-    svcName = `${serviceType} STR Next Guest ${fmtDate(nextCheckInDate)}`;
-    console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting service name to: ${svcName}`);
+  if (customServiceLine && customServiceLine.trim()) {
+    // Use custom service line if it exists and is not empty
+    svcName = customServiceLine.trim();
+    console.log(`Using custom service line: ${svcName}`);
   } else {
-    svcName = `${serviceType} STR Next Guest Unknown`;
-    console.log(`No Res UID found -- Setting service name to: ${svcName}`);
+    // Fall back to generated service name
+    if (sameDayTurnover) {
+      svcName = `${serviceType} STR SAME DAY`;
+      console.log(`Same-day ${serviceType} -- Setting service name to: ${svcName}`);
+    } else {
+      const checkOutDate = rec.fields['Check-out Date'];
+      console.log(`Finding next reservation for ${propertyName}`);
+      const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+      
+      if (nextReservation) {
+        const nextCheckInDate = nextReservation.fields['Check-in Date'];
+        const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
+        svcName = `${serviceType} STR Next Guest ${fmtDate(nextCheckInDate)}`;
+        console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting service name to: ${svcName}`);
+      } else {
+        svcName = `${serviceType} STR Next Guest Unknown`;
+        console.log(`No Res UID found -- Setting service name to: ${svcName}`);
+      }
+    }
   }
-}
 
   const custLinks = propRec.fields['HCP Customer ID'] || [];
   let custId = '';

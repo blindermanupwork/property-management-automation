@@ -17,7 +17,7 @@ def test_imports():
     print("🔍 Testing imports...")
     
     tests = [
-        ("automation.config", "Config"),
+        ("automation.config_wrapper", "Config"),
         ("automation.controller", "AutomationController"), 
         ("automation.scripts.run_automation", "AutomationRunner"),
     ]
@@ -42,7 +42,7 @@ def test_config():
     print("\n🔧 Testing configuration...")
     
     try:
-        from automation.config import Config
+        from automation.config_wrapper import Config
         
         # Test project root discovery
         root = Config.get_project_root()
@@ -95,7 +95,7 @@ def test_controller():
         os.environ.setdefault('AUTOMATION_TABLE_NAME', 'test_table')
         
         from automation.controller import AutomationController
-        from automation.config import Config
+        from automation.config_wrapper import Config
         
         # Reset config to pick up test environment
         Config._env_loaded = False
@@ -148,7 +148,7 @@ def test_portability():
     print("\n🌍 Testing portability...")
     
     try:
-        from automation.config import Config
+        from automation.config_wrapper import Config
         
         # Test that we can change working directory and still work
         original_cwd = os.getcwd()
@@ -161,7 +161,7 @@ def test_portability():
                 print(f"  ✅ Changed to temp directory: {temp_dir}")
                 
                 # Should still be able to find project root
-                from automation.config import find_project_root
+                from automation.config_wrapper import find_project_root
                 root = find_project_root()
                 print(f"  ✅ Found project root from temp dir: {root}")
                 
@@ -185,14 +185,14 @@ def test_package_structure():
     print("\n📦 Testing package structure...")
     
     try:
-        from automation.config import Config
+        from automation.config_wrapper import Config
         
         project_root = Config.get_project_root()
         
         # Check expected files and directories
         expected_items = [
             ("src/automation/__init__.py", "Package init file"),
-            ("src/automation/config.py", "Config module"),
+            ("src/automation/config_wrapper.py", "Config wrapper module"),
             ("src/automation/controller.py", "Controller module"),
             ("src/automation/scripts/__init__.py", "Scripts package init"),
             ("setup.py", "Setup script"),

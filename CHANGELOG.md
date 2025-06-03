@@ -5,7 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2025-06-02
+## [2.0.0] - 2025-06-02
+
+### 🚀 **MAJOR RELEASE: Complete Environment Separation & Enterprise Security**
+
+### ✨ New Features
+- **Complete Environment Separation**: Full isolation between development and production
+  - Separate automation runners: `run_automation_dev.py` and `run_automation_prod.py`
+  - Environment-specific Airtable bases and CSV directories
+  - Independent cron schedules (dev: 30min, prod: 4hr)
+  - Separate logging and monitoring
+
+- **Enhanced Configuration System**: 
+  - New config architecture: `config_base.py`, `config_dev.py`, `config_prod.py`
+  - Auto-environment detection via `config_wrapper.py`
+  - Environment-specific .env files with secure permissions
+
+- **Enterprise Security Features**:
+  - Secure credential handling with proper file permissions (600)
+  - Environment safety checks with hostname detection
+  - Enhanced validation with detailed error messages
+  - Cross-environment execution protection
+
+### 🔧 Improvements
+- **Robust Error Handling**: Enhanced validation for API keys and base IDs
+- **Production-Ready Deployment**: Cron job management scripts and monitoring tools
+- **Enhanced Documentation**: Comprehensive README with deployment guides
+- **Entry Point Fixes**: Corrected setup.py entry points for proper installation
+
+### 🐛 Bug Fixes
+- Fixed original config.py conflicts causing import issues
+- Resolved .env file permission vulnerabilities  
+- Fixed broken cron job paths and references
+- Corrected config loading for environment-specific variables
+
+### 🔒 Security
+- **CRITICAL**: Fixed world-readable credential files (now 600 permissions)
+- Added environment safety checks to prevent cross-execution
+- Separate API keys and credentials for each environment
+- Enhanced configuration validation
+
+### 💔 Breaking Changes
+- Old single `run_automation.py` replaced with environment-specific runners
+- Configuration system completely restructured (migration guide in README)
+- Legacy API endpoints removed (use `/api/dev/*` or `/api/prod/*`)
+- Cron job configuration must be updated using new setup scripts
+
+### 📋 Migration Guide
+1. Update cron jobs: `./cron_remove.sh && ./cron_setup_prod.sh`
+2. Configure environment-specific .env files in `config/environments/`
+3. Update scripts to use new runners: `run_automation_dev.py` or `run_automation_prod.py`
+4. Update Airtable scripts to use environment-specific API endpoints
+
+## [1.3.0] - 2025-05-30
 
 ### 🚀 New Features
 - **iTrip Info Field**: Added support for syncing contractor info from iTrip CSVs to Airtable

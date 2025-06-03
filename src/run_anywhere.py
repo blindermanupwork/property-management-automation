@@ -94,12 +94,22 @@ def install_dependencies(missing_packages):
 def run_automation_suite():
     """Run the complete automation suite"""
     try:
-        from automation.scripts.run_automation import main
-        print("🚀 Starting automation suite...")
+        # Import based on environment
+        environment = os.environ.get('ENVIRONMENT', 'development').lower()
+        
+        if environment == 'production':
+            print("🚀 Starting PRODUCTION automation suite...")
+            from run_automation_prod import main
+        else:
+            print("🚀 Starting DEVELOPMENT automation suite...")
+            from run_automation_dev import main
+            
         main()
         return True
     except Exception as e:
         print(f"❌ Automation suite failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -107,11 +117,12 @@ def list_automations():
     """List all available automations"""
     try:
         from automation.controller import AutomationController
+        from automation.config_wrapper import Config
         
         print("📋 Available Automations:")
         print("=" * 30)
         
-        controller = AutomationController()
+        controller = AutomationController(Config)
         controller.list_automations()
         return True
     except Exception as e:
@@ -193,9 +204,9 @@ def show_system_info():
     # Check if package is importable
     try:
         setup_python_path(project_root)
-        from automation.config import Config
+        from automation.config_wrapper import Config
         print("✅ Automation package is importable")
-        print(f"Config Project Root: {Config.get_project_root()}")
+        print(f"Config Project Root: {Config.root_dir}")
     except ImportError as e:
         print(f"❌ Automation package not importable: {e}")
     

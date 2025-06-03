@@ -10,7 +10,7 @@ from unittest.mock import patch, MagicMock, call
 import requests
 
 from automation.controller import AutomationController
-from automation.config import Config
+from automation.config_wrapper import Config
 
 
 class TestAutomationController:

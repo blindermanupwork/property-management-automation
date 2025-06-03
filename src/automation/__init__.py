@@ -13,7 +13,7 @@ __author__ = "Property Management Automation Team"
 __email__ = "automation@example.com"
 
 # Import main classes for easy access
-from .config import Config
+from .config_wrapper import Config
 from .controller import AutomationController
 
 __all__ = ["Config", "AutomationController", "__version__"]
