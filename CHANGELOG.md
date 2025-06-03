@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-06-03
+
+### ✨ New Features
+- **Service Line Custom Instructions**: 
+  - Support for custom instructions in HousecallPro job service names
+  - Automatic truncation to 200 characters for HCP compatibility
+  - Full Unicode support (accents, special characters, emojis)
+  - Works across all job creation methods (API, scripts, sync)
+
+- **Webhook Forwarding Support**:
+  - Accept forwarded webhooks from Servativ's Java service
+  - Shared secret authentication (X-Internal-Auth header)
+  - Dual authentication: HCP signature or forwarding secret
+  - Always returns 200 status to prevent webhook disabling
+
+- **Environment-Specific Scripts**:
+  - New `dev-hcp-sync.js` for development batch job creation
+  - New `prod-hcp-sync.js` for production batch job creation
+  - Enhanced debugging in dev/prod create job scripts
+
+### 🔧 Improvements
+- **Better Error Handling**: Enhanced HCP line item update error handling
+- **Automatic Truncation**: Prevents API errors with long service names
+- **Debug Logging**: Improved logging for service name generation
+- **Service Name Logic**: Consistent format across all scripts
+
+### 🐛 Bug Fixes
+- Fixed line items failing to update with special characters
+- Fixed missing service names in HCP jobs
+- Resolved character encoding issues with Unicode text
+
 ## [2.0.0] - 2025-06-02
 
 ### 🚀 **MAJOR RELEASE: Complete Environment Separation & Enterprise Security**
