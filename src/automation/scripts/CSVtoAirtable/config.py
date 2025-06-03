@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # Import from main config file - all credentials come from environment variables
-from config import *
+from config_wrapper import Config
 
 # Legacy compatibility - these are now imported from main config
 # AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
@@ -17,6 +17,6 @@ from config import *
 ICS_CRON_TABLE_NAME = "ICS Cron"
 
 # Legacy settings (now controlled by main config)
-IGNORE_PAST_ROWS = IGNORE_EVENTS_ENDING_BEFORE_TODAY
-IGNORE_ROWS_MONTHS_AHEAD = IGNORE_EVENTS_ENDING_MONTHS_AWAY  
-FETCH_ROWS_MONTHS_BEFORE = FETCH_RESERVATIONS_MONTHS_BEFORE
+IGNORE_PAST_ROWS = Config.IGNORE_EVENTS_ENDING_BEFORE_TODAY
+IGNORE_ROWS_MONTHS_AHEAD = Config.IGNORE_EVENTS_ENDING_MONTHS_AWAY  
+FETCH_ROWS_MONTHS_BEFORE = Config.FETCH_RESERVATIONS_MONTHS_BEFORE

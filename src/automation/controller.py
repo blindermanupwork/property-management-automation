@@ -14,23 +14,22 @@ import time
 import traceback
 import pytz
 
-# Import from our centralized config
-from .config import Config
-
-# Ensure project is in path and directories exist
-Config.add_project_to_path()
-Config.ensure_directories()
-
 class AutomationController:
     """Controls automation execution based on Airtable settings"""
     
-    def __init__(self):
-        self.airtable_api_key = Config.get_airtable_api_key()
-        self.base_id = Config.get_airtable_base_id()
-        self.automation_table = Config.get_automation_table_name()
+    def __init__(self, config):
+        """Initialize controller with a config instance
+        
+        Args:
+            config: Instance of DevConfig or ProdConfig
+        """
+        self.config = config
+        self.airtable_api_key = config.get_airtable_api_key()
+        self.base_id = config.get_airtable_base_id()
+        self.automation_table = config.get_airtable_table_name('automation_control')
         
         if not self.airtable_api_key:
-            raise ValueError("AIRTABLE_API_KEY environment variable not set")
+            raise ValueError(f"{config.environment_name} Airtable API key not set")
     
     def get_headers(self):
         """Get Airtable API headers"""
@@ -59,7 +58,7 @@ class AutomationController:
                 
             record = records[0]
             fields = record.get("fields", {})
-            is_active = fields.get(Config.get_automation_active_field(), False)
+            is_active = fields.get('Active', False)
             
             print(f"📋 {automation_name}: {'✅ Active' if is_active else '❌ Inactive'}")
             return is_active
@@ -98,8 +97,8 @@ class AutomationController:
             
             update_data = {
                 "fields": {
-                    Config.get_automation_last_ran_field(): run_time,
-                    Config.get_automation_sync_details_field(): sync_details
+                    'Last Ran': run_time,
+                    'Sync Details': sync_details
                 }
             }
             
@@ -183,10 +182,10 @@ class AutomationController:
             automations = {}
             for record in records:
                 fields = record.get("fields", {})
-                name = fields.get(Config.get_automation_name_field(), "")
-                is_active = fields.get(Config.get_automation_active_field(), False)
-                last_ran = fields.get(Config.get_automation_last_ran_field(), "Never")
-                sync_details = fields.get(Config.get_automation_sync_details_field(), "No details")
+                name = fields.get('Name', "")
+                is_active = fields.get('Active', False)
+                last_ran = fields.get('Last Ran', "Never")
+                sync_details = fields.get('Sync Details', "No details")
                 
                 automations[name] = {
                     "active": is_active,
@@ -219,10 +218,10 @@ class AutomationController:
             
             for record in records:
                 fields = record.get("fields", {})
-                name = fields.get(Config.get_automation_name_field(), "Unknown")
-                is_active = fields.get(Config.get_automation_active_field(), False)
-                last_ran = fields.get(Config.get_automation_last_ran_field(), "Never")
-                sync_details = fields.get(Config.get_automation_sync_details_field(), "No details")
+                name = fields.get('Name', "Unknown")
+                is_active = fields.get('Active', False)
+                last_ran = fields.get('Last Ran', "Never")
+                sync_details = fields.get('Sync Details', "No details")
                 
                 status_icon = "✅" if is_active else "❌"
                 print(f"{status_icon} {name}")
@@ -234,6 +233,101 @@ class AutomationController:
                 
         except requests.exceptions.RequestException as e:
             print(f"❌ Error listing automations: {e}")
+    
+    def run_all(self, dry_run=False):
+        """Run all active automations
+        
+        Args:
+            dry_run: If True, show what would be run without executing
+        """
+        print("🚀 Starting Automation Suite")
+        print("=" * 50)
+        print(f"🕐 Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"📍 Environment: {self.config.environment_name}")
+        print()
+        
+        if dry_run:
+            print("🔍 DRY RUN MODE - No automations will be executed")
+            print()
+        
+        # Import automation functions based on environment
+        # These will be imported dynamically based on the config
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation
+        
+        # Define automation mappings
+        automations = [
+            ("iTrip CSV Gmail", run_gmail_automation),
+            ("Evolve", run_evolve_automation),
+            ("CSV Files", run_csv_automation),
+            ("ICS Calendar", run_ics_automation),
+            ("Add/Sync Service Jobs", run_hcp_automation),
+        ]
+        
+        results = []
+        start_time = datetime.now()
+        
+        for name, func in automations:
+            if dry_run:
+                is_active = self.get_automation_status(name)
+                if is_active:
+                    print(f"✅ Would run: {name}")
+                else:
+                    print(f"❌ Would skip: {name} (inactive)")
+            else:
+                # Pass config to the automation function
+                success = self.run_automation(name, func, self.config)
+                results.append((name, success))
+        
+        # Summary
+        end_time = datetime.now()
+        duration = end_time - start_time
+        
+        print()
+        print("=" * 50)
+        print("🎯 Automation Suite Summary")
+        print("=" * 50)
+        
+        if not dry_run:
+            successful = sum(1 for _, success in results if success)
+            total = len(results)
+            
+            for name, success in results:
+                icon = "✅" if success else "❌"
+                print(f"{icon} {name}")
+            
+            print()
+            print(f"📊 Results: {successful}/{total} successful")
+        
+        print(f"⏱️  Total duration: {duration.total_seconds():.1f}s")
+        print(f"🕐 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    def run_specific(self, automation_id):
+        """Run a specific automation by ID
+        
+        Args:
+            automation_id: The name/ID of the automation to run
+        """
+        # Import automation functions
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation
+        
+        # Map automation IDs to functions
+        automation_map = {
+            "iTrip CSV Gmail": run_gmail_automation,
+            "Evolve": run_evolve_automation,
+            "CSV Files": run_csv_automation,
+            "ICS Calendar": run_ics_automation,
+            "Add/Sync Service Jobs": run_hcp_automation,
+        }
+        
+        if automation_id not in automation_map:
+            print(f"❌ Unknown automation: {automation_id}")
+            print("Available automations:")
+            for name in automation_map:
+                print(f"  - {name}")
+            return False
+        
+        func = automation_map[automation_id]
+        return self.run_automation(automation_id, func, self.config)
 
 def test_automation_controller():
     """Test the automation controller"""
@@ -241,7 +335,10 @@ def test_automation_controller():
     print("=" * 40)
     
     try:
-        controller = AutomationController()
+        # Import config for testing
+        from .config_dev import DevConfig
+        config = DevConfig()
+        controller = AutomationController(config)
         
         # Test getting all automations status
         print("📋 All Automations Status:")

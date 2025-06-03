@@ -1,0 +1,6 @@
+[console_scripts]
+csv-processor = automation.scripts.csv_processor:main
+evolve-scraper = automation.scripts.evolve_scraper:main
+gmail-downloader = automation.scripts.gmail_downloader:main
+ics-sync = automation.scripts.ics_sync:main
+run-automation = automation.scripts.run_automation:main

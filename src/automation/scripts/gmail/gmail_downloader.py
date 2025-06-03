@@ -19,7 +19,7 @@ from googleapiclient.discovery import build
 script_dir = Path(__file__).parent.absolute()
 project_root = script_dir.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
-from src.automation.config import Config
+from src.automation.config_wrapper import Config
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 DEFAULT_DOWNLOAD_FOLDER = str(Config.get_itripcsv_downloads_dir())
@@ -315,7 +315,8 @@ def download_today_csv():
         logger.warning("No CSV attachments found in the matching emails")
         return False
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the Gmail downloader script"""
     if args.list_only:
         logger.info("Running in LIST-ONLY mode (no downloads)")
     elif args.all_emails:
@@ -348,3 +349,8 @@ if __name__ == "__main__":
         logger.info("  - Check emails from yesterday: python gmail_downloader.py --days 1")
         logger.info("  - Show debug info: python gmail_downloader.py --debug")
         logger.info("  - Specify download location: python gmail_downloader.py --output-dir \"PATH\"")
+    
+    return success
+
+if __name__ == "__main__":
+    main()

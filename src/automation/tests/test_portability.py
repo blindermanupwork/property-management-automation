@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from automation.config import Config
+from automation.config_wrapper import Config
 
 
 class TestPortability:
@@ -163,7 +163,7 @@ class TestSystemIntegration:
         """Test that dependencies are properly handled"""
         # Test that automation package can be imported without external deps
         try:
-            from automation.config import Config
+            from automation.config_wrapper import Config
             # Basic functionality should work without external dependencies
             project_root = Config.get_project_root()
             assert project_root.exists()

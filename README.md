@@ -1,533 +1,366 @@
 # Property Management Automation System
 
-**Version 1.2.0** - Complete Project Restructuring & Timezone Implementation
+**Version 2.0.0** - Complete Environment Separation & Enterprise Security
 
-A comprehensive, cross-platform automation system for property management operations including CSV processing, calendar synchronization, web scraping, and service integrations.
+A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
 ## 🚀 Quick Start
 
-### Option 1: Universal Runner (No Installation)
+### Development Environment
 ```bash
-git clone <your-repo-url>
-cd automation
-python src/run_anywhere.py    # Auto-detects environment and runs
-```
-
-### Option 2: Package Installation
-```bash
-pip install -e .           # Install in development mode
-run-automation             # Run from anywhere
-```
-
-### Option 3: Test First
-```bash
-python test_setup.py       # Validate setup
-python src/run_anywhere.py --test  # Run system tests
-```
-
-## 📁 Complete File Structure
-
-```
-automation/                          # Project root
-├── 📄 Core System Files
-│   ├── README.md                    # This comprehensive guide
-│   ├── VERSION                      # Current version number (1.2.0)
-│   ├── CHANGELOG.md                 # Version history
-│   ├── setup.py                    # Package installation config
-│   ├── pyproject.toml              # Modern Python packaging
-│   ├── requirements.txt            # Python dependencies
-│   ├── package.json                # Node.js dependencies
-│   ├── package-lock.json           # Locked Node.js versions
-│   ├── test_setup.py               # Setup validation script
-│   └── .env                        # Environment configuration (create from template)
-│
-├── 🐍 Python Package Structure (REORGANIZED)
-│   └── src/
-│       ├── run_anywhere.py         # ⭐ Universal runner (works from anywhere)
-│       └── automation/             # Main package source
-│           ├── __init__.py         # Package initialization
-│           ├── config.py           # ⭐ Centralized configuration system
-│           ├── controller.py       # ⭐ Automation orchestration
-│           ├── bin/                # Shell scripts directory  
-│           │   ├── backup.sh       # Data backup system
-│           │   ├── deploy.sh       # Production deployment
-│           │   ├── deploy_to_prod.sh # Git-based deployment workflow
-│           │   ├── monitor.sh      # Production health monitoring
-│           │   └── setup_cron.sh   # Automated scheduling setup
-│           ├── logs/               # ⭐ Centralized application logs
-│           │   ├── alerts.log      # Alert notifications
-│           │   ├── automation_cron.log # Scheduled execution logs
-│           │   ├── csv_sync.log    # CSV processing logs
-│           │   ├── ics_sync.log    # Calendar sync logs
-│           │   └── webhook.log     # Webhook handling logs
-│           ├── scripts/            # ⭐ All automation scripts organized
-│           │   ├── __init__.py     # Scripts package init
-│           │   ├── run_automation.py # Main automation runner
-│           │   ├── CSV_done/       # ⭐ Processed CSV files
-│           │   ├── CSV_process/    # ⭐ Incoming CSV files  
-│           │   ├── CSVtoAirtable/  # CSV processing system
-│           │   │   ├── config.py   # CSV processor config
-│           │   │   └── csvProcess.py # Main CSV processing logic
-│           │   ├── gmail/          # Email integration
-│           │   │   ├── credentials.json # Google OAuth credentials
-│           │   │   ├── gmail_downloader.py # iTrip CSV downloader
-│           │   │   ├── processed_emails.txt # Tracking file
-│           │   │   └── token.pickle # OAuth token cache
-│           │   ├── evolve/         # Web scraping
-│           │   │   └── evolveScrape.py # Evolve property data scraper
-│           │   ├── icsAirtableSync/ # Calendar integration
-│           │   │   └── icsProcess.py # ICS calendar processor
-│           │   ├── webhook/        # Webhook handlers
-│           │   │   ├── webhook.py  # Flask webhook server
-│           │   │   └── notes.txt   # Webhook documentation
-│           │   ├── airtable-agent/ # AI-powered agent
-│           │   │   ├── airtable-agent.js # Node.js AI agent
-│           │   │   ├── systemPrompt.js # AI system prompts
-│           │   │   ├── package.json # Agent dependencies
-│           │   │   └── public/     # Web interface assets
-│           │   ├── hcp/            # HousecallPro integration
-│           │   │   ├── hcp_sync.js # HCP synchronization service
-│           │   │   └── agent.log   # HCP service logs
-│           │   ├── release.sh      # Version release automation
-│           │   └── version.sh      # Version display utility
-│           ├── tests/              # ⭐ Comprehensive test suite
-│           │   ├── __init__.py     # Test package init
-│           │   ├── test_config.py  # Configuration system tests
-│           │   ├── test_controller.py # Controller functionality tests
-│           │   └── test_portability.py # Cross-platform compatibility tests
-│           └── utils/              # Utility modules
-│
-├── 📚 Documentation
-│   └── docs/                       # Additional documentation
-│       └── INSTALLATION.md         # Detailed installation guide
-│
-├── ⚙️ Configuration
-│   └── config/                     # Configuration management
-│       └── environments/           # Environment-specific configs
-│           ├── dev/                # Development environment
-│           └── prod/               # Production environment
-│
-└── 📊 Data Directories
-    └── backups/                    # System backups (auto-created)
-```
-
-## 🎯 Core Features
-
-### **Automation Components**
-- **📧 iTrip CSV Download**: Automated Gmail integration for CSV retrieval with Arizona timezone timestamps
-- **🏠 Evolve Scraping**: Web scraping for property data collection with PST browser time and Arizona data timestamps
-- **📊 CSV Processing**: Intelligent CSV-to-Airtable synchronization with conflict prevention and timezone-aware data
-- **📅 ICS Calendar Sync**: Multi-source calendar data integration with timezone normalization
-- **🔧 HousecallPro Integration**: Service job management and synchronization with Arizona timezone consistency
-- **🤖 AI Agent**: OpenAI-powered Airtable data agent
-- **🕐 Webhook Server**: Flask-based webhook handler with PST logging and Arizona data timestamps
-
-### **System Features**
-- **🌍 Cross-Platform**: Works on Windows, macOS, and Linux with pathlib compatibility
-- **📦 Portable**: Run from any directory without installation via `run_anywhere.py`
-- **⚙️ Environment-Aware**: Automatic dev/prod environment detection with Airtable base switching
-- **🔍 Self-Testing**: Built-in validation and health checks with comprehensive test suite
-- **📝 Comprehensive Logging**: Centralized logging with PST timestamps for system operations
-- **🕐 Timezone Management**: Dual-timezone strategy (PST for logs, Arizona for business data)
-- **🔄 Automatic Backup**: Scheduled data protection with configurable retention
-- **📈 Production Monitoring**: Health checks and alerting with Airtable-based control
-- **🏗️ Professional Structure**: Organized `/src/automation/` package structure following Python best practices
-
-## 🚀 Usage Guide
-
-### **Development & Testing**
-```bash
-# Validate setup
-python test_setup.py
-
-# Test all components
-python src/run_anywhere.py --test
+# Run development automation (uses dev Airtable base)
+python3 src/run_automation_dev.py --dry-run  # Test first
+python3 src/run_automation_dev.py            # Run for real
 
 # List available automations
-python src/run_anywhere.py --list
-
-# Show system information
-python src/run_anywhere.py --info
-
-# Install missing dependencies automatically
-python src/run_anywhere.py --auto-install
+python3 src/run_automation_dev.py --list
 ```
 
-### **Running Automations**
+### Production Environment
 ```bash
-# Run all automations (respects Airtable control settings)
-python src/run_anywhere.py
+# Run production automation (uses prod Airtable base)
+python3 src/run_automation_prod.py --dry-run  # Test first
+python3 src/run_automation_prod.py            # Run for real
 
-# Package installation method
-pip install -e .
-run-automation
-
-# Direct module execution
-python -m automation.scripts.run_automation
+# List available automations
+python3 src/run_automation_prod.py --list
 ```
 
-### **Production Operations**
+### Universal Runner (Auto-detects Environment)
 ```bash
-# Deploy to production
-./bin/deploy_to_prod.sh
-
-# Manual deployment
-./bin/deploy.sh
-
-# System health check
-./bin/monitor.sh
-
-# Create system backup
-./bin/backup.sh
-
-# Setup automated scheduling
-./bin/setup_cron.sh
-
-# Check version
-./scripts/version.sh
-
-# Create new release
-./scripts/release.sh patch "Bug fixes and improvements"
+# Works from anywhere, auto-detects environment
+python3 src/run_anywhere.py --info           # Show system information
+python3 src/run_anywhere.py --test           # Run system tests
+python3 src/run_anywhere.py                  # Run automation
 ```
 
-### **Individual Script Execution**
+## 🏗️ Architecture Overview
+
+### **Complete Environment Separation**
+This system provides complete isolation between development and production:
+
+| Aspect | Development | Production |
+|--------|-------------|------------|
+| **Runner Script** | `run_automation_dev.py` | `run_automation_prod.py` |
+| **Airtable Base** | `app67yWFv0hKdl6jM` | `appZzebEIqCU5R9ER` |
+| **CSV Directories** | `CSV_*_development/` | `CSV_*_production/` |
+| **Log Files** | `automation_dev*.log` | `automation_prod*.log` |
+| **API Endpoints** | `/api/dev/*` | `/api/prod/*` |
+| **Cron Schedule** | Every 30 minutes | Every 4 hours |
+
+### **Security Features**
+- 🔒 **Credential Protection**: Environment-specific .env files with secure permissions
+- 🛡️ **Environment Safety**: Cross-environment execution protection
+- 🚨 **Enhanced Validation**: Robust configuration validation with detailed error messages
+- 🔐 **API Security**: Separate API keys and endpoints for each environment
+
+## 📁 Project Structure
+
+```
+automation/                                 # Project root
+├── 📄 Core System Files
+│   ├── README.md                           # This comprehensive guide
+│   ├── VERSION                             # Current version (2.0.0)
+│   ├── CHANGELOG.md                        # Version history
+│   ├── setup.py                           # Package installation config
+│   ├── requirements.txt                   # Python dependencies
+│   ├── .env                               # Main environment configuration
+│   ├── CRITICAL_FIXES_COMPLETED.md        # Security & reliability fixes
+│   └── ENVIRONMENT_SEPARATION_COMPLETE.md # Complete implementation guide
+│
+├── 🔧 Configuration System (NEW v2.0)
+│   └── config/
+│       └── environments/
+│           ├── dev/.env                    # Development credentials (secure)
+│           └── prod/.env                   # Production credentials (secure)
+│
+├── 🐍 Python Package Structure
+│   └── src/
+│       ├── run_automation_dev.py           # ⭐ Development automation runner
+│       ├── run_automation_prod.py          # ⭐ Production automation runner  
+│       ├── run_anywhere.py                # ⭐ Universal runner
+│       └── automation/                    # Main package source
+│           ├── config_base.py              # ⭐ Base configuration class
+│           ├── config_dev.py               # ⭐ Development configuration
+│           ├── config_prod.py              # ⭐ Production configuration
+│           ├── config_wrapper.py           # ⭐ Auto-environment detection
+│           ├── controller.py               # ⭐ Automation orchestration
+│           ├── scripts/                    # Individual automation scripts
+│           │   ├── CSV_process_development/ # Dev CSV processing
+│           │   ├── CSV_process_production/  # Prod CSV processing
+│           │   ├── CSV_done_development/    # Dev CSV archive
+│           │   ├── CSV_done_production/     # Prod CSV archive
+│           │   ├── gmail/                  # Gmail CSV downloader
+│           │   ├── evolve/                 # Evolve property scraper
+│           │   ├── CSVtoAirtable/          # CSV processing engine
+│           │   ├── icsAirtableSync/        # Calendar synchronization
+│           │   ├── webhook/                # Webhook handlers
+│           │   └── airscripts-api/         # Airtable API server
+│           ├── logs/                       # Environment-specific logs
+│           └── tests/                      # Comprehensive test suite
+│
+├── 🛠️ Deployment & Operations
+│   ├── cron_setup_dev.sh                  # Setup development cron (30min)
+│   ├── cron_setup_prod.sh                 # Setup production cron (4hr)
+│   ├── cron_remove.sh                     # Remove old cron jobs
+│   └── backups/                           # Backup storage
+│
+└── 🔧 Development Tools
+    ├── tools/airtable-mcp-server/          # Airtable MCP integration
+    ├── test_setup.py                      # Setup validation
+    └── docs/                              # Documentation
+```
+
+## 🚦 Installation & Setup
+
+### 1. **Environment Setup**
 ```bash
-# Gmail CSV download
-python src/automation/scripts/gmail/gmail_downloader.py
-
-# Evolve data scraping  
-python src/automation/scripts/evolve/evolveScrape.py --headless
-
-# CSV processing
-python src/automation/scripts/CSVtoAirtable/csvProcess.py
-
-# ICS calendar sync
-python src/automation/scripts/icsAirtableSync/icsProcess.py
-
-# Webhook server
-python src/automation/scripts/webhook/webhook.py
-
-# AI agent (Node.js)
-cd src/automation/scripts/airtable-agent && node airtable-agent.js
-
-# HousecallPro sync (Node.js)  
-cd src/automation/scripts/hcp && node hcp_sync.js
-```
-
-## 🕐 Timezone Management
-
-### **Dual-Timezone Strategy**
-The system implements a sophisticated dual-timezone approach for optimal usability and business consistency:
-
-#### **PST (Pacific Standard Time) - System Operations**
-- **All log timestamps**: System logs, error messages, debug output
-- **Health check responses**: `/health` endpoint timestamps
-- **Browser automation**: Evolve scraper forces browser to use PST
-- **User-facing timestamps**: System information and status displays
-
-```python
-# PST timezone implementation across all scripts
-pst = pytz.timezone('US/Pacific')
-class PSTFormatter(logging.Formatter):
-    def formatTime(self, record, datefmt=None):
-        dt = datetime.fromtimestamp(record.created, tz=pst)
-        return dt.strftime(datefmt or "%Y-%m-%d %H:%M:%S %Z")
-```
-
-#### **Arizona Time (America/Phoenix) - Business Data**
-- **All Airtable data**: Timestamps written to business records
-- **CSV file processing**: Business event timestamps
-- **Email download timestamps**: File naming and processing
-- **HousecallPro integration**: Service job scheduling
-- **Webhook data processing**: Business event timestamps
-
-```python
-# Arizona timezone for business data consistency
-arizona_tz = pytz.timezone('America/Phoenix')
-run_time = datetime.now(arizona_tz).isoformat()
-```
-
-#### **Benefits of This Approach**
-- **System Operations**: PST timestamps make log analysis intuitive for Pacific coast operations
-- **Business Consistency**: Arizona time ensures data consistency (no daylight saving complications)
-- **Cross-Platform**: Works identically across different server timezones
-- **Audit Trail**: Clear separation between system events and business events
-
-## ⚙️ Configuration
-
-### **Environment Setup**
-Create `.env` file in project root:
-```bash
-# Required Configuration
-AIRTABLE_API_KEY=your_api_key_here
-PROD_AIRTABLE_BASE_ID=your_base_id_here
-AUTOMATION_TABLE_NAME=Automation
-
-# Optional Field Names (defaults provided)
-AUTOMATION_NAME_FIELD=Name
-AUTOMATION_ACTIVE_FIELD=Active
-AUTOMATION_LAST_RAN_FIELD=Last Ran
-AUTOMATION_SYNC_DETAILS_FIELD=Sync Details
-
-# Gmail Integration
-GMAIL_CREDENTIALS_PATH=scripts/gmail/credentials.json
-
-# Evolve Configuration
-EVOLVE_USER=your_username
-EVOLVE_PASS=your_password
-
-# HousecallPro Integration
-HCP_API_KEY=your_hcp_key
-HCP_COMPANY_ID=your_company_id
-
-# AI Agent
-OPENAI_API_KEY=your_openai_key
-
-# System Configuration
-LOG_LEVEL=INFO
-LOG_RETENTION_DAYS=30
-BACKUP_RETENTION_DAYS=90
-```
-
-### **Airtable Control System**
-The system uses an Airtable "Automation" table to control which automations run:
-
-| Field Name | Type | Description |
-|------------|------|-------------|
-| Name | Single line text | Automation identifier |
-| Active | Checkbox | Enable/disable automation |
-| Last Ran | Date & time | Last execution timestamp |
-| Sync Details | Long text | Execution results and logs |
-
-### **Environment-Specific Configuration**
-```bash
-# Development environment
-config/environments/dev/.env
-
-# Production environment  
-config/environments/prod/.env
-
-# Copy from templates
-cp config/environments/dev/.env.example config/environments/dev/.env
-cp config/environments/prod/.env.example config/environments/prod/.env
-```
-
-## 🔧 Installation & Dependencies
-
-### **Python Dependencies** (requirements.txt)
-- `selenium` - Web scraping automation
-- `webdriver-manager` - Browser driver management
-- `python-dotenv` - Environment variable management
-- `pandas` - Data processing
-- `aiohttp` - Async HTTP client
-- `icalendar` - ICS calendar parsing
-- `pyairtable` - Airtable API client
-- `python-dateutil` - Date parsing utilities
-- `requests` - HTTP client
-- `airtable-python-wrapper` - Alternative Airtable client
-- `flask` - Web framework for webhooks
-
-### **Node.js Dependencies** (package.json)
-- AI agent and web interface components
-- Airtable integration utilities
-
-### **System Requirements**
-- **Python**: 3.8 or higher
-- **Node.js**: 16 or higher (for AI agent)
-- **Chrome/Chromium**: For web scraping
-- **Git**: For version control and deployment
-
-## 🧪 Testing
-
-### **Test Suite**
-```bash
-# Quick validation
-python test_setup.py
-
-# Full test suite  
-pytest tests/ -v
-
-# CI/CD testing
-python run_anywhere.py --test
-```
-
-### **Test Coverage**
-- ✅ Configuration system validation
-- ✅ Controller functionality
-- ✅ Cross-platform portability
-- ✅ Import and dependency checks
-- ✅ Error handling and edge cases
-- ✅ Environment detection
-- ✅ Path resolution across platforms
-
-## 🚀 Deployment
-
-### **Development Workflow**
-```bash
-# Work on dev branch
-git checkout dev
-# Make changes...
-git add . && git commit -m "Feature update"
-git push origin dev
-
-# Deploy to production
-./deploy_to_prod.sh
-```
-
-### **Production Deployment**
-```bash
-# Automated deployment with testing
-./bin/deploy.sh
-
-# Manual production setup
-pip install -e .
-cp .env.example .env
-# Edit .env with production values
-./bin/setup_cron.sh
-```
-
-### **Docker Deployment**
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY . .
-RUN pip install -e .
-CMD ["run-automation"]
-```
-
-## 📊 Monitoring & Maintenance
-
-### **Health Monitoring**
-- **System Health**: `./bin/monitor.sh` - Checks processes, errors, disk space
-- **Log Analysis**: Automatic error detection and alerting
-- **Performance**: Execution time tracking and optimization
-- **Resource Usage**: Disk space and memory monitoring
-
-### **Backup System**
-- **Automated Backups**: `./bin/backup.sh` - Full system and data backups
-- **Retention Policy**: Configurable backup retention
-- **Integrity Checks**: Automatic backup validation
-- **Disaster Recovery**: Complete system restoration procedures
-
-### **Logging System**
-- **Centralized Logs**: All logs in `logs/` directory
-- **Log Rotation**: Automatic cleanup based on retention policy
-- **Error Tracking**: Detailed error logging and alerting
-- **Audit Trail**: Complete operation history
-
-## 🔒 Security
-
-### **Data Protection**
-- All credentials stored in `.env` files (never committed)
-- Separate development and production environments
-- Automatic backup encryption (when configured)
-- Comprehensive audit logging
-
-### **Access Control**
-- Environment-based access control
-- API key rotation support
-- Webhook signature validation
-- Secure credential storage
-
-## 🐛 Troubleshooting
-
-### **Common Issues**
-```bash
-# Import errors
-python run_anywhere.py --info
-
-# Missing dependencies
-python run_anywhere.py --auto-install
-
-# Permission issues
-sudo chown -R $USER:$USER automation/
-
-# Path problems
-python test_setup.py
-
-# Environment issues
-python -c "from automation.config import Config; print(Config.validate_required_env(['AIRTABLE_API_KEY']))"
-```
-
-### **Debug Mode**
-```bash
-export AUTOMATION_DEBUG=1
-python run_anywhere.py
-```
-
-### **Log Analysis**
-```bash
-# View recent logs
-tail -f logs/automation.log
-
-# Check for errors
-grep -i error logs/*.log
-
-# Monitor health
-./bin/monitor.sh
-```
-
-## 🤝 Contributing
-
-### **Development Setup**
-```bash
-git clone <repo-url>
+# Clone the repository
+git clone <your-repo-url>
 cd automation
-pip install -e ".[dev]"
-pytest tests/
+
+# Install Python dependencies
+pip3 install -r requirements.txt
+
+# Validate setup
+python3 test_setup.py
+```
+
+### 2. **Configure Environments**
+```bash
+# Development credentials (secure permissions automatically applied)
+nano config/environments/dev/.env
+
+# Production credentials (secure permissions automatically applied)  
+nano config/environments/prod/.env
+```
+
+### 3. **Set Up Automation Schedules**
+```bash
+# Development (every 30 minutes for testing)
+./cron_setup_dev.sh
+
+# Production (every 4 hours for business operations)
+./cron_setup_prod.sh
+
+# Remove old cron jobs if needed
+./cron_remove.sh
+```
+
+## 🔄 Automation Components
+
+### **1. Gmail CSV Downloader**
+- Downloads iTrip reservation reports from Gmail
+- OAuth2 authentication with automatic token refresh
+- Environment-specific download directories
+
+### **2. Evolve Property Scraper**
+- Scrapes property data using Selenium WebDriver
+- Headless operation with comprehensive error handling
+- Environment-aware configuration
+
+### **3. CSV Processing Engine**
+- Processes iTrip and Evolve CSV files to Airtable
+- Complete change tracking and history preservation
+- Environment-specific processing workflows
+
+### **4. ICS Calendar Sync**
+- Synchronizes calendar data from property management systems
+- Real-time availability updates
+- Conflict detection and resolution
+
+### **5. Service Job Management**
+- HousecallPro integration for service scheduling
+- Automatic job creation and status updates
+- Environment-specific API endpoints
+
+## 🔧 Configuration System
+
+### **Environment-Aware Configuration**
+The system uses a sophisticated configuration hierarchy:
+
+1. **Base Configuration** (`config_base.py`) - Shared functionality
+2. **Environment-Specific** (`config_dev.py`, `config_prod.py`) - Credentials and settings
+3. **Auto-Detection** (`config_wrapper.py`) - Automatic environment selection
+
+### **Environment Variables**
+```bash
+# Development
+DEV_AIRTABLE_API_KEY=pat...
+DEV_AIRTABLE_BASE_ID=app...
+DEV_HCP_TOKEN=...
+
+# Production  
+PROD_AIRTABLE_API_KEY=pat...
+PROD_AIRTABLE_BASE_ID=app...
+PROD_HCP_TOKEN=...
+```
+
+## 🚨 Security Features
+
+### **Credential Protection**
+- Environment-specific .env files with `600` permissions
+- No world-readable credential files
+- Separate API keys for dev/prod environments
+
+### **Environment Safety**
+- Automatic hostname-based environment detection
+- Warning prompts for cross-environment execution
+- `--force` flag for intentional overrides
+
+### **Enhanced Validation**
+- API key format validation (must start with 'pat', minimum 20 chars)
+- Base ID validation (must start with 'app', exactly 17 chars)
+- Empty credential detection with detailed error messages
+
+## 📊 Operations & Monitoring
+
+### **Logging**
+```bash
+# Development logs
+tail -f src/automation/logs/automation_dev*.log
+
+# Production logs  
+tail -f src/automation/logs/automation_prod*.log
+
+# Cron job logs
+tail -f src/automation/logs/automation_*_cron.log
+```
+
+### **Monitoring Commands**
+```bash
+# Check automation status
+python3 src/run_automation_dev.py --list    # Dev environment
+python3 src/run_automation_prod.py --list   # Prod environment
+
+# System information
+python3 src/run_anywhere.py --info
+
+# Test system health
+python3 src/run_anywhere.py --test
+```
+
+### **Cron Job Management**
+```bash
+# View current cron jobs
+crontab -l
+
+# Setup development automation (30 min intervals)
+./cron_setup_dev.sh
+
+# Setup production automation (4 hour intervals)  
+./cron_setup_prod.sh
+```
+
+## 🔧 Development
+
+### **Entry Points**
+After installation (`pip install -e .`):
+```bash
+run-automation-dev      # Development automation
+run-automation-prod     # Production automation
+run-automation          # Universal runner
+evolve-scraper          # Evolve property scraper
+csv-processor           # CSV processing tool
+ics-sync               # Calendar synchronization
+gmail-downloader       # Gmail CSV downloader
+```
+
+### **Testing**
+```bash
+# Run comprehensive tests
+python3 -m pytest tests/ -v
+
+# Test with coverage
+python3 -m pytest tests/ --cov=automation
+
+# Integration testing
+python3 src/run_anywhere.py --test
 ```
 
 ### **Code Quality**
 ```bash
-# Formatting
+# Format code
 black src/ tests/
 isort src/ tests/
 
 # Type checking
 mypy src/
 
-# Testing
-pytest tests/ --cov=automation
+# Linting
+flake8 src/
 ```
 
-## 📋 File-by-File Reference
+## 🚀 Deployment
 
-### **🔴 Core System Files (DO NOT MODIFY)**
-- `setup.py` - Package installation configuration
-- `pyproject.toml` - Modern Python packaging standards
-- `src/automation/` - Main package source code
-- `requirements.txt` - Python dependencies
+### **Production Deployment Checklist**
+- ✅ Configure production environment variables
+- ✅ Set up production cron schedule  
+- ✅ Verify file permissions (600 for .env files)
+- ✅ Test production automation with `--dry-run`
+- ✅ Monitor initial production runs
+- ✅ Verify log file separation
 
-### **🟡 Configuration Files (MODIFY AS NEEDED)**
-- `.env` - Main environment configuration
-- `config/environments/dev/.env` - Development settings
-- `config/environments/prod/.env` - Production settings
+### **Environment Verification**
+```bash
+# Verify development environment
+python3 src/run_automation_dev.py --dry-run
 
-### **🟢 Operational Scripts (SAFE TO MODIFY)**
-- `bin/` - All operational shell scripts
-- `bin/backup.sh` - Customize backup strategy
-- `bin/monitor.sh` - Add custom health checks  
-- `bin/deploy.sh` - Modify deployment process
-- `bin/setup_cron.sh` - Adjust scheduling
+# Verify production environment  
+python3 src/run_automation_prod.py --dry-run
 
-### **🔵 Automation Scripts (EXTEND AS NEEDED)**
-- `scripts/*/` - All individual automation components
-- Add new scripts here following existing patterns
+# Check configuration
+python3 -c "
+from src.automation.config_dev import DevConfig
+from src.automation.config_prod import ProdConfig
+print('Dev errors:', DevConfig().validate_config())
+print('Prod errors:', ProdConfig().validate_config())
+"
+```
 
-### **⚪ Generated/Cache Files (SAFE TO DELETE)**
-- `logs/*.log` - Will be regenerated
-- `CSV_done/*.csv` - Processed files (backup first)
-- `__pycache__/` - Python cache (auto-regenerated)
+## 📋 Troubleshooting
 
-## 📞 Support
+### **Common Issues**
+1. **Config Validation Errors**: Check environment-specific .env files
+2. **Permission Denied**: Ensure .env files have correct permissions (600)
+3. **Import Errors**: Verify Python path and package installation
+4. **Airtable 403 Errors**: Check API keys and base IDs
+5. **Cron Job Failures**: Verify paths and Python executable
 
-- **Documentation**: [Installation Guide](docs/INSTALLATION.md)
-- **Issues**: GitHub Issues
-- **Testing**: `python test_setup.py`
-- **Health Check**: `./bin/monitor.sh`
+### **Debug Commands**
+```bash
+# Check system information
+python3 src/run_anywhere.py --info
+
+# Validate configuration
+python3 -c "from src.automation.config_wrapper import Config; print(Config.validate_config())"
+
+# Test imports
+python3 -c "from src.automation.controller import AutomationController; print('OK')"
+```
+
+## 📝 Version History
+
+### **Version 2.0.0** (Current)
+- ✅ **Complete environment separation** (dev/prod isolation)
+- ✅ **Enterprise security enhancements** (secure credential handling)
+- ✅ **Robust error handling** (enhanced validation & safety checks)
+- ✅ **Production-ready deployment** (cron jobs, logging, monitoring)
+
+### **Version 1.2.0** (Previous)
+- Project restructuring and timezone implementation
+- Centralized configuration system
+- Cross-platform compatibility improvements
+
+## 🤝 Support
+
+For issues, feature requests, or contributions:
+
+1. **Check Documentation**: Review this README and configuration guides
+2. **Run Diagnostics**: Use `python3 src/run_anywhere.py --info` and `--test`
+3. **Check Logs**: Review environment-specific log files
+4. **Validate Config**: Ensure .env files are properly configured
 
 ---
 
-**🎉 Your automation system is now fully portable, documented, and ready for production deployment!**
-
-*Generated with [Claude Code](https://claude.ai/code)*
+**🎉 The system is now enterprise-ready with complete environment separation, enhanced security, and production-grade reliability!**

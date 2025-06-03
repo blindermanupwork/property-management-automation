@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from automation.config import Config
+from automation.config_wrapper import Config
 
 
 class TestConfig:
@@ -158,7 +158,7 @@ class TestConfigIntegration:
         
         # Should be able to import
         try:
-            from automation.config import Config as ImportedConfig
+            from automation.config_wrapper import Config as ImportedConfig
             assert ImportedConfig is not None
         except ImportError:
             pytest.fail("Could not import Config from script location")
