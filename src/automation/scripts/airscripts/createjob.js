@@ -101,7 +101,15 @@ if (serviceType === "Return Laundry") {
 
 /* ─ 6) determine serviceName ──────────────────────────────────── */
 let serviceName;
-if (sameDay) {
+const serviceLineDescription = rec.getCellValue("Service Line Description");
+const serviceLineCustomInstructions = rec.getCellValue("Service Line Custom Instructions");
+
+if (serviceLineDescription?.trim()) {
+  serviceName = serviceLineDescription.trim();
+  if (serviceLineCustomInstructions?.trim()) {
+    serviceName += ` - ${serviceLineCustomInstructions.trim()}`;
+  }
+} else if (sameDay) {
   serviceName = `${serviceType} STR SAME DAY`;
 } else {
   const query = await reservationsTable.selectRecordsAsync({

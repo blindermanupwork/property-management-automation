@@ -225,34 +225,43 @@ async function createJob(rec, finalTime, sameDayTurnover, allRecords) {
   
   const propertyName = propRec.fields['Property Name'] || propId;
   
-  // Check for Custom Service Line Description first
+  // Build service name based on service type and date logic
   let svcName;
-  const customServiceLine = rec.fields['Custom Service Line Description'];
   
-  if (customServiceLine && customServiceLine.trim()) {
-    // Use custom service line if it exists and is not empty
-    svcName = customServiceLine.trim();
-    console.log(`Using custom service line: ${svcName}`);
+  if (sameDayTurnover) {
+    svcName = `${serviceType} STR SAME DAY`;
+    console.log(`Same-day ${serviceType} -- Setting service name to: ${svcName}`);
   } else {
-    // Fall back to generated service name
-    if (sameDayTurnover) {
-      svcName = `${serviceType} STR SAME DAY`;
-      console.log(`Same-day ${serviceType} -- Setting service name to: ${svcName}`);
+    const checkOutDate = rec.fields['Check-out Date'];
+    console.log(`Finding next reservation for ${propertyName}`);
+    const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+    
+    if (nextReservation) {
+      const nextCheckInDate = nextReservation.fields['Check-in Date'];
+      const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
+      svcName = `${serviceType} STR Next Guest ${fmtDate(nextCheckInDate)}`;
+      console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting service name to: ${svcName}`);
     } else {
-      const checkOutDate = rec.fields['Check-out Date'];
-      console.log(`Finding next reservation for ${propertyName}`);
-      const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
-      
-      if (nextReservation) {
-        const nextCheckInDate = nextReservation.fields['Check-in Date'];
-        const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
-        svcName = `${serviceType} STR Next Guest ${fmtDate(nextCheckInDate)}`;
-        console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting service name to: ${svcName}`);
-      } else {
-        svcName = `${serviceType} STR Next Guest Unknown`;
-        console.log(`No Res UID found -- Setting service name to: ${svcName}`);
-      }
+      svcName = `${serviceType} STR Next Guest Unknown`;
+      console.log(`No Res UID found -- Setting service name to: ${svcName}`);
     }
+  }
+  
+  // Append Service Line Custom Instructions if present
+  const serviceLineCustomInstructions = rec.fields['Service Line Custom Instructions'];
+  if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
+    // Limit custom instructions length to prevent issues
+    let customInstructions = serviceLineCustomInstructions.trim();
+    const maxCustomLength = 200; // Leave room for base service name
+    
+    if (customInstructions.length > maxCustomLength) {
+      customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
+      console.log(`Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
+    }
+    
+    svcName += ` - ${customInstructions}`;
+    console.log(`Added custom instructions -- Final service name: ${svcName}`);
+    console.log(`Final service name length: ${svcName.length} characters`);
   }
 
   const custLinks = propRec.fields['HCP Customer ID'] || [];

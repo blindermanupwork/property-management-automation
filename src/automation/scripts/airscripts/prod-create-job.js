@@ -101,6 +101,9 @@ if (serviceType === "Return Laundry") {
 
 /* ─ 6) determine serviceName ──────────────────────────────────── */
 let serviceName;
+const serviceLineCustomInstructions = rec.getCellValue("Service Line Custom Instructions");
+
+// Build base service name
 if (sameDay) {
   serviceName = `${serviceType} STR SAME DAY`;
 } else {
@@ -128,6 +131,18 @@ if (sameDay) {
   } else {
     serviceName = `${serviceType} STR Next Guest Unknown`;
   }
+}
+
+// Append Service Line Custom Instructions if present
+if (serviceLineCustomInstructions?.trim()) {
+  let customInstructions = serviceLineCustomInstructions.trim();
+  const maxCustomLength = 200; // Leave room for base service name
+  
+  if (customInstructions.length > maxCustomLength) {
+    customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
+  }
+  
+  serviceName += ` - ${customInstructions}`;
 }
 
 /* ─ 7) hcp helper (minimal, read body once, proper JSON parse) ─── */

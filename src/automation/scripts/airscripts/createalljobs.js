@@ -164,7 +164,15 @@ async function createJob(rec, finalTime, sameDay, allRecords) {
   
   // Build service name
  let svcName;
-if (sameDay) {
+const serviceLineDescription = rec.getCellValue("Service Line Description");
+const serviceLineCustomInstructions = rec.getCellValue("Service Line Custom Instructions");
+
+if (serviceLineDescription?.trim()) {
+  svcName = serviceLineDescription.trim();
+  if (serviceLineCustomInstructions?.trim()) {
+    svcName += ` - ${serviceLineCustomInstructions.trim()}`;
+  }
+} else if (sameDay) {
   svcName = `${serviceType} STR SAME DAY`;
 } else {
   const checkOutDate = rec.getCellValue("Check-out Date");

@@ -189,6 +189,27 @@ async function createJob(req, res) {
         serviceName = `${serviceType} STR Next Guest Unknown`;
       }
     }
+    
+    // Add Service Line Custom Instructions if present
+    const serviceLineCustomInstructions = reservation.get('Service Line Custom Instructions');
+    console.log(`DEBUG: Service Line Custom Instructions: "${serviceLineCustomInstructions}"`);
+    
+    if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
+      // Limit custom instructions length to prevent issues
+      let customInstructions = serviceLineCustomInstructions.trim();
+      const maxCustomLength = 200; // Leave room for base service name
+      
+      if (customInstructions.length > maxCustomLength) {
+        customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
+        console.log(`DEBUG: Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
+      }
+      
+      serviceName += ` - ${customInstructions}`;
+      console.log(`DEBUG: Final service name with custom instructions: "${serviceName}"`);
+      console.log(`DEBUG: Final service name length: ${serviceName.length} characters`);
+    } else {
+      console.log(`DEBUG: Final service name (no custom instructions): "${serviceName}"`);
+    }
 
     // Check if job already exists
     let jobId = reservation.get('Service Job ID');
@@ -271,10 +292,35 @@ async function createJob(req, res) {
         }));
 
         if (lineItems.length > 0) {
-          await hcpFetch(hcpConfig, `/jobs/${jobId}/line_items/bulk_update`, 'PUT', {
-            line_items: lineItems
-          });
-          console.log('Copied', lineItems.length, 'line items from template');
+          console.log(`DEBUG: Updating ${lineItems.length} line items for job ${jobId}`);
+          console.log(`DEBUG: First line item name length: ${lineItems[0].name.length} characters`);
+          console.log(`DEBUG: First line item name: "${lineItems[0].name.substring(0, 100)}${lineItems[0].name.length > 100 ? '...' : ''}"`);
+          
+          try {
+            const updateResp = await hcpFetch(hcpConfig, `/jobs/${jobId}/line_items/bulk_update`, 'PUT', {
+              line_items: lineItems
+            });
+            console.log('Successfully copied', lineItems.length, 'line items from template');
+          } catch (updateError) {
+            console.error(`ERROR updating line items: ${updateError.message}`);
+            // Check if it's a length issue
+            if (lineItems[0].name.length > 255) {
+              console.log(`WARNING: Service name is ${lineItems[0].name.length} characters, may exceed HCP limit`);
+              // Try with truncated name
+              const truncatedName = lineItems[0].name.substring(0, 250) + '...';
+              lineItems[0].name = truncatedName;
+              console.log(`Retrying with truncated name: "${truncatedName}"`);
+              
+              try {
+                await hcpFetch(hcpConfig, `/jobs/${jobId}/line_items/bulk_update`, 'PUT', {
+                  line_items: lineItems
+                });
+                console.log('Successfully updated line items with truncated name');
+              } catch (retryError) {
+                console.error(`ERROR on retry: ${retryError.message}`);
+              }
+            }
+          }
         }
       } catch (error) {
         console.log('Failed to copy line items:', error.message);
@@ -375,7 +421,8 @@ async function createJob(req, res) {
       scheduledTime: schedLive.toISOString(),
       syncStatus: syncStatus,
       syncDetails: syncDetails,
-      environment: environment
+      environment: environment,
+      serviceName: serviceName  // Add service name for debugging
     });
 
   } catch (error) {
