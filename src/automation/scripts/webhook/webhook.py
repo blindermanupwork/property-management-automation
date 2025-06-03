@@ -51,9 +51,10 @@ logger.addHandler(console_handler)
 # Environment variables using Config
 AIRTABLE_API_KEY = Config.get_airtable_api_key()
 AIRTABLE_BASE_ID = Config.get_airtable_base_id()
-AIRTABLE_TABLE_NAME = Config.get_airtable_table_name()
-AIRTABLE_PROPERTIES_TABLE = Config.get_properties_table_name()
-HCP_WEBHOOK_SECRET = Config.get_env("HCP_WEBHOOK_SECRET")
+AIRTABLE_TABLE_NAME = Config.get_airtable_table_name('reservations')
+AIRTABLE_PROPERTIES_TABLE = Config.get_airtable_table_name('properties')
+HCP_WEBHOOK_SECRET = os.environ.get("HCP_WEBHOOK_SECRET")
+SERVATIV_WEBHOOK_SECRET = "sk_servativ_webhook_7f4d9b2e8a3c1f6d"
 
 # Validate required configuration
 missing_config = Config.validate_config()
@@ -174,6 +175,11 @@ def validate_timestamp(timestamp):
     except (ValueError, TypeError):
         logger.warning(f"Invalid timestamp format: {timestamp}")
         return True  # Fail open for timestamp issues
+
+def is_servativ_forwarded(request) -> bool:
+    """Check if request is forwarded from Servativ"""
+    auth_header = request.headers.get("X-Internal-Auth", "")
+    return auth_header == SERVATIV_WEBHOOK_SECRET
 
 def verify_signature(payload: bytes, timestamp: str, sig: str) -> bool:
     """Verify webhook signature"""
@@ -524,10 +530,15 @@ def hcp_webhook():
             logger.info("✅ Ping test successful")
             return jsonify({"status": "success", "message": "Ping received"}), 200
         
-        # Verify signature
-        if not verify_signature(payload, timestamp, signature):
-            logger.warning(f"❌ Invalid webhook signature from {client_ip}")
-            return jsonify({"error": "Unauthorized"}), 200
+        # Check if this is a forwarded request from Servativ
+        is_forwarded = is_servativ_forwarded(request)
+        if is_forwarded:
+            logger.info(f"✅ Verified forwarded webhook from Servativ - Event: {data.get('event', 'unknown')}")
+        else:
+            # Verify signature for direct HCP webhooks
+            if not verify_signature(payload, timestamp, signature):
+                logger.warning(f"❌ Invalid webhook signature from {client_ip}")
+                return jsonify({"status": "success", "message": "Webhook received"}), 200
         
         event_type = data.get("event", "unknown")
         logger.info(f"✅ Verified webhook - Event: {event_type}")

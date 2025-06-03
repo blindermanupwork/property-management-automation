@@ -2,6 +2,7 @@ import { getHCPClient } from '../services/hcp.js';
 import { getAirtableClient } from '../services/airtable.js';
 import { logger } from '../utils/logger.js';
 import { validateCreateJobRequest } from '../validators/index.js';
+import fs from 'fs';
 
 // Arizona timezone helpers
 const AZ_TZ = "America/Phoenix";
@@ -129,17 +130,44 @@ export async function createJob(req, res) {
     // Copy template line items
     const templateItems = await hcp.getJobLineItems(templateId);
     
-    // Determine service name
+    // Determine service name - DEV ENVIRONMENT LOGIC
     let serviceName;
-    const customServiceLine = reservation.fields['Custom Service Line Description'];
     
-    if (customServiceLine?.trim()) {
-      serviceName = customServiceLine.trim();
-    } else if (sameDayTurnover) {
+    if (sameDayTurnover) {
       serviceName = `${serviceType} STR SAME DAY`;
+      console.log(`DEBUG: Using same day service name: "${serviceName}"`);
     } else {
-      // Find next reservation logic here...
+      // For now, just use fallback until we can debug the next guest logic
       serviceName = `${serviceType} STR Next Guest Unknown`;
+      console.log(`DEBUG: Using fallback service name: "${serviceName}"`);
+    }
+    
+    // Append custom instructions if present
+    const serviceLineCustomInstructions = reservation.fields['Service Line Custom Instructions'];
+    console.log(`DEBUG: Raw custom instructions value:`, serviceLineCustomInstructions);
+    console.log(`DEBUG: Custom instructions type:`, typeof serviceLineCustomInstructions);
+    console.log(`DEBUG: Custom instructions length:`, serviceLineCustomInstructions?.length);
+    
+    // Also write to a debug file
+    const debugInfo = `
+${new Date().toISOString()} - Record: ${recordId}
+Service Type: ${serviceType}
+Service Name (before custom): ${serviceName}
+Custom Instructions: "${serviceLineCustomInstructions}"
+Custom Instructions Type: ${typeof serviceLineCustomInstructions}
+Custom Instructions Length: ${serviceLineCustomInstructions?.length}
+Has Custom Instructions: ${serviceLineCustomInstructions?.trim() ? 'YES' : 'NO'}
+`;
+    fs.appendFileSync('/tmp/debug-service-names.log', debugInfo);
+    
+    if (serviceLineCustomInstructions?.trim()) {
+      const trimmedInstructions = serviceLineCustomInstructions.trim();
+      serviceName += ` - ${trimmedInstructions}`;
+      console.log(`DEBUG: Added custom instructions: "${trimmedInstructions}"`);
+      console.log(`DEBUG: Final service name with custom instructions: "${serviceName}"`);
+    } else {
+      console.log(`DEBUG: No custom instructions to add`);
+      console.log(`DEBUG: Final service name (no custom instructions): "${serviceName}"`);
     }
     
     // Update line items
@@ -193,7 +221,11 @@ export async function createJob(req, res) {
       success: true, 
       jobId,
       appointmentId,
-      message: `Job ${jobId} created successfully`
+      message: `Job ${jobId} created successfully`,
+      serviceName: serviceName,  // Add service name to response for debugging
+      employeeId: process.env.HCP_EMPLOYEE_ID,
+      scheduledTime: finalTime,
+      environment: process.env.NODE_ENV
     });
     
   } catch (error) {

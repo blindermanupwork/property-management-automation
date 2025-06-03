@@ -21,11 +21,19 @@ const reservationUID = record.getCellValue('Reservation UID');
 const serviceType = record.getCellValue('Service Type');
 const propertyLink = record.getCellValue('Property ID');
 const finalServiceTime = record.getCellValue('Final Service Time');
+const serviceLineCustomInstructions = record.getCellValue('Service Line Custom Instructions');
+const checkInDate = record.getCellValue('Check-in Date');
+const checkOutDate = record.getCellValue('Check-out Date');
+const sameDayTurnover = record.getCellValue('Same-day Turnover');
 
 output.text(`📋 Reservation: ${reservationUID || 'No UID'}`);
 output.text(`🔧 Service Type: ${serviceType ? serviceType.name : 'Not set'}`);
 output.text(`🏠 Property: ${propertyLink ? propertyLink[0].name : 'Not linked'}`);
 output.text(`⏰ Final Service Time: ${finalServiceTime || 'Not set'}`);
+output.text(`📅 Check-in: ${checkInDate || 'Not set'} | Check-out: ${checkOutDate || 'Not set'}`);
+output.text(`🔄 Same-day Turnover: ${sameDayTurnover ? 'YES' : 'NO'}`);
+output.text(`📝 Service Line Custom Instructions: "${serviceLineCustomInstructions || 'Not set'}"`);
+output.text(`📏 Instructions Length: ${serviceLineCustomInstructions ? serviceLineCustomInstructions.length : 0} characters`);
 
 try {
     output.text('🔄 Creating job in DEV environment...');
@@ -67,6 +75,15 @@ try {
             output.text(`📋 Appointment: ${result.appointmentId}`);
         }
         output.text(`🌍 Environment: ${result.environment || 'development'}`);
+        
+        // Debug: show what service name was used
+        if (result.serviceName) {
+            output.text(`🏷️ Service Name Used: "${result.serviceName}"`);
+        }
+        
+        // Show raw response for debugging
+        output.text(`\n🔍 Debug - Full Response:`);
+        output.text(JSON.stringify(result, null, 2));
     } else {
         output.text(`❌ Failed: ${result.error}`);
         if (result.details) {
