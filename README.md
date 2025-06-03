@@ -173,6 +173,10 @@ nano config/environments/prod/.env
 - HousecallPro integration for service scheduling
 - Automatic job creation and status updates
 - Environment-specific API endpoints
+- **NEW**: Service Line Custom Instructions support
+  - Appends custom instructions to job service names
+  - Automatic truncation to 200 characters for compatibility
+  - Full Unicode support (accents, special characters, emojis)
 
 ## 🔧 Configuration System
 
@@ -212,6 +216,26 @@ PROD_HCP_TOKEN=...
 - API key format validation (must start with 'pat', minimum 20 chars)
 - Base ID validation (must start with 'app', exactly 17 chars)
 - Empty credential detection with detailed error messages
+
+## 🔗 Webhook Integration
+
+### **HousecallPro Webhook Handler**
+- Secure webhook endpoint for real-time HCP events
+- Automatic job status synchronization with Airtable
+- **NEW**: Webhook forwarding support
+  - Accepts forwarded webhooks from Servativ's Java service
+  - Shared secret authentication (X-Internal-Auth header)
+  - Always returns 200 status to prevent webhook disabling
+  - Dual authentication: HCP signature or forwarding secret
+
+### **Webhook Configuration**
+```bash
+# Webhook endpoint
+https://servativ.themomentcatchers.com/webhooks/hcp
+
+# Forwarding authentication header
+X-Internal-Auth: sk_servativ_webhook_7f4d9b2e8a3c1f6d
+```
 
 ## 📊 Operations & Monitoring
 
