@@ -12,8 +12,8 @@ export const HCP_API = {
         BACKOFF_MULTIPLIER: 2
     },
     // Pagination
-    DEFAULT_PAGE_SIZE: 20,
-    MAX_PAGE_SIZE: 100,
+    DEFAULT_PAGE_SIZE: 100,
+    MAX_PAGE_SIZE: 200, // HCP API supports up to 200 (tested June 2025)
     // Job statuses
     JOB_STATUSES: [
         'unscheduled',
@@ -52,7 +52,34 @@ export const HCP_API = {
         'in_progress',
         'completed',
         'canceled'
+    ],
+    // Customer sort fields
+    CUSTOMER_SORT_FIELDS: [
+        'created_at',
+        'updated_at',
+        'first_name',
+        'last_name',
+        'email',
+        'company'
+    ],
+    // Sort directions
+    SORT_DIRECTIONS: [
+        'asc',
+        'desc'
     ]
+};
+export const CACHE_DEFAULTS = {
+    BASE_DIR: '/tmp/hcp-cache',
+    RETENTION_HOURS: 48,
+    MAX_SIZE_MB: 1000,
+    THRESHOLDS: {
+        JOBS: 10,
+        CUSTOMERS: 5,
+        LINE_ITEMS: 15,
+        CHARACTERS: 1500
+    },
+    ANALYSIS_CACHE_DIR: 'analysis',
+    FILE_PERMISSIONS: 0o600
 };
 export const MCP_TOOL_NAMES = {
     // Customer tools
@@ -91,7 +118,18 @@ export const MCP_TOOL_NAMES = {
     GET_APPOINTMENT: 'get_appointment',
     CREATE_APPOINTMENT: 'create_appointment',
     UPDATE_APPOINTMENT: 'update_appointment',
-    DELETE_APPOINTMENT: 'delete_appointment'
+    DELETE_APPOINTMENT: 'delete_appointment',
+    // Cache management tools
+    SEARCH_CACHE: 'search_hcp_cache',
+    LIST_CACHE: 'list_hcp_cache',
+    GET_CACHE_SUMMARY: 'get_cache_summary',
+    CLEANUP_CACHE: 'cleanup_hcp_cache',
+    // Advanced analysis tools
+    ANALYZE_LAUNDRY_JOBS: 'analyze_laundry_jobs',
+    ANALYZE_SERVICE_ITEMS: 'analyze_service_items',
+    ANALYZE_CUSTOMER_REVENUE: 'analyze_customer_revenue',
+    ANALYZE_JOB_STATISTICS: 'analyze_job_statistics',
+    ANALYZE_TOWEL_USAGE: 'analyze_towel_usage'
 };
 export const HTTP_METHODS = {
     GET: 'GET',

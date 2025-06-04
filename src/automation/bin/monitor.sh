@@ -84,10 +84,13 @@ check_disk_space() {
 check_csv_processing() {
     log_message "Checking CSV processing..."
     
-    # Check if there are stuck files in CSV_process
-    stuck_files=$(find "$SCRIPT_DIR/CSV_process" -name "*.csv" -mtime +1 2>/dev/null | wc -l)
-    if [ "$stuck_files" -gt 0 ]; then
-        send_alert "$stuck_files CSV files stuck in processing folder for over 24 hours"
+    # Check if there are stuck files in CSV processing directories
+    stuck_dev=$(find "$SCRIPT_DIR/CSV_process_development" -name "*.csv" -mtime +1 2>/dev/null | wc -l)
+    stuck_prod=$(find "$SCRIPT_DIR/CSV_process_production" -name "*.csv" -mtime +1 2>/dev/null | wc -l)
+    total_stuck=$((stuck_dev + stuck_prod))
+    
+    if [ "$total_stuck" -gt 0 ]; then
+        send_alert "$total_stuck CSV files stuck in processing folders for over 24 hours (dev: $stuck_dev, prod: $stuck_prod)"
         return 1
     fi
     

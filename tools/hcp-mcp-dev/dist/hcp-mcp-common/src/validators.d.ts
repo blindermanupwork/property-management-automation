@@ -17,12 +17,15 @@ export declare function validateJobStatus(status: string): string;
 export declare function validateEmployeeRole(role: string): string;
 export declare function validateLineItemKind(kind: string): string;
 export declare function validateAppointmentStatus(status: string): string;
+export declare function validateSortDirection(direction: string): string;
+export declare function validateCustomerSortField(field: string): string;
 export declare function validatePaginationParams(params: {
     page?: number;
     per_page?: number;
+    page_size?: number;
 }): {
     page: number;
-    per_page: number;
+    page_size: number;
 };
 export declare function validateDateRange(params: {
     start_date?: string;

@@ -6,3 +6,5 @@
 export * from './types.js';
 export * from './constants.js';
 export * from './validators.js';
+export { CacheService } from './cacheService.js';
+export { AnalysisService } from './analysisService.js';

@@ -40,6 +40,18 @@ const config = {
     rateLimit: {
         requestsPerMinute: parseInt(process.env.DEV_HCP_RATE_LIMIT || '60'),
         retryAfterMs: parseInt(process.env.DEV_HCP_RETRY_AFTER_MS || '1000')
+    },
+    cache: {
+        enabled: false, // Disable caching for tests
+        baseDir: '/tmp/cache',
+        retentionHours: 24,
+        maxSizeMB: 100,
+        thresholds: {
+            jobs: 50,
+            customers: 50,
+            lineItems: 50,
+            characters: 50000
+        }
     }
 };
 console.log('✅ Configuration loaded');
@@ -87,7 +99,10 @@ async function runAllTests() {
     // Test 3: List Employees
     await runTest('List Employees', async () => {
         const result = await hcpService.listEmployees({ page: 1, page_size: 5 });
-        if (!result || !Array.isArray(result.data)) {
+        if (!result || typeof result !== 'object') {
+            throw new Error('Invalid employees response format');
+        }
+        if (!('data' in result) || !Array.isArray(result.data)) {
             throw new Error('Invalid employees response');
         }
         console.log(`   Found ${result.data.length} employees`);
@@ -95,7 +110,10 @@ async function runAllTests() {
     // Test 4: List Jobs
     await runTest('List Jobs', async () => {
         const result = await hcpService.listJobs({ page: 1, page_size: 5 });
-        if (!result || !Array.isArray(result.data)) {
+        if (!result || typeof result !== 'object') {
+            throw new Error('Invalid jobs response format');
+        }
+        if (!('data' in result) || !Array.isArray(result.data)) {
             throw new Error('Invalid jobs response');
         }
         console.log(`   Found ${result.data.length} jobs`);
@@ -103,7 +121,10 @@ async function runAllTests() {
     // Test 5: List Job Types
     await runTest('List Job Types', async () => {
         const result = await hcpService.listJobTypes({ page: 1, page_size: 5 });
-        if (!result || !Array.isArray(result.data)) {
+        if (!result || typeof result !== 'object') {
+            throw new Error('Invalid job types response format');
+        }
+        if (!('data' in result) || !Array.isArray(result.data)) {
             throw new Error('Invalid job types response');
         }
         console.log(`   Found ${result.data.length} job types`);
@@ -152,7 +173,7 @@ async function runAllTests() {
     // Test 9: Get Specific Customer (if any exist)
     await runTest('Get First Customer (if available)', async () => {
         const customersResult = await hcpService.listCustomers({ page: 1, page_size: 1 });
-        if (customersResult.data.length === 0) {
+        if (!customersResult.data || customersResult.data.length === 0) {
             console.log('   ⏭️ Skipping - no customers found');
             testResults[testResults.length - 1].status = 'skip';
             return;

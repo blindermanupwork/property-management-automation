@@ -5,18 +5,24 @@
 import fetch from 'node-fetch';
 import { RateLimiter } from './rateLimiter.js';
 import { HCPError } from '../../hcp-mcp-common/src/index.js';
+import { CacheService } from '../../hcp-mcp-common/src/cacheService.js';
+import { AnalysisService } from '../../hcp-mcp-common/src/analysisService.js';
 export class HCPService {
     apiKey;
     baseUrl;
     environment;
     rateLimiter;
+    cacheService;
+    analysisService;
     constructor(config) {
         this.apiKey = config.apiKey;
         this.baseUrl = config.baseUrl;
         this.environment = config.environment;
         this.rateLimiter = new RateLimiter(config.rateLimit?.requestsPerMinute || 60);
+        this.cacheService = new CacheService(config.cache);
+        this.analysisService = new AnalysisService(config.environment);
     }
-    async makeRequest(path, method = 'GET', body, retries = 3) {
+    async makeRequest(path, method = 'GET', body, retries = 3, operationName) {
         return this.rateLimiter.execute(async () => {
             for (let attempt = 0; attempt < retries; attempt++) {
                 try {
@@ -27,7 +33,8 @@ export class HCPService {
                         'Accept': 'application/json',
                         'User-Agent': `HCP-MCP-${this.environment}/1.0.0`
                     };
-                    console.log(`[${this.environment}] ${method} ${path}`);
+                    console.log(`[${this.environment}] ${method} ${url}`);
+                    console.log(`[${this.environment}] Full URL: ${url}`);
                     const response = await fetch(url, {
                         method,
                         headers,
@@ -45,7 +52,21 @@ export class HCPService {
                         return {};
                     }
                     try {
-                        return JSON.parse(responseText);
+                        const data = JSON.parse(responseText);
+                        // Check if response should be cached (only for GET requests)
+                        if (method === 'GET' && operationName && this.cacheService.shouldCache(data, operationName)) {
+                            try {
+                                const cachedResponse = await this.cacheService.cacheResponse(data, operationName, this.environment, { path, method });
+                                console.log(`[${this.environment}] Cached large response: ${this.cacheService.getSummary(data, operationName)}`);
+                                return cachedResponse;
+                            }
+                            catch (cacheError) {
+                                console.warn(`[${this.environment}] Cache write failed:`, cacheError);
+                                // Continue with normal response if caching fails
+                                return data;
+                            }
+                        }
+                        return data;
                     }
                     catch (parseError) {
                         throw new HCPError(`Failed to parse response: ${parseError}`, 500);
@@ -77,8 +98,14 @@ export class HCPService {
             searchParams.set('page', params.page.toString());
         if (params.page_size)
             searchParams.set('page_size', params.page_size.toString());
+        if (params.q)
+            searchParams.set('q', params.q);
         if (params.search)
             searchParams.set('search', params.search);
+        if (params.sort_by)
+            searchParams.set('sort_by', params.sort_by);
+        if (params.sort_direction)
+            searchParams.set('sort_direction', params.sort_direction);
         if (params.created_after)
             searchParams.set('created_after', params.created_after);
         if (params.created_before)
@@ -87,10 +114,10 @@ export class HCPService {
             searchParams.set('tags', params.tags.join(','));
         const query = searchParams.toString();
         const path = `/customers${query ? `?${query}` : ''}`;
-        return this.makeRequest(path);
+        return this.makeRequest(path, 'GET', undefined, 3, 'list_customers');
     }
     async getCustomer(id) {
-        return this.makeRequest(`/customers/${id}`);
+        return this.makeRequest(`/customers/${id}`, 'GET', undefined, 3, 'get_customer');
     }
     async createCustomer(data) {
         return this.makeRequest('/customers', 'POST', data);
@@ -109,7 +136,7 @@ export class HCPService {
             searchParams.set('page_size', params.page_size.toString());
         const query = searchParams.toString();
         const path = `/customers/${id}/jobs${query ? `?${query}` : ''}`;
-        return this.makeRequest(path);
+        return this.makeRequest(path, 'GET', undefined, 3, 'get_customer_jobs');
     }
     // Employee methods
     async listEmployees(params = {}) {
@@ -124,10 +151,10 @@ export class HCPService {
             searchParams.set('role', params.role);
         const query = searchParams.toString();
         const path = `/employees${query ? `?${query}` : ''}`;
-        return this.makeRequest(path);
+        return this.makeRequest(path, 'GET', undefined, 3, 'list_employees');
     }
     async getEmployee(id) {
-        return this.makeRequest(`/employees/${id}`);
+        return this.makeRequest(`/employees/${id}`, 'GET', undefined, 3, 'get_employee');
     }
     async createEmployee(data) {
         return this.makeRequest('/employees', 'POST', data);
@@ -143,7 +170,7 @@ export class HCPService {
             searchParams.set('end_date', endDate);
         const query = searchParams.toString();
         const path = `/employees/${id}/schedule${query ? `?${query}` : ''}`;
-        return this.makeRequest(path);
+        return this.makeRequest(path, 'GET', undefined, 3, 'get_employee_schedule');
     }
     // Job methods
     async listJobs(params = {}) {
@@ -166,10 +193,10 @@ export class HCPService {
             searchParams.set('job_type_id', params.job_type_id);
         const query = searchParams.toString();
         const path = `/jobs${query ? `?${query}` : ''}`;
-        return this.makeRequest(path);
+        return this.makeRequest(path, 'GET', undefined, 3, 'list_jobs');
     }
     async getJob(id) {
-        return this.makeRequest(`/jobs/${id}`);
+        return this.makeRequest(`/jobs/${id}`, 'GET', undefined, 3, 'get_job');
     }
     async createJob(data) {
         return this.makeRequest('/jobs', 'POST', data);
@@ -184,7 +211,11 @@ export class HCPService {
         return this.makeRequest(`/jobs/${id}/reschedule`, 'POST', { schedule });
     }
     async getJobLineItems(id) {
-        const response = await this.makeRequest(`/jobs/${id}/line_items`);
+        const response = await this.makeRequest(`/jobs/${id}/line_items`, 'GET', undefined, 3, 'get_job_line_items');
+        // Handle cached responses
+        if ('_cached' in response) {
+            return response;
+        }
         return response.data || [];
     }
     async updateJobLineItems(id, lineItems) {
@@ -194,7 +225,7 @@ export class HCPService {
         return this.makeRequest(`/jobs/${jobId}/line_items`, 'POST', lineItem);
     }
     async getJobLineItem(jobId, lineItemId) {
-        return this.makeRequest(`/jobs/${jobId}/line_items/${lineItemId}`);
+        return this.makeRequest(`/jobs/${jobId}/line_items/${lineItemId}`, 'GET', undefined, 3, 'get_job_line_item');
     }
     async updateJobLineItem(jobId, lineItemId, lineItem) {
         return this.makeRequest(`/jobs/${jobId}/line_items/${lineItemId}`, 'PUT', lineItem);
@@ -213,10 +244,10 @@ export class HCPService {
             searchParams.set('is_active', params.is_active.toString());
         const query = searchParams.toString();
         const path = `/job_types${query ? `?${query}` : ''}`;
-        return this.makeRequest(path);
+        return this.makeRequest(path, 'GET', undefined, 3, 'list_job_types');
     }
     async getJobType(id) {
-        return this.makeRequest(`/job_types/${id}`);
+        return this.makeRequest(`/job_types/${id}`, 'GET', undefined, 3, 'get_job_type');
     }
     async createJobType(data) {
         return this.makeRequest('/job_types', 'POST', data);
@@ -241,18 +272,26 @@ export class HCPService {
         if (params.job_id) {
             // Use job-specific endpoint
             const path = `/jobs/${params.job_id}/appointments${query ? `?${query}` : ''}`;
-            const response = await this.makeRequest(path);
+            const response = await this.makeRequest(path, 'GET', undefined, 3, 'list_appointments');
+            // Handle cached responses
+            if ('_cached' in response) {
+                return response;
+            }
             return response.appointments || [];
         }
         else {
             // Use general appointments endpoint
             const path = `/appointments${query ? `?${query}` : ''}`;
-            const response = await this.makeRequest(path);
+            const response = await this.makeRequest(path, 'GET', undefined, 3, 'list_appointments');
+            // Handle cached responses
+            if ('_cached' in response) {
+                return response;
+            }
             return response.data || [];
         }
     }
     async getAppointment(id) {
-        return this.makeRequest(`/appointments/${id}`);
+        return this.makeRequest(`/appointments/${id}`, 'GET', undefined, 3, 'get_appointment');
     }
     async createAppointment(data) {
         return this.makeRequest('/appointments', 'POST', data);
@@ -263,12 +302,45 @@ export class HCPService {
     async deleteAppointment(id) {
         return this.makeRequest(`/appointments/${id}`, 'DELETE');
     }
+    // Cache management methods
+    async searchCache(filePath, searchTerm, fieldPath) {
+        return this.cacheService.searchCache(filePath, searchTerm, fieldPath);
+    }
+    async listCacheFiles(operation) {
+        return this.cacheService.listCacheFiles(this.environment, operation);
+    }
+    async cleanupCache() {
+        return this.cacheService.cleanup(this.environment);
+    }
+    getCacheSummary(data, operation) {
+        return this.cacheService.getSummary(data, operation);
+    }
+    // Analysis methods
+    async analyzeLaundryJobs() {
+        return this.analysisService.analyzeLaundryJobs();
+    }
+    async analyzeServiceItems(itemPattern) {
+        return this.analysisService.analyzeServiceItems(itemPattern);
+    }
+    async analyzeCustomerRevenue(customerId) {
+        return this.analysisService.analyzeCustomerRevenue(customerId);
+    }
+    async analyzeJobStatistics() {
+        return this.analysisService.analyzeJobStatistics();
+    }
+    async generateAnalysisReport() {
+        return this.analysisService.generateAnalysisReport();
+    }
     // Utility methods
     getStatus() {
         return {
             environment: this.environment,
             baseUrl: this.baseUrl,
-            rateLimiter: this.rateLimiter.getStatus()
+            rateLimiter: this.rateLimiter.getStatus(),
+            cache: {
+                enabled: true,
+                environment: this.environment
+            }
         };
     }
 }

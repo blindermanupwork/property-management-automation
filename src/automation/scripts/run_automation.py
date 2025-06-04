@@ -26,13 +26,12 @@ def run_gmail_automation(config):
         print("📧 Running Gmail downloader...")
         result = subprocess.run([
             sys.executable, str(gmail_script.absolute()), "--force"
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, 
-        cwd=str(gmail_script.parent.absolute()))
+        ], cwd=str(gmail_script.parent.absolute()))
         
         if result.returncode == 0:
             return {"success": True, "message": "Gmail download completed successfully"}
         else:
-            return {"success": False, "message": f"Gmail download failed: {result.stderr}"}
+            return {"success": False, "message": "Gmail download failed"}
             
     except Exception as e:
         return {"success": False, "message": f"Gmail error: {str(e)}"}
@@ -56,13 +55,12 @@ def run_evolve_automation(config):
         
         result = subprocess.run([
             sys.executable, str(evolve_script.absolute()), "--headless"
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, 
-        cwd=str(evolve_script.parent.absolute()), env=env)
+        ], cwd=str(evolve_script.parent.absolute()), env=env)
         
         if result.returncode == 0:
             return {"success": True, "message": "Evolve scraping completed successfully"}
         else:
-            return {"success": False, "message": f"Evolve scraping failed: {result.stderr}"}
+            return {"success": False, "message": "Evolve scraping failed"}
             
     except Exception as e:
         return {"success": False, "message": f"Evolve error: {str(e)}"}
@@ -86,13 +84,12 @@ def run_csv_automation(config):
         
         result = subprocess.run([
             sys.executable, str(csv_script.absolute())
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, 
-        cwd=str(csv_script.parent.absolute()), env=env)
+        ], cwd=str(csv_script.parent.absolute()), env=env)
         
         if result.returncode == 0:
             return {"success": True, "message": "CSV processing to Airtable completed successfully"}
         else:
-            return {"success": False, "message": f"CSV processing failed: {result.stderr}"}
+            return {"success": False, "message": "CSV processing failed"}
             
     except Exception as e:
         return {"success": False, "message": f"CSV processing error: {str(e)}"}
@@ -116,13 +113,12 @@ def run_ics_automation(config):
         
         result = subprocess.run([
             sys.executable, str(ics_script.absolute())
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, 
-        cwd=str(ics_script.parent.absolute()), env=env)
+        ], cwd=str(ics_script.parent.absolute()), env=env)
         
         if result.returncode == 0:
             return {"success": True, "message": "ICS calendar sync completed successfully"}
         else:
-            return {"success": False, "message": f"ICS sync failed: {result.stderr}"}
+            return {"success": False, "message": "ICS sync failed"}
             
     except Exception as e:
         return {"success": False, "message": f"ICS sync error: {str(e)}"}

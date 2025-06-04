@@ -68,7 +68,10 @@ export interface UpdateCustomerData extends Partial<CreateCustomerData> {}
 export interface ListCustomersParams {
   page?: number;
   page_size?: number;
+  q?: string;
   search?: string;
+  sort_by?: string;
+  sort_direction?: 'asc' | 'desc';
   created_after?: string;
   created_before?: string;
   tags?: string[];
@@ -245,6 +248,42 @@ export interface ListAppointmentsParams {
   status?: string;
 }
 
+// Cache types
+export interface CacheConfig {
+  enabled: boolean;
+  baseDir: string;
+  retentionHours: number;
+  maxSizeMB: number;
+  thresholds: {
+    jobs: number;
+    customers: number;
+    lineItems: number;
+    characters: number;
+  };
+}
+
+export interface CacheMetadata {
+  timestamp: string;
+  operation: string;
+  environment: 'dev' | 'prod';
+  queryParams?: any;
+  recordCount: number;
+  sizeBytes: number;
+  filePath: string;
+}
+
+export interface CachedResponse<T> {
+  _cached: true;
+  _filePath: string;
+  _metadata: CacheMetadata;
+  _summary: {
+    count: number;
+    operation: string;
+    timestamp: string;
+  };
+  data?: T; // Optional - only include if small enough
+}
+
 // Configuration types
 export interface HCPConfig {
   apiKey: string;
@@ -255,6 +294,7 @@ export interface HCPConfig {
     requestsPerMinute: number;
     retryAfterMs: number;
   };
+  cache?: CacheConfig;
 }
 
 // Error types

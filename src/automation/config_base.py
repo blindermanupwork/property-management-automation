@@ -101,8 +101,8 @@ class ConfigBase:
         return self.get_script_path(f'CSV_done_{self.environment}')
         
     def get_itripcsv_downloads_dir(self) -> Path:
-        """Get iTrip CSV downloads directory"""
-        return self.get_script_path('CSV_process')
+        """Get iTrip CSV downloads directory (environment-specific)"""
+        return self.csv_process_dir
         
     def get_csv_process_dir(self) -> Path:
         """Get CSV processing directory (legacy compatibility method)"""

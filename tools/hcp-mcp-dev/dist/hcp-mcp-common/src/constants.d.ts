@@ -18,6 +18,21 @@ export declare const HCP_API: {
     ADDRESS_TYPES: readonly ["service", "billing"];
     CONTACT_TYPES: readonly ["phone", "email", "other"];
     APPOINTMENT_STATUSES: readonly ["scheduled", "in_progress", "completed", "canceled"];
+    CUSTOMER_SORT_FIELDS: readonly ["created_at", "updated_at", "first_name", "last_name", "email", "company"];
+    SORT_DIRECTIONS: readonly ["asc", "desc"];
+};
+export declare const CACHE_DEFAULTS: {
+    readonly BASE_DIR: "/tmp/hcp-cache";
+    readonly RETENTION_HOURS: 48;
+    readonly MAX_SIZE_MB: 1000;
+    readonly THRESHOLDS: {
+        readonly JOBS: 10;
+        readonly CUSTOMERS: 5;
+        readonly LINE_ITEMS: 15;
+        readonly CHARACTERS: 1500;
+    };
+    readonly ANALYSIS_CACHE_DIR: "analysis";
+    readonly FILE_PERMISSIONS: 384;
 };
 export declare const MCP_TOOL_NAMES: {
     readonly LIST_CUSTOMERS: "list_customers";
@@ -52,6 +67,15 @@ export declare const MCP_TOOL_NAMES: {
     readonly CREATE_APPOINTMENT: "create_appointment";
     readonly UPDATE_APPOINTMENT: "update_appointment";
     readonly DELETE_APPOINTMENT: "delete_appointment";
+    readonly SEARCH_CACHE: "search_hcp_cache";
+    readonly LIST_CACHE: "list_hcp_cache";
+    readonly GET_CACHE_SUMMARY: "get_cache_summary";
+    readonly CLEANUP_CACHE: "cleanup_hcp_cache";
+    readonly ANALYZE_LAUNDRY_JOBS: "analyze_laundry_jobs";
+    readonly ANALYZE_SERVICE_ITEMS: "analyze_service_items";
+    readonly ANALYZE_CUSTOMER_REVENUE: "analyze_customer_revenue";
+    readonly ANALYZE_JOB_STATISTICS: "analyze_job_statistics";
+    readonly ANALYZE_TOWEL_USAGE: "analyze_towel_usage";
 };
 export declare const HTTP_METHODS: {
     readonly GET: "GET";

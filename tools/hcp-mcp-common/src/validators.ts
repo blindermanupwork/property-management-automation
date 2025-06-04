@@ -116,19 +116,35 @@ export function validateAppointmentStatus(status: string): string {
   return validateEnum(status, HCP_API.APPOINTMENT_STATUSES, 'status');
 }
 
+export function validateSortDirection(direction: string): string {
+  return validateEnum(direction, HCP_API.SORT_DIRECTIONS, 'sort_direction');
+}
+
+export function validateCustomerSortField(field: string): string {
+  return validateEnum(field, HCP_API.CUSTOMER_SORT_FIELDS, 'sort_by');
+}
+
 // Pagination validators
-export function validatePaginationParams(params: { page?: number; per_page?: number }) {
-  const result: { page: number; per_page: number } = {
+export function validatePaginationParams(params: { page?: number; per_page?: number; page_size?: number }) {
+  const result: { page: number; page_size: number } = {
     page: 1,
-    per_page: HCP_API.DEFAULT_PAGE_SIZE
+    page_size: HCP_API.DEFAULT_PAGE_SIZE
   };
 
   if (params.page !== undefined) {
     result.page = validateNumber(params.page, 'page', 1);
   }
 
-  if (params.per_page !== undefined) {
-    result.per_page = validateNumber(
+  // Support both per_page and page_size parameters
+  if (params.page_size !== undefined) {
+    result.page_size = validateNumber(
+      params.page_size, 
+      'page_size', 
+      1, 
+      HCP_API.MAX_PAGE_SIZE
+    );
+  } else if (params.per_page !== undefined) {
+    result.page_size = validateNumber(
       params.per_page, 
       'per_page', 
       1, 
