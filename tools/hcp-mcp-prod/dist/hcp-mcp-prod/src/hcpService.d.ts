@@ -48,6 +48,21 @@ export declare class HCPService {
     createAppointment(data: CreateAppointmentData): Promise<HCPAppointment>;
     updateAppointment(id: string, data: UpdateAppointmentData): Promise<HCPAppointment>;
     deleteAppointment(id: string): Promise<void>;
+    searchAddresses(params: {
+        street?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+        customer_name?: string;
+        customer_id?: string;
+    }): Promise<any[]>;
+    getJobsByAddress(addressId: string, params?: {
+        work_status?: string;
+        scheduled_start_min?: string;
+        scheduled_start_max?: string;
+    }): Promise<any[]>;
+    private createDetailedError;
+    private matchesAddressFilter;
     searchCache(filePath: string, searchTerm: string, fieldPath?: string): Promise<any[]>;
     listCacheFiles(operation?: string): Promise<any[]>;
     cleanupCache(): Promise<number>;

@@ -151,6 +151,12 @@ export class HCPMCPServer {
           case this.toolName(MCP_TOOL_NAMES.CLEANUP_CACHE):
             return await this.handleCleanupCache(args);
 
+          // New search tools
+          case this.toolName(MCP_TOOL_NAMES.SEARCH_ADDRESSES):
+            return await this.handleSearchAddresses(args);
+          case this.toolName(MCP_TOOL_NAMES.GET_JOBS_BY_ADDRESS):
+            return await this.handleGetJobsByAddress(args);
+
           // Analysis tools
           case this.toolName(MCP_TOOL_NAMES.ANALYZE_LAUNDRY_JOBS):
             return await this.handleAnalyzeLaundryJobs(args);
@@ -816,6 +822,58 @@ export class HCPMCPServer {
         {
           type: 'text',
           text: `Appointment ${appointmentId} deleted successfully`
+        }
+      ]
+    };
+  }
+
+  // New search tool handlers
+  private async handleSearchAddresses(args: any) {
+    const params: any = {};
+    
+    if (args.street) params.street = validateString(args.street, 'street');
+    if (args.city) params.city = validateString(args.city, 'city');
+    if (args.state) params.state = validateString(args.state, 'state');
+    if (args.zip) params.zip = validateString(args.zip, 'zip');
+    if (args.customer_name) params.customer_name = validateString(args.customer_name, 'customer_name');
+    if (args.customer_id) params.customer_id = validateHCPId(args.customer_id, 'customer');
+
+    const results = await this.hcpService.searchAddresses(params);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            search_params: params,
+            results_count: results.length,
+            results: results
+          }, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleGetJobsByAddress(args: any) {
+    const addressId = validateHCPId(args.address_id, 'address');
+    const params: any = {};
+    
+    if (args.work_status) params.work_status = validateJobStatus(args.work_status);
+    if (args.scheduled_start_min) params.scheduled_start_min = validateDate(args.scheduled_start_min, 'scheduled_start_min');
+    if (args.scheduled_start_max) params.scheduled_start_max = validateDate(args.scheduled_start_max, 'scheduled_start_max');
+
+    const results = await this.hcpService.getJobsByAddress(addressId, params);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            address_id: addressId,
+            search_params: params,
+            results_count: results.length,
+            results: results
+          }, null, 2)
         }
       ]
     };
@@ -1490,6 +1548,41 @@ export class HCPMCPServer {
             appointment_id: { type: 'string', description: 'Appointment ID' }
           },
           required: ['appointment_id']
+        }
+      },
+
+      // New search tools
+      {
+        name: this.toolName(MCP_TOOL_NAMES.SEARCH_ADDRESSES),
+        description: 'Search for addresses across all customers with flexible filtering',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            street: { type: 'string', description: 'Street address to search for (partial match)' },
+            city: { type: 'string', description: 'City to search for (partial match)' },
+            state: { type: 'string', description: 'State to search for (partial match)' },
+            zip: { type: 'string', description: 'ZIP code to search for (partial match)' },
+            customer_name: { type: 'string', description: 'Customer name to filter by' },
+            customer_id: { type: 'string', description: 'Specific customer ID to search within' }
+          }
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.GET_JOBS_BY_ADDRESS),
+        description: 'Find all jobs associated with a specific address',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            address_id: { type: 'string', description: 'Address ID to find jobs for' },
+            work_status: { 
+              type: 'string', 
+              enum: ['unscheduled', 'scheduled', 'in_progress', 'completed', 'canceled'],
+              description: 'Filter by work status'
+            },
+            scheduled_start_min: { type: 'string', description: 'Minimum scheduled start (ISO 8601)' },
+            scheduled_start_max: { type: 'string', description: 'Maximum scheduled start (ISO 8601)' }
+          },
+          required: ['address_id']
         }
       },
 

@@ -83,6 +83,25 @@ export class HCPService {
           const responseText = await response.text();
           
           if (!response.ok) {
+            // Enhanced error handling with specific types
+            let errorType = 'APIError';
+            let suggestion = 'Check your request parameters and try again';
+            let context = `${method} request to ${path}`;
+            
+            if (response.status === 404) {
+              if (path.includes('/customers/') && path.includes('/jobs')) {
+                errorType = 'CustomerHasNoJobs';
+                suggestion = 'Use list_jobs with customer_id filter instead of get_customer_jobs';
+                context = `Customer exists but may have no jobs`;
+              } else if (path.includes('/customers/')) {
+                errorType = 'CustomerNotFound';
+                suggestion = 'Verify the customer ID is correct';
+              }
+            } else if (response.status === 401 || response.status === 403) {
+              errorType = 'InvalidPermissions';
+              suggestion = 'Check your API key has the required permissions';
+            }
+
             const error = new HCPError(
               `API request failed: ${response.status} ${response.statusText}`,
               response.status,
@@ -90,7 +109,10 @@ export class HCPService {
               responseText
             );
 
-            // Add headers to error for rate limit handling
+            // Add enhanced error details
+            (error as any).type = errorType;
+            (error as any).context = context;
+            (error as any).suggestion = suggestion;
             (error as any).headers = Object.fromEntries(response.headers.entries());
 
             throw error;
@@ -381,6 +403,181 @@ export class HCPService {
 
   async deleteAppointment(id: string): Promise<void> {
     return this.makeRequest<void>(`/appointments/${id}`, 'DELETE') as Promise<void>;
+  }
+
+  // Enhanced search methods
+  async searchAddresses(params: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    customer_name?: string;
+    customer_id?: string;
+  }): Promise<any[]> {
+    try {
+      // If customer_id is provided, get that customer's addresses directly
+      if (params.customer_id) {
+        const customer = await this.getCustomer(params.customer_id);
+        
+        // Handle cached response
+        let customerData;
+        if ('_cached' in customer) {
+          // Read from cache file
+          const cacheContent = await this.cacheService.searchCache(customer._filePath, '', '');
+          customerData = cacheContent[0] || {};
+        } else {
+          customerData = customer;
+        }
+        
+        if (customerData.addresses) {
+          return customerData.addresses
+            .filter((addr: any) => this.matchesAddressFilter(addr, params))
+            .map((addr: any) => ({
+              address: addr,
+              customer: {
+                id: customerData.id,
+                first_name: customerData.first_name,
+                last_name: customerData.last_name,
+                company: customerData.company
+              }
+            }));
+        }
+        return [];
+      }
+      
+      // Otherwise, search through all customers
+      const results: any[] = [];
+      let page = 1;
+      const pageSize = 100;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const customersResponse = await this.listCustomers({ 
+          page, 
+          page_size: pageSize,
+          q: params.customer_name // Use name filter if provided
+        });
+        
+        let customers: any[] = [];
+        if ('_cached' in customersResponse) {
+          // For cached responses, need to search the cache
+          const cacheResults = await this.cacheService.searchCache(customersResponse._filePath, '', '');
+          customers = cacheResults;
+        } else {
+          customers = customersResponse.data || [];
+        }
+        
+        // Filter customers' addresses
+        for (const customer of customers) {
+          if (customer.addresses) {
+            const matchingAddresses = customer.addresses
+              .filter((addr: any) => this.matchesAddressFilter(addr, params))
+              .map((addr: any) => ({
+                address: addr,
+                customer: {
+                  id: customer.id,
+                  first_name: customer.first_name,
+                  last_name: customer.last_name,
+                  company: customer.company
+                }
+              }));
+            
+            results.push(...matchingAddresses);
+          }
+        }
+        
+        // Check if we have more pages (only for non-cached responses)
+        if ('_cached' in customersResponse) {
+          hasMore = false; // Cached responses include all data
+        } else {
+          hasMore = customers.length === pageSize;
+          page++;
+        }
+      }
+      
+      return results;
+    } catch (error: any) {
+      throw this.createDetailedError('APIError', `Address search failed: ${error.message}`, 
+        'Error occurred while searching addresses', 'Try with more specific search criteria');
+    }
+  }
+
+  async getJobsByAddress(addressId: string, params: {
+    work_status?: string;
+    scheduled_start_min?: string;
+    scheduled_start_max?: string;
+  } = {}): Promise<any[]> {
+    try {
+      const jobParams = {
+        ...params,
+        address_id: addressId,
+        page_size: 200 // Get max results
+      };
+      
+      // Remove address_id from params since it's not a valid filter for list_jobs
+      const { address_id, ...listJobsParams } = jobParams;
+      
+      // We need to search through jobs to find ones matching the address
+      const results: any[] = [];
+      let page = 1;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const jobsResponse = await this.listJobs({ 
+          ...listJobsParams,
+          page,
+          page_size: 100
+        });
+        
+        let jobs: any[] = [];
+        if ('_cached' in jobsResponse) {
+          const cacheResults = await this.cacheService.searchCache(jobsResponse._filePath, addressId, 'address_id');
+          jobs = cacheResults;
+        } else {
+          jobs = (jobsResponse.data || []).filter((job: any) => job.address_id === addressId);
+        }
+        
+        results.push(...jobs);
+        
+        // Check if we have more pages
+        if ('_cached' in jobsResponse) {
+          hasMore = false;
+        } else {
+          hasMore = (jobsResponse.data || []).length === 100;
+          page++;
+        }
+      }
+      
+      return results;
+    } catch (error: any) {
+      throw this.createDetailedError('APIError', `Jobs by address search failed: ${error.message}`,
+        `Failed to find jobs for address ${addressId}`, 'Verify the address ID exists and try again');
+    }
+  }
+
+  // Helper methods for enhanced error handling
+  private createDetailedError(type: string, message: string, context?: string, suggestion?: string): Error {
+    const error = new Error(message);
+    (error as any).type = type;
+    (error as any).context = context;
+    (error as any).suggestion = suggestion;
+    return error;
+  }
+
+  private matchesAddressFilter(address: any, params: any): boolean {
+    if (params.street && !address.street?.toLowerCase().includes(params.street.toLowerCase())) {
+      return false;
+    }
+    if (params.city && !address.city?.toLowerCase().includes(params.city.toLowerCase())) {
+      return false;
+    }
+    if (params.state && !address.state?.toLowerCase().includes(params.state.toLowerCase())) {
+      return false;
+    }
+    if (params.zip && !address.zip?.includes(params.zip)) {
+      return false;
+    }
+    return true;
   }
 
   // Cache management methods

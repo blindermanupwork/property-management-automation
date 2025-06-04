@@ -43,6 +43,8 @@ export declare class HCPMCPServer {
     private handleCreateAppointment;
     private handleUpdateAppointment;
     private handleDeleteAppointment;
+    private handleSearchAddresses;
+    private handleGetJobsByAddress;
     private handleSearchCache;
     private handleListCache;
     private handleGetCacheSummary;
