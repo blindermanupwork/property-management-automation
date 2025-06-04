@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.0.0** - Complete Environment Separation & Enterprise Security
+**Version 2.2.0** - Environment Separation, ICS Processor Fixes & Automation Improvements
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -46,7 +46,7 @@ This system provides complete isolation between development and production:
 | **CSV Directories** | `CSV_*_development/` | `CSV_*_production/` |
 | **Log Files** | `automation_dev*.log` | `automation_prod*.log` |
 | **API Endpoints** | `/api/dev/*` | `/api/prod/*` |
-| **Cron Schedule** | Every 30 minutes | Every 4 hours |
+| **Cron Schedule** | Every 4 hours (:10 past) | Every 4 hours (:00) |
 
 ### **Security Features**
 - 🔒 **Credential Protection**: Environment-specific .env files with secure permissions
@@ -60,7 +60,7 @@ This system provides complete isolation between development and production:
 automation/                                 # Project root
 ├── 📄 Core System Files
 │   ├── README.md                           # This comprehensive guide
-│   ├── VERSION                             # Current version (2.0.0)
+│   ├── VERSION                             # Current version (2.2.0)
 │   ├── CHANGELOG.md                        # Version history
 │   ├── setup.py                           # Package installation config
 │   ├── requirements.txt                   # Python dependencies
