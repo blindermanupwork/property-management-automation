@@ -32,11 +32,13 @@ class DevConfig(ConfigBase):
         """
         table_mappings = {
             'reservations': 'Reservations',
-            'automation_control': 'Automation Control',
+            'automation_control': 'Automation',
             'calendars': 'Calendars',
             'properties': 'Properties',
             'owners': 'Owners',
-            'api_logs': 'API Logs'
+            'api_logs': 'API Logs',
+            'ics_feeds': 'ICS Feeds',
+            'ics_cron': 'ICS Cron'
         }
         return table_mappings.get(table_type, table_type)
         

@@ -97,7 +97,7 @@ class AutomationController:
             
             update_data = {
                 "fields": {
-                    'Last Ran': run_time,
+                    'Last Ran Time': run_time,
                     'Sync Details': sync_details
                 }
             }

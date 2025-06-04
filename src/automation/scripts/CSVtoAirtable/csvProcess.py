@@ -400,7 +400,7 @@ def parse_row(row, hdr_map):
         "dtend": dtend_display,
         "property_name": prop_name,
         "property_address": property_address,  # Store the address
-        "contractor_info": contractor_info,  # Store contractor info for iTrip Info field
+        "contractor_info": contractor_info,  # Store contractor info for iTrip Report Info field
         "entry_type": entry_type,
         "service_type": service_type,
         "block_type": block_type,
@@ -554,8 +554,8 @@ def build_property_lookup(properties_table):
     property_lookup = {}
     id_to_name = {}  # Will store all property IDs to names for reporting
     
-    for rec in properties_table.all(fields=[Config.get_env("PROPERTIES_NAME_FIELD", "Property Name")]):
-        name = rec["fields"].get(Config.get_env("PROPERTIES_NAME_FIELD", "Property Name"), "").strip()
+    for rec in properties_table.all(fields=["Property Name"]):
+        name = rec["fields"].get("Property Name", "").strip()
         rid = rec["id"]
         if not name:
             continue
@@ -597,8 +597,8 @@ def fetch_all_reservations(table, feed_urls):
         fields = [
             "Reservation UID", "ICS URL", "Check-in Date", "Check-out Date",
             "Status", "Entry Type", "Service Type", "Entry Source",
-            Config.get_env("PROPERTY_LINK_FIELD", "Property ID"), "Last Updated",
-            "Overlapping Dates", "Same-day Turnover", "iTrip Info"
+            "Property ID", "Last Updated",
+            "Overlapping Dates", "Same-day Turnover", "iTrip Report Info"
         ] + HCP_FIELDS
         
         # Fetch records with minimal filtering to see if we get any results
@@ -646,7 +646,7 @@ def has_changes(csv_record, airtable_record):
         return True
     
     # 2. Check property link
-    at_property_links = at_fields.get(Config.get_env("PROPERTY_LINK_FIELD", "Property ID"), [])
+    at_property_links = at_fields.get("Property ID", [])
     at_property_id = at_property_links[0] if at_property_links else None
     
     if at_property_id != csv_record["property_id"]:
@@ -762,13 +762,13 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
             # Compare critical fields
             at_checkin = normalize_date_for_comparison(at_fields.get("Check-in Date", ""))
             at_checkout = normalize_date_for_comparison(at_fields.get("Check-out Date", ""))
-            at_property_links = at_fields.get(Config.get_env("PROPERTY_LINK_FIELD", "Property ID"), [])
+            at_property_links = at_fields.get("Property ID", [])
             at_property_id = at_property_links[0] if at_property_links else None
             at_overlap = convert_flag_value(at_fields.get("Overlapping Dates"))
             at_sameday = convert_flag_value(at_fields.get("Same-day Turnover"))
             at_entry_type = at_fields.get("Entry Type", "")
             at_service_type = at_fields.get("Service Type", "")
-            at_itrip_info = at_fields.get("iTrip Info", "")
+            at_itrip_info = at_fields.get("iTrip Report Info", "")
             
             # Check if anything important changed
             dates_changed = (at_checkin != res["dtstart"] or at_checkout != res["dtend"])
@@ -787,11 +787,11 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                     "Service Type": res["service_type"],  # Add this line
                     "Overlapping Dates": res["overlapping"],
                     "Same-day Turnover": res["same_day_turnover"],
-                    Config.get_env("PROPERTY_LINK_FIELD", "Property ID"): [res["property_id"]]
+                    "Property ID": [res["property_id"]]
                 }
-                # Add iTrip Info if from iTrip and has contractor info
+                # Add iTrip Report Info if from iTrip and has contractor info
                 if res["entry_source"] == "iTrip" and res.get("contractor_info"):
-                    new_fields["iTrip Info"] = res["contractor_info"]
+                    new_fields["iTrip Report Info"] = res["contractor_info"]
                 # Add Block Type if it exists
                 if res.get("block_type"):
                     new_fields["Block Type"] = res["block_type"]
@@ -869,15 +869,15 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                 "Overlapping Dates": res["overlapping"],
                 "Same-day Turnover": res["same_day_turnover"],
             }
-            # Add iTrip Info if from iTrip and has contractor info
+            # Add iTrip Report Info if from iTrip and has contractor info
             if res["entry_source"] == "iTrip" and res.get("contractor_info"):
-                new_fields["iTrip Info"] = res["contractor_info"]
+                new_fields["iTrip Report Info"] = res["contractor_info"]
             # Add Block Type if it exists
             if res.get("block_type"):
                 new_fields["Block Type"] = res["block_type"]
 
             if res["property_id"]:
-                new_fields[Config.get_env("PROPERTY_LINK_FIELD", "Property ID")] = [res["property_id"]]
+                new_fields["Property ID"] = [res["property_id"]]
             
             # Mark any existing non-active records as Old
             if all_records:
@@ -930,7 +930,7 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                         removed_count += 1
                         
                         # Add to summary
-                        prop_links = fields.get(Config.get_env("PROPERTY_LINK_FIELD", "Property ID"), [])
+                        prop_links = fields.get("Property ID", [])
                         prop_id = prop_links[0] if prop_links else None
                         entry_source = fields.get("Entry Source", "Unknown")
                         
@@ -1139,13 +1139,13 @@ def build_guest_to_property_map(properties_table):
     formula = "{Entry Source (from ICS Feeds)} = 'Evolve'"
     records = properties_table.all(
         formula=formula,
-        fields=["Full Name (from HCP Customer ID)", Config.get_env("PROPERTIES_NAME_FIELD", "Property Name")]
+        fields=["Full Name (from HCP Customer ID)", "Property Name"]
     )
     
     logging.info(f"Found {len(records)} Evolve properties in Properties table")
     
     for rec in records:
-        prop_name = rec["fields"].get(Config.get_env("PROPERTIES_NAME_FIELD", "Property Name"), "Unknown Property")
+        prop_name = rec["fields"].get("Property Name", "Unknown Property")
         names = rec["fields"].get("Full Name (from HCP Customer ID)", [])
         
         # Airtable returns a list for linked/multi-fields
@@ -1274,7 +1274,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                                 "Entry Type": "Block",
                                 "Service Type": "Needs Review",
                                 "Entry Source": "Evolve",
-                                Config.get_env("PROPERTY_LINK_FIELD", "Property ID"): [prop_id],
+                                "Property ID": [prop_id],
                                 "Last Updated": now_iso_str
                             }
                         })
@@ -1288,7 +1288,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                         # Check for changes
                         at_checkin = normalize_date_for_comparison(fields.get("Check-in Date", ""))
                         at_checkout = normalize_date_for_comparison(fields.get("Check-out Date", ""))
-                        at_property_links = fields.get(Config.get_env("PROPERTY_LINK_FIELD", "Property ID"), [])
+                        at_property_links = fields.get("Property ID", [])
                         at_property_id = at_property_links[0] if at_property_links else None
                         
                         # Convert new dates to MM/DD/YYYY for comparison
@@ -1306,7 +1306,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                                 "Check-out Date": checkout_display,
                                 "Entry Type": "Block",
                                 "Service Type": "Needs Review",
-                                Config.get_env("PROPERTY_LINK_FIELD", "Property ID"): [prop_id]
+                                "Property ID": [prop_id]
                             }
                             
                             # Mark all existing records as old and create a modified version
@@ -1364,8 +1364,8 @@ def main():
         # Initialize Airtable API
         api = Api(Config.get_airtable_api_key())
         base_id = Config.get_airtable_base_id()
-        reservations_table = api.table(base_id, Config.get_airtable_table_name())
-        properties_table = api.table(base_id, Config.get_properties_table_name())
+        reservations_table = api.table(base_id, Config.get_airtable_table_name('reservations'))
+        properties_table = api.table(base_id, Config.get_airtable_table_name('properties'))
         
         # ————— Evolve “Tab 2” CSV exports —————
         guest_to_prop = build_guest_to_property_map(properties_table)

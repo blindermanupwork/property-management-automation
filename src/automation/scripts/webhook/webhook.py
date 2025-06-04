@@ -683,9 +683,16 @@ if __name__ == "__main__":
     logger.info(f"🌐 IP whitelist: {'Enabled' if SECURITY_CONFIG['ENABLE_IP_WHITELIST'] else 'Disabled'}")
     logger.info(f"📦 Max payload: {SECURITY_CONFIG['MAX_PAYLOAD_SIZE']} bytes")
 
+    # Determine port and environment based on PORT env var
+    port = int(os.environ.get('PORT', 5000))
+    env_name = Config.environment_name
+    
+    logger.info(f"🌍 Environment: {env_name}")
+    logger.info(f"🔌 Port: {port}")
+    
     app.run(
         host="0.0.0.0",
-        port=int(os.environ.get('PORT', 5000)),
+        port=port,
         debug=False,
         threaded=True
     )

@@ -31,13 +31,19 @@ log_message "✅ Full backup created: $backup_name"
 # Create data-only backup (CSV files, configs)
 data_backup="automation-data-$DATE.tar.gz"
 tar -czf "$BACKUP_DIR/$data_backup" \
-    "$AUTOMATION_DIR/CSV_process" \
+    "$AUTOMATION_DIR/CSV_process_development" \
+    "$AUTOMATION_DIR/CSV_process_production" \
+    "$AUTOMATION_DIR/CSV_done_development" \
+    "$AUTOMATION_DIR/CSV_done_production" \
     "$AUTOMATION_DIR/config/environments" \
     "$AUTOMATION_DIR/.env" \
     "$AUTOMATION_DIR/scripts/gmail/credentials.json" \
     "$AUTOMATION_DIR/scripts/gmail/token.pickle" 2>/dev/null || \
     tar -czf "$BACKUP_DIR/$data_backup" \
-    "$AUTOMATION_DIR/CSV_process" \
+    "$AUTOMATION_DIR/CSV_process_development" \
+    "$AUTOMATION_DIR/CSV_process_production" \
+    "$AUTOMATION_DIR/CSV_done_development" \
+    "$AUTOMATION_DIR/CSV_done_production" \
     "$AUTOMATION_DIR/config/environments" \
     "$AUTOMATION_DIR/.env"
 

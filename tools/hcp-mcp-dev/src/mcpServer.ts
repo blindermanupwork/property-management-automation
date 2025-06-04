@@ -22,6 +22,8 @@ import {
   validateEmployeeRole,
   validateLineItemKind,
   validateAppointmentStatus,
+  validateSortDirection,
+  validateCustomerSortField,
   validatePaginationParams,
   validateSchedule,
   validateLineItem,
@@ -139,6 +141,28 @@ export class HCPMCPServer {
           case this.toolName(MCP_TOOL_NAMES.DELETE_APPOINTMENT):
             return await this.handleDeleteAppointment(args);
 
+          // Cache management tools
+          case this.toolName(MCP_TOOL_NAMES.SEARCH_CACHE):
+            return await this.handleSearchCache(args);
+          case this.toolName(MCP_TOOL_NAMES.LIST_CACHE):
+            return await this.handleListCache(args);
+          case this.toolName(MCP_TOOL_NAMES.GET_CACHE_SUMMARY):
+            return await this.handleGetCacheSummary(args);
+          case this.toolName(MCP_TOOL_NAMES.CLEANUP_CACHE):
+            return await this.handleCleanupCache(args);
+
+          // Analysis tools
+          case this.toolName(MCP_TOOL_NAMES.ANALYZE_LAUNDRY_JOBS):
+            return await this.handleAnalyzeLaundryJobs(args);
+          case this.toolName(MCP_TOOL_NAMES.ANALYZE_SERVICE_ITEMS):
+            return await this.handleAnalyzeServiceItems(args);
+          case this.toolName(MCP_TOOL_NAMES.ANALYZE_CUSTOMER_REVENUE):
+            return await this.handleAnalyzeCustomerRevenue(args);
+          case this.toolName(MCP_TOOL_NAMES.ANALYZE_JOB_STATISTICS):
+            return await this.handleAnalyzeJobStatistics(args);
+          case this.toolName(MCP_TOOL_NAMES.ANALYZE_TOWEL_USAGE):
+            return await this.handleAnalyzeTowelUsage(args);
+
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -162,7 +186,9 @@ export class HCPMCPServer {
     const paginationParams = validatePaginationParams(args);
     const params: any = { ...paginationParams };
     
-    if (args.search) params.search = validateString(args.search, 'search');
+    if (args.q) params.q = validateString(args.q, 'q');
+    if (args.sort_by) params.sort_by = validateCustomerSortField(args.sort_by);
+    if (args.sort_direction) params.sort_direction = validateSortDirection(args.sort_direction);
     if (args.created_after) params.created_after = validateDate(args.created_after, 'created_after');
     if (args.created_before) params.created_before = validateDate(args.created_before, 'created_before');
     if (args.tags) params.tags = validateArray(args.tags, 'tags');
@@ -381,7 +407,9 @@ export class HCPMCPServer {
 
   // Job tool handlers
   private async handleListJobs(args: any) {
+    console.log(`[${this.environment}] handleListJobs args:`, JSON.stringify(args, null, 2));
     const paginationParams = validatePaginationParams(args);
+    console.log(`[${this.environment}] validatePaginationParams returned:`, JSON.stringify(paginationParams, null, 2));
     const params: any = { ...paginationParams };
     
     if (args.customer_id) params.customer_id = validateHCPId(args.customer_id, 'customer');
@@ -391,6 +419,7 @@ export class HCPMCPServer {
     if (args.assigned_employee_id) params.assigned_employee_id = validateHCPId(args.assigned_employee_id, 'employee');
     if (args.job_type_id) params.job_type_id = validateHCPId(args.job_type_id, 'job_type');
 
+    console.log(`[${this.environment}] Final params sent to hcpService.listJobs:`, JSON.stringify(params, null, 2));
     const result = await this.hcpService.listJobs(params);
     
     return {
@@ -792,6 +821,147 @@ export class HCPMCPServer {
     };
   }
 
+  // Cache management tool handlers
+  private async handleSearchCache(args: any) {
+    const filePath = validateString(args.file_path, 'file_path');
+    const searchTerm = validateString(args.search_term, 'search_term');
+    const fieldPath = args.field_path ? validateString(args.field_path, 'field_path') : undefined;
+
+    const results = await this.hcpService.searchCache(filePath, searchTerm, fieldPath);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            file_path: filePath,
+            search_term: searchTerm,
+            field_path: fieldPath,
+            results_count: results.length,
+            results: results
+          }, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleListCache(args: any) {
+    const operation = args.operation ? validateString(args.operation, 'operation') : undefined;
+    
+    const files = await this.hcpService.listCacheFiles(operation);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            environment: this.environment,
+            operation: operation || 'all',
+            files_count: files.length,
+            files: files
+          }, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleGetCacheSummary(args: any) {
+    const data = args.data;
+    const operation = validateString(args.operation, 'operation');
+    
+    const summary = this.hcpService.getCacheSummary(data, operation);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: summary
+        }
+      ]
+    };
+  }
+
+  private async handleCleanupCache(args: any) {
+    const deletedCount = await this.hcpService.cleanupCache();
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Cache cleanup completed. Deleted ${deletedCount} old files from ${this.environment} environment.`
+        }
+      ]
+    };
+  }
+
+  // Analysis tool handlers
+  private async handleAnalyzeLaundryJobs(args: any) {
+    const result = await this.hcpService.analyzeLaundryJobs();
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleAnalyzeServiceItems(args: any) {
+    const itemPattern = validateString(args.item_pattern, 'item_pattern');
+    const result = await this.hcpService.analyzeServiceItems(itemPattern);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleAnalyzeCustomerRevenue(args: any) {
+    const customerId = args.customer_id ? validateHCPId(args.customer_id, 'customer') : undefined;
+    const result = await this.hcpService.analyzeCustomerRevenue(customerId);
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleAnalyzeJobStatistics(args: any) {
+    const result = await this.hcpService.analyzeJobStatistics();
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  private async handleAnalyzeTowelUsage(args: any) {
+    const result = await this.hcpService.analyzeServiceItems('towel');
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
   private getToolDefinitions(): Tool[] {
     return [
       // Customer tools
@@ -802,8 +972,10 @@ export class HCPMCPServer {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number (default: 1)' },
-            per_page: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
-            search: { type: 'string', description: 'Search customers by name, email, or phone' },
+            page_size: { type: 'number', description: 'Items per page (default: 20, max: 200)' },
+            q: { type: 'string', description: 'Search customers by name, email, mobile number and address' },
+            sort_by: { type: 'string', description: 'Customer attribute to sort by (default: created_at)' },
+            sort_direction: { type: 'string', enum: ['asc', 'desc'], description: 'Ascending or descending (default: desc)' },
             created_after: { type: 'string', description: 'Filter by creation date (ISO 8601)' },
             created_before: { type: 'string', description: 'Filter by creation date (ISO 8601)' },
             tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' }
@@ -881,7 +1053,7 @@ export class HCPMCPServer {
           properties: {
             customer_id: { type: 'string', description: 'Customer ID' },
             page: { type: 'number', description: 'Page number (default: 1)' },
-            per_page: { type: 'number', description: 'Items per page (default: 20, max: 100)' }
+            per_page: { type: 'number', description: 'Items per page (default: 20, max: 200)' }
           },
           required: ['customer_id']
         }
@@ -895,7 +1067,7 @@ export class HCPMCPServer {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number (default: 1)' },
-            per_page: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+            per_page: { type: 'number', description: 'Items per page (default: 20, max: 200)' },
             is_active: { type: 'boolean', description: 'Filter by active status' },
             role: { type: 'string', enum: ['admin', 'employee', 'field_employee'], description: 'Filter by role' }
           }
@@ -970,7 +1142,7 @@ export class HCPMCPServer {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number (default: 1)' },
-            per_page: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+            per_page: { type: 'number', description: 'Items per page (default: 20, max: 200)' },
             customer_id: { type: 'string', description: 'Filter by customer' },
             work_status: { 
               type: 'string', 
@@ -1198,7 +1370,7 @@ export class HCPMCPServer {
           type: 'object',
           properties: {
             page: { type: 'number', description: 'Page number (default: 1)' },
-            per_page: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+            per_page: { type: 'number', description: 'Items per page (default: 20, max: 200)' },
             is_active: { type: 'boolean', description: 'Filter by active status' }
           }
         }
@@ -1318,6 +1490,98 @@ export class HCPMCPServer {
             appointment_id: { type: 'string', description: 'Appointment ID' }
           },
           required: ['appointment_id']
+        }
+      },
+
+      // Cache management tools
+      {
+        name: this.toolName(MCP_TOOL_NAMES.SEARCH_CACHE),
+        description: 'Search through cached HCP response data using text or field-specific queries',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            file_path: { type: 'string', description: 'Path to the cached JSON file to search' },
+            search_term: { type: 'string', description: 'Text to search for in the cached data' },
+            field_path: { type: 'string', description: 'Optional field path for targeted search (e.g., "customer.name" or "work_status")' }
+          },
+          required: ['file_path', 'search_term']
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.LIST_CACHE),
+        description: 'List available cached response files with metadata',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            operation: { type: 'string', description: 'Optional filter by operation type (e.g., "list_jobs", "list_customers")' }
+          }
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.GET_CACHE_SUMMARY),
+        description: 'Get summary information about cached data size and record count',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            data: { type: 'object', description: 'Data object to summarize' },
+            operation: { type: 'string', description: 'Operation name for context' }
+          },
+          required: ['data', 'operation']
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.CLEANUP_CACHE),
+        description: 'Clean up old cached files based on retention policy',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+
+      // Analysis tools
+      {
+        name: this.toolName(MCP_TOOL_NAMES.ANALYZE_LAUNDRY_JOBS),
+        description: 'Analyze laundry-related jobs using Linux commands on cached data',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.ANALYZE_SERVICE_ITEMS),
+        description: 'Analyze specific service items (like towels, linens) from cached job data',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            item_pattern: { type: 'string', description: 'Pattern to search for service items (e.g., "towel", "linen")' }
+          },
+          required: ['item_pattern']
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.ANALYZE_CUSTOMER_REVENUE),
+        description: 'Analyze customer revenue and job statistics from cached data',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            customer_id: { type: 'string', description: 'Optional specific customer ID to analyze' }
+          }
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.ANALYZE_JOB_STATISTICS),
+        description: 'Generate comprehensive job statistics from cached data',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: this.toolName(MCP_TOOL_NAMES.ANALYZE_TOWEL_USAGE),
+        description: 'Analyze towel usage and costs from service line items in cached data',
+        inputSchema: {
+          type: 'object',
+          properties: {}
         }
       }
     ];

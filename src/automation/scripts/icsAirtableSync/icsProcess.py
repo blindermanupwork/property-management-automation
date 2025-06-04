@@ -174,12 +174,16 @@ logging.info("=== ICS sync run started ===")
 # Helper Functions for Environment Variables
 # ---------------------------------------------------------------------------
 def getenv_bool(key, default=False):
-    """Wrapper for Config.get_env_bool for backward compatibility"""
-    return Config.get_env_bool(key, default)
+    """Helper function to get boolean environment variables"""
+    value = Config.get(key, str(default))
+    return value.lower() in ('true', '1', 'yes', 'on') if isinstance(value, str) else bool(value)
 
 def getenv_int(key, default=0):
-    """Wrapper for Config.get_env_int for backward compatibility"""
-    return Config.get_env_int(key, default)
+    """Helper function to get integer environment variables"""
+    try:
+        return int(Config.get(key, str(default)))
+    except (ValueError, TypeError):
+        return default
 
 # ---------------------------------------------------------------------------
 # BatchCollector – collects 10-row chunks for batch_update / batch_create
@@ -1241,10 +1245,10 @@ async def main_async():
         # Load environment variables from Config
         AIRTABLE_API_KEY = Config.get_airtable_api_key()
         AIRTABLE_BASE_ID = Config.get_airtable_base_id()
-        AIRTABLE_TABLE_NAME = Config.get_airtable_table_name()
-        PROPERTIES_TABLE_NAME = Config.get_properties_table_name()
-        ICS_FEEDS_TABLE_NAME = Config.get_ics_feeds_table_name()
-        ICS_CRON_TABLE_NAME = Config.get_env('ICS_CRON_TABLE_NAME', 'ICS Cron')
+        AIRTABLE_TABLE_NAME = Config.get_airtable_table_name('reservations')
+        PROPERTIES_TABLE_NAME = Config.get_airtable_table_name('properties')
+        ICS_FEEDS_TABLE_NAME = Config.get_airtable_table_name('ics_feeds')
+        ICS_CRON_TABLE_NAME = Config.get('ICS_CRON_TABLE_NAME', 'ICS Cron')
 
         # Check required environment variables
         missing_config = Config.validate_config()
@@ -1297,7 +1301,7 @@ async def main_async():
         # │ Example: IGNORE_EVENTS_ENDING_MONTHS_AWAY=6 means ignore events         │
         # │          with check-out > (today + 6 months)                            │
         # └──────────────────────────────────────────────────────────────────────────┘
-        end_months = Config.get_env_int("IGNORE_EVENTS_ENDING_MONTHS_AWAY", 0) or None
+        end_months = getenv_int("IGNORE_EVENTS_ENDING_MONTHS_AWAY", 0) or None
         if end_months is not None:
             future_end_threshold = today + relativedelta(months=end_months)
             ignore_future_end = True
@@ -1336,10 +1340,10 @@ async def main_async():
         # 2.1 Build a map from property ID to name for reporting
         id_to_name = {}
         try:
-            prop_records = properties_table.all(fields=[Config.get_env('PROPERTIES_NAME_FIELD', 'Property Name')])
+            prop_records = properties_table.all(fields=[Config.get('PROPERTIES_NAME_FIELD', 'Property Name')])
             for rec in prop_records:
                 rec_id = rec["id"]
-                name = rec["fields"].get(Config.get_env('PROPERTIES_NAME_FIELD', 'Property Name'), "")
+                name = rec["fields"].get(Config.get('PROPERTIES_NAME_FIELD', 'Property Name'), "")
                 if name:
                     id_to_name[rec_id] = name
             logging.info(f"Loaded {len(id_to_name)} property names for reporting")
