@@ -71,6 +71,8 @@ export declare const MCP_TOOL_NAMES: {
     readonly LIST_CACHE: "list_hcp_cache";
     readonly GET_CACHE_SUMMARY: "get_cache_summary";
     readonly CLEANUP_CACHE: "cleanup_hcp_cache";
+    readonly SEARCH_ADDRESSES: "search_addresses";
+    readonly GET_JOBS_BY_ADDRESS: "get_jobs_by_address";
     readonly ANALYZE_LAUNDRY_JOBS: "analyze_laundry_jobs";
     readonly ANALYZE_SERVICE_ITEMS: "analyze_service_items";
     readonly ANALYZE_CUSTOMER_REVENUE: "analyze_customer_revenue";

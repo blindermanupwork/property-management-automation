@@ -126,6 +126,9 @@ export class CacheService {
         console.error('Cache cleanup error:', err)
       );
       
+      // Include actual data if it's small enough for better UX
+      const includeData = sizeBytes < (500 * 1024); // Include if less than 500KB
+      
       return {
         _cached: true,
         _filePath: filePath,
@@ -134,7 +137,8 @@ export class CacheService {
           count: metadata.recordCount,
           operation,
           timestamp: metadata.timestamp
-        }
+        },
+        ...(includeData && { data })
       };
       
     } catch (error) {
@@ -191,7 +195,7 @@ export class CacheService {
   }
 
   /**
-   * Search through cached data
+   * Search through cached data with improved traversal
    */
   async searchCache(filePath: string, searchTerm: string, fieldPath?: string): Promise<any[]> {
     try {
@@ -199,6 +203,8 @@ export class CacheService {
       const data = JSON.parse(content);
       
       let searchData = [];
+      
+      // Better data extraction logic
       if (Array.isArray(data)) {
         searchData = data;
       } else if (data.data && Array.isArray(data.data)) {
@@ -212,18 +218,24 @@ export class CacheService {
       } else if (data.line_items && Array.isArray(data.line_items)) {
         searchData = data.line_items;
       } else {
+        // For single object responses (like get_customer), still wrap in array for search
         searchData = [data];
       }
       
-      return searchData.filter((item: any) => {
+      const results = searchData.filter((item: any) => {
         if (fieldPath) {
+          // Support JSONPath-like queries
           const fieldValue = this.getNestedValue(item, fieldPath);
-          return fieldValue && fieldValue.toString().toLowerCase().includes(searchTerm.toLowerCase());
+          return fieldValue && this.matchesSearchTerm(fieldValue, searchTerm);
         } else {
-          // Search all string fields
-          return this.searchInObject(item, searchTerm.toLowerCase());
+          // Enhanced deep search with better handling
+          return this.searchInObjectDeep(item, searchTerm.toLowerCase());
         }
       });
+      
+      console.log(`Cache search: Found ${results.length} matches for "${searchTerm}" in ${searchData.length} items`);
+      return results;
+      
     } catch (error) {
       console.error('Error searching cache:', error);
       return [];
@@ -315,24 +327,66 @@ export class CacheService {
     }
   }
 
-  private getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
-  }
-
-  private searchInObject(obj: any, term: string): boolean {
+  // Enhanced search methods
+  private searchInObjectDeep(obj: any, term: string, depth: number = 0): boolean {
+    // Prevent infinite recursion
+    if (depth > 10) return false;
+    
     if (typeof obj === 'string') {
       return obj.toLowerCase().includes(term);
     }
     
+    if (typeof obj === 'number') {
+      return obj.toString().includes(term);
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.some(item => this.searchInObjectDeep(item, term, depth + 1));
+    }
+    
     if (typeof obj === 'object' && obj !== null) {
-      for (const value of Object.values(obj)) {
-        if (this.searchInObject(value, term)) {
+      // Search both keys and values
+      for (const [key, value] of Object.entries(obj)) {
+        if (key.toLowerCase().includes(term) || 
+            this.searchInObjectDeep(value, term, depth + 1)) {
           return true;
         }
       }
     }
     
     return false;
+  }
+
+  private matchesSearchTerm(value: any, searchTerm: string): boolean {
+    if (value == null) return false;
+    
+    const valueStr = value.toString().toLowerCase();
+    const termLower = searchTerm.toLowerCase();
+    
+    // Support partial matching and exact matching
+    return valueStr.includes(termLower) || valueStr === termLower;
+  }
+
+  private getNestedValue(obj: any, path: string): any {
+    // Support JSONPath-like syntax and array access
+    const parts = path.split(/[.\[\]]/).filter(Boolean);
+    let current = obj;
+    
+    for (const part of parts) {
+      if (current == null) return null;
+      
+      // Handle array access
+      if (/^\d+$/.test(part)) {
+        current = current[parseInt(part)];
+      } else if (part === '*' && Array.isArray(current)) {
+        // Wildcard array access - return all values
+        return current.map(item => this.getNestedValue(item, parts.slice(parts.indexOf('*') + 1).join('.'))).filter(Boolean);
+      } else {
+        current = current[part];
+      }
+    }
+    
+    return current;
   }
 
   private async cleanupOldFiles(directory: string): Promise<void> {

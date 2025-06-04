@@ -124,6 +124,9 @@ export const MCP_TOOL_NAMES = {
     LIST_CACHE: 'list_hcp_cache',
     GET_CACHE_SUMMARY: 'get_cache_summary',
     CLEANUP_CACHE: 'cleanup_hcp_cache',
+    // New search tools
+    SEARCH_ADDRESSES: 'search_addresses',
+    GET_JOBS_BY_ADDRESS: 'get_jobs_by_address',
     // Advanced analysis tools
     ANALYZE_LAUNDRY_JOBS: 'analyze_laundry_jobs',
     ANALYZE_SERVICE_ITEMS: 'analyze_service_items',

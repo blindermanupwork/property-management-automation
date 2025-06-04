@@ -284,6 +284,37 @@ export interface CachedResponse<T> {
   data?: T; // Optional - only include if small enough
 }
 
+// Enhanced error types for better debugging
+export interface HCPDetailedError {
+  type: 'CustomerNotFound' | 'CustomerHasNoJobs' | 'InvalidPermissions' | 'ValidationError' | 'APIError';
+  message: string;
+  context?: string;
+  suggestion?: string;
+  originalError?: any;
+}
+
+// New search interfaces
+export interface AddressSearchParams {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  customer_name?: string;
+  customer_id?: string;
+}
+
+export interface AddressSearchResult {
+  address: HCPAddress;
+  customer: Pick<HCPCustomer, 'id' | 'first_name' | 'last_name' | 'company'>;
+}
+
+export interface JobSearchByAddressParams {
+  address_id: string;
+  work_status?: string;
+  scheduled_start_min?: string;
+  scheduled_start_max?: string;
+}
+
 // Configuration types
 export interface HCPConfig {
   apiKey: string;

@@ -23,7 +23,7 @@ export declare class CacheService {
      */
     listCacheFiles(environment: 'dev' | 'prod', operation?: string): Promise<CacheMetadata[]>;
     /**
-     * Search through cached data
+     * Search through cached data with improved traversal
      */
     searchCache(filePath: string, searchTerm: string, fieldPath?: string): Promise<any[]>;
     /**
@@ -35,8 +35,9 @@ export declare class CacheService {
     private getRecordCount;
     private formatBytes;
     private getAllSubDirectories;
+    private searchInObjectDeep;
+    private matchesSearchTerm;
     private getNestedValue;
-    private searchInObject;
     private cleanupOldFiles;
 }
 //# sourceMappingURL=cacheService.d.ts.map
