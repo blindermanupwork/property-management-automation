@@ -5,6 +5,90 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-06-04
+
+### 🚀 **MAJOR: Environment Separation, ICS Processor Fixes & Automation Improvements**
+
+### ✨ New Features
+- **Complete CSV Environment Separation**: 
+  - Environment-specific CSV directories: `CSV_process_development/` and `CSV_process_production/`
+  - Environment-specific done directories: `CSV_done_development/` and `CSV_done_production/`
+  - Updated backup and monitoring scripts to handle environment-specific paths
+  - Proper isolation between development and production CSV processing
+
+- **Real-time Console Output**:
+  - Removed subprocess.PIPE from all automation functions in `run_automation.py`
+  - Gmail downloader, Evolve scraper, and other automation scripts now show real-time output
+  - Enhanced visibility into automation processes during execution
+  - Better debugging and monitoring capabilities
+
+### 🔧 Critical Fixes
+- **ICS Processor Configuration Fixes**:
+  - **CRITICAL**: Added missing table mappings for 'ics_feeds' and 'ics_cron' in both dev/prod configs
+  - Fixed `Config.get_airtable_table_name()` calls to include required `table_type` parameter
+  - Added helper functions `getenv_bool()` and `getenv_int()` for missing Config methods
+  - Fixed `Config.get_env()` method calls to use `Config.get()` (method doesn't exist)
+  - ICS processor now runs successfully in both production (246 feeds) and development (255 feeds)
+
+- **Environment-Specific Directory Structure**:
+  - **BREAKING**: Fixed `get_itripcsv_downloads_dir()` to return environment-specific directories
+  - CSV processing now properly isolated between development and production environments
+  - Cleaned up old mixed CSV directories from legacy configuration
+
+### 🔄 Operational Improvements
+- **Optimized Cron Scheduling**:
+  - Updated both dev and prod automation to run every 4 hours (previously dev: 30min, prod: 4hr)
+  - Staggered scheduling: Production at :00, Development at :10 (10 minutes apart)
+  - Prevents resource conflicts while maintaining consistent automation frequency
+  - Better load distribution and system resource management
+
+- **Enhanced Backup & Monitoring**:
+  - Updated `backup.sh` to backup environment-specific CSV directories
+  - Modified `monitor.sh` to check both dev and prod directories for stuck files
+  - Environment-aware monitoring and maintenance scripts
+
+### 🛠️ Technical Improvements
+- **HCP MCP Server Enhancements**:
+  - Enhanced analysis capabilities with new service analysis functions
+  - Improved caching mechanisms for better performance
+  - Added comprehensive debugging and validation tools
+  - Updated TypeScript build outputs and type definitions
+
+- **Configuration System Robustness**:
+  - Improved environment detection and configuration validation
+  - Enhanced error handling throughout automation pipeline
+  - Better validation for missing required configuration values
+
+### 🐛 Bug Fixes
+- Fixed CSV directory confusion between environments
+- Resolved ICS processor crashes due to missing table mappings
+- Fixed automation runner output not showing real-time progress
+- Corrected backup and monitor scripts for new directory structure
+- Fixed missing helper functions in Config class
+
+### 📋 Testing & Validation
+- **Verified ICS Processor Operation**:
+  - Production: Successfully processing 246 ICS feeds from Airbnb, VRBO, Hospitable
+  - Development: Successfully processing 255 ICS feeds with proper sync functionality
+  - Both environments tested and confirmed working with date filtering and overlapping detection
+
+- **Environment Isolation Verified**:
+  - Confirmed complete separation between dev and prod CSV processing
+  - Validated cron job scheduling and execution
+  - Tested real-time console output for all automation components
+
+### 💔 Breaking Changes
+- CSV directory structure changed to environment-specific paths
+- Old shared CSV directories no longer used
+- Scripts expecting old CSV paths may need updates
+
+### 🔒 System Status
+- ✅ All automation components fully functional in both environments
+- ✅ ICS processor successfully tested and verified in production and development  
+- ✅ Environment separation complete with proper isolation
+- ✅ Real-time logging and monitoring improvements implemented
+- ✅ Cron jobs optimized for better system resource utilization
+
 ## [2.1.0] - 2025-06-03
 
 ### ✨ New Features
