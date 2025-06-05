@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.0** - Environment Separation, ICS Processor Fixes & Automation Improvements
+**Version 2.2.1** - HCP MCP Server Enhancements & Automation Improvements
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -60,7 +60,7 @@ This system provides complete isolation between development and production:
 automation/                                 # Project root
 ├── 📄 Core System Files
 │   ├── README.md                           # This comprehensive guide
-│   ├── VERSION                             # Current version (2.2.0)
+│   ├── VERSION                             # Current version (2.2.1)
 │   ├── CHANGELOG.md                        # Version history
 │   ├── setup.py                           # Package installation config
 │   ├── requirements.txt                   # Python dependencies
@@ -105,8 +105,11 @@ automation/                                 # Project root
 │   ├── cron_remove.sh                     # Remove old cron jobs
 │   └── backups/                           # Backup storage
 │
-└── 🔧 Development Tools
-    ├── tools/airtable-mcp-server/          # Airtable MCP integration
+└── 🔧 Development Tools & MCP Servers
+    ├── tools/airtable-mcp-server/          # Airtable MCP integration for Claude
+    ├── tools/hcp-mcp-dev/                 # HousecallPro MCP server (development)
+    ├── tools/hcp-mcp-prod/                # HousecallPro MCP server (production)
+    ├── tools/hcp-mcp-common/              # Shared HCP MCP functionality
     ├── test_setup.py                      # Setup validation
     └── docs/                              # Documentation
 ```
