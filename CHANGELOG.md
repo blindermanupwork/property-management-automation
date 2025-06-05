@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2025-06-04
+
+### 🚀 **HCP MCP Server Enhancements**
+
+### ✨ New Features
+- **Enhanced Cache Service**:
+  - Improved deep object search traversal with better handling of nested data structures
+  - Support for JSONPath-like queries (e.g., "addresses.*.street") for complex data access
+  - Include actual data in responses for small payloads (<500KB) to improve user experience
+  - Enhanced search logging and debugging capabilities for better troubleshooting
+
+- **New Search Tools**:
+  - `search_addresses`: Find customer addresses by street, city, customer name, or customer ID
+  - `get_jobs_by_address`: Get jobs for a specific address with work status and date filtering
+  - Better address search parameters and structured results for more precise queries
+
+- **Improved Error Handling**:
+  - New `HCPDetailedError` interface with specific error types for better error classification
+  - Context-aware error messages with actionable suggestions for troubleshooting
+  - Better error classification (CustomerNotFound, CustomerHasNoJobs, InvalidPermissions, etc.)
+
+### 🔧 Developer Experience Improvements
+- Better search result logging and debugging information
+- Enhanced TypeScript type definitions for new functionality
+- Improved cache search with wildcard array access capabilities
+- More informative error messages with context and suggestions
+
+These improvements significantly enhance Claude's ability to work with HousecallPro data through the MCP servers, providing better search capabilities, more informative errors, and improved performance for data operations.
+
+---
+
 ## [2.2.0] - 2025-06-04
 
 ### 🚀 **MAJOR: Environment Separation, ICS Processor Fixes & Automation Improvements**
