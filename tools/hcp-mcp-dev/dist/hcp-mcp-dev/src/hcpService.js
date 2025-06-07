@@ -355,16 +355,65 @@ export class HCPService {
                 }
                 return [];
             }
-            // Otherwise, search through all customers
-            const results = [];
+            // Build server-side search query from address components
+            const searchTerms = [];
+            if (params.street)
+                searchTerms.push(params.street);
+            if (params.city)
+                searchTerms.push(params.city);
+            if (params.state)
+                searchTerms.push(params.state);
+            if (params.zip)
+                searchTerms.push(params.zip);
+            if (params.customer_name)
+                searchTerms.push(params.customer_name);
+            const searchQuery = searchTerms.join(' ').trim();
+            let results = [];
+            // If we have search terms, use server-side filtering first (MUCH more efficient)
+            if (searchQuery) {
+                console.log(`[${this.environment}] Address search using server-side query: "${searchQuery}"`);
+                const customersResponse = await this.listCustomers({
+                    q: searchQuery,
+                    page_size: 200 // Use max page size for efficiency
+                });
+                let customers = [];
+                if ('_cached' in customersResponse) {
+                    const cacheResults = await this.cacheService.searchCache(customersResponse._filePath, '', '');
+                    customers = cacheResults;
+                }
+                else {
+                    customers = customersResponse.data || [];
+                }
+                console.log(`[${this.environment}] Server-side search returned ${customers.length} customers`);
+                // Filter the small result set locally for exact matches
+                for (const customer of customers) {
+                    if (customer.addresses) {
+                        const matchingAddresses = customer.addresses
+                            .filter((addr) => this.matchesAddressFilter(addr, params))
+                            .map((addr) => ({
+                            address: addr,
+                            customer: {
+                                id: customer.id,
+                                first_name: customer.first_name,
+                                last_name: customer.last_name,
+                                company: customer.company
+                            }
+                        }));
+                        results.push(...matchingAddresses);
+                    }
+                }
+                console.log(`[${this.environment}] Found ${results.length} matching addresses after local filtering`);
+                return results;
+            }
+            // Fallback: If no search terms provided, scan all customers (warn about inefficiency)
+            console.warn(`[${this.environment}] No search terms provided - falling back to full customer scan (INEFFICIENT!)`);
             let page = 1;
-            const pageSize = 100;
+            const pageSize = 200; // Use max page size
             let hasMore = true;
             while (hasMore) {
                 const customersResponse = await this.listCustomers({
                     page,
-                    page_size: pageSize,
-                    q: params.customer_name // Use name filter if provided
+                    page_size: pageSize
                 });
                 let customers = [];
                 if ('_cached' in customersResponse) {
@@ -424,7 +473,7 @@ export class HCPService {
                 const jobsResponse = await this.listJobs({
                     ...listJobsParams,
                     page,
-                    page_size: 100
+                    page_size: 200
                 });
                 let jobs = [];
                 if ('_cached' in jobsResponse) {
@@ -440,7 +489,7 @@ export class HCPService {
                     hasMore = false;
                 }
                 else {
-                    hasMore = (jobsResponse.data || []).length === 100;
+                    hasMore = (jobsResponse.data || []).length === 200;
                     page++;
                 }
             }

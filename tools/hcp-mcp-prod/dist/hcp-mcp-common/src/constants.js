@@ -76,7 +76,7 @@ export const CACHE_DEFAULTS = {
         JOBS: 10,
         CUSTOMERS: 5,
         LINE_ITEMS: 15,
-        CHARACTERS: 1500
+        CHARACTERS: 50000 // Increased from 1500 to reduce excessive caching of small responses
     },
     ANALYSIS_CACHE_DIR: 'analysis',
     FILE_PERMISSIONS: 0o600

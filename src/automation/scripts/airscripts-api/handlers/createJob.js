@@ -143,7 +143,7 @@ export async function createJob(req, res) {
     }
     
     // Append custom instructions if present
-    const serviceLineCustomInstructions = reservation.fields['Service Line Custom Instructions'];
+    const serviceLineCustomInstructions = reservation.fields['Custom Service Line Instructions'];
     console.log(`DEBUG: Raw custom instructions value:`, serviceLineCustomInstructions);
     console.log(`DEBUG: Custom instructions type:`, typeof serviceLineCustomInstructions);
     console.log(`DEBUG: Custom instructions length:`, serviceLineCustomInstructions?.length);
@@ -162,7 +162,7 @@ Has Custom Instructions: ${serviceLineCustomInstructions?.trim() ? 'YES' : 'NO'}
     
     if (serviceLineCustomInstructions?.trim()) {
       const trimmedInstructions = serviceLineCustomInstructions.trim();
-      serviceName += ` - ${trimmedInstructions}`;
+      serviceName = `${trimmedInstructions} - ${serviceName}`;
       console.log(`DEBUG: Added custom instructions: "${trimmedInstructions}"`);
       console.log(`DEBUG: Final service name with custom instructions: "${serviceName}"`);
     } else {

@@ -79,6 +79,7 @@ source automation-env/bin/activate
 automation-env\Scripts\activate
 ```
 
+
 #### Option B: Conda Environment
 ```bash
 # Create conda environment

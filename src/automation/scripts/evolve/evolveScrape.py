@@ -121,9 +121,9 @@ def filter_tab2_csv(csv_path):
         # Convert the Check-In column to datetime
         df[checkin_col] = pd.to_datetime(df[checkin_col], errors='coerce')
         
-        # Calculate date ranges in PST (timezone-naive for pandas comparison)
-        pst = pytz.timezone('US/Pacific')
-        today = datetime.now(pst).replace(tzinfo=None)  # Remove timezone for pandas comparison
+        # Calculate date ranges in MST (timezone-naive for pandas comparison)
+        mst = pytz.timezone('America/Phoenix')
+        today = datetime.now(mst).replace(tzinfo=None)  # Remove timezone for pandas comparison
         past_date = today - timedelta(days=30 * TAB2_FILTER_MONTHS_PAST)
         future_date = today + timedelta(days=30 * TAB2_FILTER_MONTHS_FUTURE)
         
@@ -269,9 +269,9 @@ def second_tab_export(headless: bool):
                     filtered_path = filter_tab2_csv(orig)
                     orig = filtered_path
                 
-                # Generate timestamp in PST and rename
-                pst = pytz.timezone('US/Pacific')
-                ts = datetime.now(pst).strftime("%m-%d-%Y--%H-%M-%S") 
+                # Generate timestamp in MST and rename
+                mst = pytz.timezone('America/Phoenix')
+                ts = datetime.now(mst).strftime("%m-%d-%Y--%H-%M-%S") 
                 new_name = DOWNLOAD_DIR / f"{ts}_tab2.csv"
                 orig.rename(new_name)
                 log.info(f"Tab 2: Processing complete → {new_name.name}")
@@ -476,9 +476,9 @@ def click_export(driver: webdriver.Chrome):
             # Get the original downloaded file
             orig_file = new.pop()
             
-            # Generate timestamp in PST format MM-DD-YYYY--HH-MM-SS
-            pst = pytz.timezone('US/Pacific')
-            timestamp = datetime.now(pst).strftime("%m-%d-%Y--%H-%M-%S")
+            # Generate timestamp in MST format MM-DD-YYYY--HH-MM-SS
+            mst = pytz.timezone('America/Phoenix')
+            timestamp = datetime.now(mst).strftime("%m-%d-%Y--%H-%M-%S")
             
             # Create new filename with timestamp
             new_filename = f"{timestamp}.csv"
@@ -492,6 +492,31 @@ def click_export(driver: webdriver.Chrome):
         time.sleep(1)
     log.warning("CSV did not appear in folder within 60 seconds.")
 
+
+def cleanup_old_evolve_csvs():
+    """
+    Remove old Evolve CSV files from the download directory before generating new ones.
+    This prevents duplicate processing when multiple Evolve exports accumulate.
+    """
+    log.info("Cleaning up old Evolve CSV files...")
+    
+    # Pattern to match Evolve CSV files (timestamp format: MM-DD-YYYY--HH-MM-SS.csv)
+    # and Tab2 files (timestamp_tab2.csv)
+    evolve_pattern = "[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]--[0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.csv"
+    
+    removed_count = 0
+    for csv_file in DOWNLOAD_DIR.glob(evolve_pattern):
+        try:
+            csv_file.unlink()
+            removed_count += 1
+            log.info(f"Removed old Evolve CSV: {csv_file.name}")
+        except Exception as e:
+            log.error(f"Error removing {csv_file.name}: {e}")
+    
+    if removed_count > 0:
+        log.info(f"Cleaned up {removed_count} old Evolve CSV file(s)")
+    else:
+        log.info("No old Evolve CSV files found to clean up")
 
 def main():
     """
@@ -510,6 +535,9 @@ def main():
         help="Run tab exports sequentially instead of concurrently."
     )
     args = parser.parse_args()
+
+    # Clean up old Evolve CSV files before generating new ones
+    cleanup_old_evolve_csvs()
 
     if args.sequential:
         # Run sequentially

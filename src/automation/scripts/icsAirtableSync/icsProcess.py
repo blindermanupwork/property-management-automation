@@ -130,16 +130,16 @@ file_handler = logging.FileHandler(LOG_PATH)
 file_handler.setLevel(logging.INFO)
 
 # Configure timezones: PST for logging, Arizona for Airtable data
-pst = pytz.timezone('US/Pacific')  # For logging
+mst = pytz.timezone('America/Phoenix')  # For logging
 arizona_tz = pytz.timezone('America/Phoenix')  # For Airtable timestamps
-class PSTFormatter(logging.Formatter):
+class MSTFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
-        dt = datetime.fromtimestamp(record.created, tz=pst)
+        dt = datetime.fromtimestamp(record.created, tz=mst)
         if datefmt:
             return dt.strftime(datefmt)
         return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
-file_formatter = PSTFormatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+file_formatter = MSTFormatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 

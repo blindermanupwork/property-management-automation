@@ -59,17 +59,17 @@ os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 # ── Timezone Configuration ──────────────────────────────────────────────────
 # PST for logging, Arizona for data/timestamps sent to external systems
-pst = pytz.timezone('US/Pacific')  # For logging
+mst = pytz.timezone('America/Phoenix')  # For logging
 arizona_tz = pytz.timezone('America/Phoenix')  # For data timestamps
-class PSTFormatter(logging.Formatter):
+class MSTFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
-        dt = datetime.datetime.fromtimestamp(record.created, tz=pst)
+        dt = datetime.datetime.fromtimestamp(record.created, tz=mst)
         if datefmt:
             return dt.strftime(datefmt)
         return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
 # Create formatter and handler
-formatter = PSTFormatter("%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+formatter = MSTFormatter("%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 

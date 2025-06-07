@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.1** - HCP MCP Server Enhancements & Automation Improvements
+**Version 2.2.2** - Service Line Custom Instructions Fix & HCP MCP Enhancements
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -140,7 +140,7 @@ nano config/environments/prod/.env
 
 ### 3. **Set Up Automation Schedules**
 ```bash
-# Development (every 30 minutes for testing)
+# Development (every 4 hours + 10 minutes after production)
 ./cron_setup_dev.sh
 
 # Production (every 4 hours for business operations)
@@ -176,10 +176,37 @@ nano config/environments/prod/.env
 - HousecallPro integration for service scheduling
 - Automatic job creation and status updates
 - Environment-specific API endpoints
-- **NEW**: Service Line Custom Instructions support
-  - Appends custom instructions to job service names
+- **Service Line Custom Instructions support**
+  - Custom instructions appear first in service name: `${customInstructions} - ${baseSvcName}`
   - Automatic truncation to 200 characters for compatibility
   - Full Unicode support (accents, special characters, emojis)
+  - Debug logging for troubleshooting service name construction
+
+### **6. HCP MCP Server Integration** (Enhanced v2.2.1)
+Claude AI can interact with HousecallPro data through enhanced MCP servers:
+
+#### **New Search Tools**:
+- `search_addresses`: Find customer addresses by street, city, customer name, or customer ID
+  - Example: `search_addresses(street="26208 N 43rd")`
+- `get_jobs_by_address`: Get jobs for specific addresses with filtering
+  - Example: `get_jobs_by_address(address_id="adr_123", work_status="completed")`
+
+#### **Advanced Analysis Tools**:
+- `analyze_laundry_jobs`: Analyze laundry-related services
+- `analyze_service_items`: Search for specific service items (towels, linens)
+- `analyze_customer_revenue`: Customer revenue and job statistics
+- `analyze_towel_usage`: Towel usage and cost analysis
+
+#### **Enhanced Error Handling**:
+- Specific error types with actionable suggestions
+- `CustomerHasNoJobs`: Suggests using list_jobs with customer_id filter
+- `CustomerNotFound`: Suggests verifying customer ID format
+- `InvalidPermissions`: Suggests checking API key permissions
+
+#### **Performance Improvements**:
+- Small responses (<500KB) include data directly
+- Enhanced cache search with JSONPath-like queries
+- Better handling of nested JSON structures
 
 ## 🔧 Configuration System
 
@@ -368,11 +395,12 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 
 ## 📝 Version History
 
-### **Version 2.0.0** (Current)
+### **Version 2.2.2** (Current)
+- ✅ **Service Line Custom Instructions Fix** (proper format: `${customInstructions} - ${baseSvcName}`)
+- ✅ **HCP MCP Server Enhancements** (new search tools, analysis capabilities)
 - ✅ **Complete environment separation** (dev/prod isolation)
 - ✅ **Enterprise security enhancements** (secure credential handling)
-- ✅ **Robust error handling** (enhanced validation & safety checks)
-- ✅ **Production-ready deployment** (cron jobs, logging, monitoring)
+- ✅ **Enhanced error handling with actionable suggestions**
 
 ### **Version 1.2.0** (Previous)
 - Project restructuring and timezone implementation
