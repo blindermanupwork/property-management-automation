@@ -190,9 +190,11 @@ async function createJob(req, res) {
       }
     }
     
-    // Add Service Line Custom Instructions if present
-    const serviceLineCustomInstructions = reservation.get('Service Line Custom Instructions');
-    console.log(`DEBUG: Service Line Custom Instructions: "${serviceLineCustomInstructions}"`);
+    // Add Custom Service Line Instructions if present
+    const serviceLineCustomInstructions = reservation.get('Custom Service Line Instructions');
+    console.log(`DEBUG: Custom Service Line Instructions: "${serviceLineCustomInstructions}"`);
+    console.log(`DEBUG: All reservation fields:`, Object.keys(reservation.fields || {}));
+    console.log(`DEBUG: Looking for field containing 'Custom':`, Object.keys(reservation.fields || {}).filter(k => k.includes('Custom')));
     
     if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
       // Limit custom instructions length to prevent issues
@@ -204,7 +206,7 @@ async function createJob(req, res) {
         console.log(`DEBUG: Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
       }
       
-      serviceName += ` - ${customInstructions}`;
+      serviceName = `${customInstructions} - ${serviceName}`;
       console.log(`DEBUG: Final service name with custom instructions: "${serviceName}"`);
       console.log(`DEBUG: Final service name length: ${serviceName.length} characters`);
     } else {
@@ -214,9 +216,11 @@ async function createJob(req, res) {
     // Check if job already exists
     let jobId = reservation.get('Service Job ID');
     let appointmentId = reservation.get('Service Appointment ID');
+    let currentJobStatus = reservation.get('Job Status');
+    let isJobCanceled = currentJobStatus && currentJobStatus.name === 'Canceled';
 
     if (!jobId) {
-      // Create job with COMPLETE data like original script
+      // Create new job with COMPLETE data like original script
       const jobData = {
         invoice_number: 0,
         customer_id: customerId,
@@ -324,6 +328,54 @@ async function createJob(req, res) {
         }
       } catch (error) {
         console.log('Failed to copy line items:', error.message);
+      }
+    } else if (isJobCanceled) {
+      // Job exists but is canceled - reschedule it
+      console.log(`Rescheduling canceled job ${jobId}`);
+      
+      // Update the job to scheduled status with new schedule
+      const updateData = {
+        work_status: 'scheduled',
+        schedule: {
+          scheduled_start: isoStart,
+          scheduled_end: isoEnd,
+          arrival_window: 0
+        },
+        assigned_employee_ids: [hcpConfig.employeeId]
+      };
+      
+      console.log('Updating canceled job with new schedule:', JSON.stringify(updateData, null, 2));
+      await hcpFetch(hcpConfig, `/jobs/${jobId}`, 'PATCH', updateData);
+      
+      // Give HCP time to process the update
+      await delay(700);
+      
+      // Try to get appointment ID for the rescheduled job
+      try {
+        const jobDetails = await hcpFetch(hcpConfig, `/jobs/${jobId}`);
+        
+        if (jobDetails.appointments && jobDetails.appointments.length > 0) {
+          appointmentId = jobDetails.appointments[0].id;
+          console.log('Found appointment ID after rescheduling:', appointmentId);
+        } else {
+          console.log('No appointments found after rescheduling, fetching separately...');
+          await delay(500);
+          const appointmentsResponse = await hcpFetch(hcpConfig, `/jobs/${jobId}/appointments`);
+          
+          if (appointmentsResponse.appointments && appointmentsResponse.appointments.length > 0) {
+            appointmentId = appointmentsResponse.appointments[0].id;
+            console.log('Found appointment ID via separate fetch after reschedule:', appointmentId);
+          }
+        }
+      } catch (error) {
+        console.log('Failed to fetch appointment ID after reschedule:', error.message);
+      }
+      
+      // Update appointment ID if found
+      if (appointmentId && !reservation.get('Service Appointment ID')) {
+        await base('Reservations').update(recordId, {
+          'Service Appointment ID': appointmentId
+        });
       }
     }
 
@@ -434,8 +486,8 @@ async function createJob(req, res) {
   }
 }
 
-// Delete job schedule
-async function deleteJob(req, res) {
+// Delete job schedule (only action supported by HCP API)
+async function cancelJob(req, res) {
   try {
     const { recordId } = req.params;
     
@@ -445,7 +497,7 @@ async function deleteJob(req, res) {
     const hcpConfig = getHCPConfig(environment);
     const base = new Airtable({ apiKey: airtableConfig.apiKey }).base(airtableConfig.baseId);
     
-    console.log(`Deleting job for record ${recordId} in ${environment} environment`);
+    console.log(`Deleting job schedule for record ${recordId} in ${environment} environment`);
     
     // Get reservation record
     const reservation = await base('Reservations').find(recordId);
@@ -461,64 +513,61 @@ async function deleteJob(req, res) {
     
     console.log(`Deleting HCP job schedule: ${jobId}`);
     
-    // Delete the job schedule in HCP
+    // First check if job has a schedule
+    let jobDetails;
+    try {
+      jobDetails = await hcpFetch(hcpConfig, `/jobs/${jobId}`);
+    } catch (error) {
+      console.error(`Failed to get job details: ${error.message}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to get job details from HCP'
+      });
+    }
+    
+    // Check if job has a schedule to delete
+    if (!jobDetails.schedule || !jobDetails.schedule.scheduled_start) {
+      console.warn(`Job ${jobId} has no schedule - nothing to delete`);
+      
+      // Update Airtable to reflect that there was no schedule
+      const updateFields = {
+        'Sync Details': `Job has no schedule to delete. Already unscheduled. ${getArizonaTime()}`,
+        'Sync Date and Time': getArizonaTime()
+      };
+      
+      await base('Reservations').update(recordId, updateFields);
+      
+      return res.json({
+        success: true,
+        recordId,
+        uid: reservationUID,
+        jobId,
+        message: 'Job has no schedule to delete - already unscheduled',
+        environment: environment
+      });
+    }
+    
+    // Delete the job schedule using the only working HCP API endpoint
     try {
       await hcpFetch(hcpConfig, `/jobs/${jobId}/schedule`, 'DELETE');
       console.log(`Successfully deleted schedule for job ${jobId}`);
-    } catch (hcpError) {
-      console.warn(`Failed to delete HCP schedule: ${hcpError.message}`);
-      // Continue with Airtable update even if HCP delete fails
+    } catch (error) {
+      console.error(`Failed to delete job schedule: ${error.message}`);
+      return res.status(400).json({
+        success: false,
+        error: `Failed to delete job schedule: ${error.message}`
+      });
     }
     
-    // Update Airtable fields to clear the job
+    // Update Airtable to reflect schedule deletion
     const updateFields = {
+      'Sync Details': `Job schedule deleted from HCP on ${getArizonaTime()}`,
+      'Sync Date and Time': getArizonaTime(),
       'Scheduled Service Time': null,
-      'Service Job ID': null,
-      'Service Appointment ID': null,
-      'Sync Details': `HCP schedule deleted on ${getArizonaTime()}`,
-      'Sync Date and Time': getArizonaTime()
+      'Service Appointment ID': null
     };
     
-    // Try to set status fields with error handling
-    try {
-      updateFields['Sync Status'] = { name: 'Not Created' };
-      updateFields['Service Type'] = { name: 'Canceled' };
-      updateFields['Job Status'] = { name: 'Canceled' };
-      
-      await base('Reservations').update(recordId, updateFields);
-    } catch (airtableError) {
-      console.warn(`Airtable field error:`, airtableError.message);
-      
-      // Update without problematic fields
-      const fallbackFields = { ...updateFields };
-      
-      if (airtableError.message.includes('Sync Status')) {
-        delete fallbackFields['Sync Status'];
-      }
-      if (airtableError.message.includes('Service Type')) {
-        delete fallbackFields['Service Type'];
-      }
-      if (airtableError.message.includes('Job Status')) {
-        delete fallbackFields['Job Status'];
-      }
-      
-      try {
-        await base('Reservations').update(recordId, fallbackFields);
-      } catch (secondError) {
-        console.warn(`Second Airtable error, updating with minimal fields:`, secondError.message);
-        
-        // Update only essential fields
-        const minimalFields = {
-          'Sync Details': updateFields['Sync Details'],
-          'Sync Date and Time': updateFields['Sync Date and Time'],
-          'Scheduled Service Time': null,
-          'Service Job ID': null,
-          'Service Appointment ID': null
-        };
-        
-        await base('Reservations').update(recordId, minimalFields);
-      }
-    }
+    await base('Reservations').update(recordId, updateFields);
     
     res.json({
       success: true,
@@ -530,7 +579,7 @@ async function deleteJob(req, res) {
     });
     
   } catch (error) {
-    console.error('Error deleting job:', error);
+    console.error('Error deleting job schedule:', error);
     res.status(400).json({
       success: false,
       error: error.message
@@ -540,5 +589,5 @@ async function deleteJob(req, res) {
 
 module.exports = {
   createJob,
-  deleteJob
+  cancelJob
 };

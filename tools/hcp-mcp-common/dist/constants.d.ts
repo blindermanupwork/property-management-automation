@@ -29,7 +29,7 @@ export declare const CACHE_DEFAULTS: {
         readonly JOBS: 10;
         readonly CUSTOMERS: 5;
         readonly LINE_ITEMS: 15;
-        readonly CHARACTERS: 1500;
+        readonly CHARACTERS: 50000;
     };
     readonly ANALYSIS_CACHE_DIR: "analysis";
     readonly FILE_PERMISSIONS: 384;

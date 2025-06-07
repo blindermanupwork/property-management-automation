@@ -35,6 +35,7 @@ Thumbs.db
 src/automation/scripts/CSV_done/
 src/automation/scripts/CSV_process/
 backups/
+archive/
 
 # Node.js dependencies
 node_modules/

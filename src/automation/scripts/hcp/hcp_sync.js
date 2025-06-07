@@ -152,6 +152,7 @@ async function hcpFetch(path, method = 'GET', body) {
   }
 }
 
+// Enhanced findNextReservation with consistent API handler logic
 function findNextReservation(propertyID, checkOutDate, allRecords) {
   const propertyReservations = allRecords.filter(record => {
     const recordPropLinks = record.fields['Property ID'] || [];
@@ -225,30 +226,45 @@ async function createJob(rec, finalTime, sameDayTurnover, allRecords) {
   
   const propertyName = propRec.fields['Property Name'] || propId;
   
-  // Build service name based on service type and date logic
-  let svcName;
+  // Enhanced service name generation logic - matches API handler logic
+  let baseSvcName;
   
   if (sameDayTurnover) {
-    svcName = `${serviceType} STR SAME DAY`;
-    console.log(`Same-day ${serviceType} -- Setting service name to: ${svcName}`);
+    baseSvcName = `${serviceType} STR SAME DAY`;
+    console.log(`Same-day ${serviceType} -- Setting base service name to: ${baseSvcName}`);
   } else {
     const checkOutDate = rec.fields['Check-out Date'];
-    console.log(`Finding next reservation for ${propertyName}`);
-    const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
     
-    if (nextReservation) {
-      const nextCheckInDate = nextReservation.fields['Check-in Date'];
-      const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
-      svcName = `${serviceType} STR Next Guest ${fmtDate(nextCheckInDate)}`;
-      console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting service name to: ${svcName}`);
+    // Only do next guest lookup for Turnover services like API handler
+    if (serviceType === 'Turnover' && checkOutDate) {
+      console.log(`Finding next reservation for ${propertyName}`);
+      const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+      
+      if (nextReservation) {
+        const nextCheckInDate = nextReservation.fields['Check-in Date'];
+        const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
+        const nextCheckIn = new Date(nextCheckInDate);
+        const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
+        const day = nextCheckIn.getDate();
+        baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+        console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting base service name to: ${baseSvcName}`);
+      } else {
+        baseSvcName = `${serviceType} STR Next Guest Unknown`;
+        console.log(`No Res UID found -- Setting base service name to: ${baseSvcName}`);
+      }
     } else {
-      svcName = `${serviceType} STR Next Guest Unknown`;
-      console.log(`No Res UID found -- Setting service name to: ${svcName}`);
+      // For non-Turnover services or when no checkout date, use fallback
+      baseSvcName = `${serviceType} STR Next Guest Unknown`;
+      console.log(`Non-turnover service or no checkout date -- Setting base service name to: ${baseSvcName}`);
     }
   }
   
-  // Append Service Line Custom Instructions if present
+  // Build final service name with Service Line Custom Instructions first
+  let svcName;
   const serviceLineCustomInstructions = rec.fields['Service Line Custom Instructions'];
+  console.log(`DEBUG: baseSvcName = "${baseSvcName}"`);
+  console.log(`DEBUG: serviceLineCustomInstructions = "${serviceLineCustomInstructions}"`);
+  
   if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
     // Limit custom instructions length to prevent issues
     let customInstructions = serviceLineCustomInstructions.trim();
@@ -259,10 +275,15 @@ async function createJob(rec, finalTime, sameDayTurnover, allRecords) {
       console.log(`Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
     }
     
-    svcName += ` - ${customInstructions}`;
-    console.log(`Added custom instructions -- Final service name: ${svcName}`);
+    console.log(`DEBUG: customInstructions = "${customInstructions}"`);
+    svcName = `${customInstructions} - ${baseSvcName}`;
+    console.log(`Added custom instructions first -- Final service name: ${svcName}`);
     console.log(`Final service name length: ${svcName.length} characters`);
+  } else {
+    svcName = baseSvcName;
+    console.log(`No custom instructions -- Final service name: ${svcName}`);
   }
+  console.log(`DEBUG: FINAL svcName = "${svcName}"`);
 
   const custLinks = propRec.fields['HCP Customer ID'] || [];
   let custId = '';
@@ -291,58 +312,61 @@ async function createJob(rec, finalTime, sameDayTurnover, allRecords) {
     throw new Error('Property missing HCP Customer ID or Address ID');
   }
 
-  // Get template ID based on service type - NO FALLBACKS
-  let tmplId;
+  // Enhanced template and job type handling - matches API handler logic
+  let tmplId, jobTypeId;
+  
+  // Normalize service type to match API handler logic
+  let normalizedServiceType;
   if (serviceType === 'Return Laundry') {
+    normalizedServiceType = 'Return Laundry';
     tmplId = propRec.fields['Return Laundry Job Template ID'];
+    jobTypeId = "jbt_434c62f58d154eb4a968531702b96e8e"; // Return Laundry job type
   } else if (serviceType === 'Inspection') {
+    normalizedServiceType = 'Inspection';
     tmplId = propRec.fields['Inspection Job Template ID'];
+    jobTypeId = "jbt_b5d9457caf694beab5f350d42de3e57f"; // Inspection job type
   } else {
+    // Default to Turnover for any other service type
+    normalizedServiceType = 'Turnover';
     tmplId = propRec.fields['Turnover Job Template ID'];
+    jobTypeId = "jbt_20319ca089124b00af1b8b40150424ed"; // Turnover job type
   }
+  
+  // Update serviceType to use normalized value for consistency
+  serviceType = normalizedServiceType;
   
   // If template doesn't exist, skip job creation
   if (!tmplId) {
-    console.log(`⚠ No template found for ${serviceType} service type - skipping job creation`);
+    console.log(`⚠ No ${serviceType} template ID found for property - skipping job creation`);
     return null;
   }
   
-  console.log(`Using ${serviceType} template for ${reservationUID}`);
+  console.log(`Using ${serviceType} template ${tmplId} and job type ${jobTypeId} for ${reservationUID}`);
   
   // Check for required IDs
   if (!custId || !addrId) {
     throw new Error('Property missing HCP Customer ID or Address ID');
   }
-  
-  // Set job type ID for every service type - always include it
-  let jobTypeId;
-  if (serviceType === 'Return Laundry') {
-    jobTypeId = "jbt_434c62f58d154eb4a968531702b96e8e";
-    console.log(`Using Return Laundry job type for ${reservationUID}`);
-  } else if (serviceType === 'Inspection') {
-    jobTypeId = "jbt_b5d9457caf694beab5f350d42de3e57f";
-    console.log(`Using Inspection job type for ${reservationUID}`);
-  } else {
-    // Always set Turnover job type for other services
-    jobTypeId = "jbt_20319ca089124b00af1b8b40150424ed";
-    console.log(`Using Turnover job type for ${serviceType}`);
-  }
 
-  // Create job
+  // Create job with enhanced data structure - matches API handler
   const isoStart = finalTime.toISOString();
   const isoEnd   = new Date(finalTime.getTime() + 3600*1000).toISOString();
 
   await delay(CFG.DELAY_MS);
 
-  const job = await hcpFetch('/jobs', 'POST', {
+  const jobData = {
     invoice_number        : 0,
     customer_id           : custId,
     address_id            : addrId,
     schedule              : { scheduled_start: isoStart, scheduled_end: isoEnd, arrival_window: 0 },
     assigned_employee_ids : CFG.ASSIGNED_TECHS,
     line_items            : [],
-    job_fields            : jobTypeId ? { job_type_id: jobTypeId } : {}
-  });
+    job_fields            : { job_type_id: jobTypeId }
+  };
+  
+  console.log('Creating HCP job with data:', JSON.stringify(jobData, null, 2));
+  const job = await hcpFetch('/jobs', 'POST', jobData);
+  console.log('Created job ID:', job.id);
 
   await delay(CFG.DELAY_MS);
 
@@ -351,20 +375,50 @@ async function createJob(rec, finalTime, sameDayTurnover, allRecords) {
   
   await delay(CFG.DELAY_MS);
   
-  // Update line items
-  await hcpFetch(`/jobs/${job.id}/line_items/bulk_update`, 'PUT', {
-    line_items: tmplItems.map((it, i) => ({
-      name              : i===0? svcName : it.name,
-      description       : it.description || '',
-      unit_price        : it.unit_price,
-      unit_cost         : it.unit_cost,
-      quantity          : it.quantity,
-      kind              : it.kind,
-      taxable           : it.taxable,
-      service_item_id   : it.service_item_id   || null,
-      service_item_type : it.service_item_type || null
-    }))
-  });
+  // Enhanced line items update with error handling - matches API handler
+  const lineItems = tmplItems.map((it, i) => ({
+    name              : i===0? svcName : it.name,
+    description       : it.description || '',
+    unit_price        : it.unit_price,
+    unit_cost         : it.unit_cost,
+    quantity          : it.quantity,
+    kind              : it.kind,
+    taxable           : it.taxable,
+    service_item_id   : it.service_item_id   || null,
+    service_item_type : it.service_item_type || null
+  }));
+  
+  if (lineItems.length > 0) {
+    console.log(`DEBUG: Updating ${lineItems.length} line items for job ${job.id}`);
+    console.log(`DEBUG: First line item name length: ${lineItems[0].name.length} characters`);
+    console.log(`DEBUG: First line item name: "${lineItems[0].name.substring(0, 100)}${lineItems[0].name.length > 100 ? '...' : ''}"`);
+    
+    try {
+      await hcpFetch(`/jobs/${job.id}/line_items/bulk_update`, 'PUT', {
+        line_items: lineItems
+      });
+      console.log('Successfully copied', lineItems.length, 'line items from template');
+    } catch (updateError) {
+      console.error(`ERROR updating line items: ${updateError.message}`);
+      // Check if it's a length issue
+      if (lineItems[0].name.length > 255) {
+        console.log(`WARNING: Service name is ${lineItems[0].name.length} characters, may exceed HCP limit`);
+        // Try with truncated name
+        const truncatedName = lineItems[0].name.substring(0, 250) + '...';
+        lineItems[0].name = truncatedName;
+        console.log(`Retrying with truncated name: "${truncatedName}"`);
+        
+        try {
+          await hcpFetch(`/jobs/${job.id}/line_items/bulk_update`, 'PUT', {
+            line_items: lineItems
+          });
+          console.log('Successfully updated line items with truncated name');
+        } catch (retryError) {
+          console.error(`ERROR on retry: ${retryError.message}`);
+        }
+      }
+    }
+  }
 
   // NEW: Fetch job details to get appointment information
   await delay(CFG.DELAY_MS);

@@ -95,17 +95,17 @@ for h in logger.handlers[:]:                    # remove old handlers
 file_handler   = logging.FileHandler(LOG_PATH, encoding="utf-8")
 file_handler.setLevel(logging.INFO)
 
-# Configure timezones: PST for logging, Arizona for Airtable data
-pst = pytz.timezone('US/Pacific')  # For logging
+# Configure timezones: MST for logging, Arizona for Airtable data
+mst = pytz.timezone('America/Phoenix')  # For logging
 arizona_tz = pytz.timezone('America/Phoenix')  # For Airtable timestamps
-class PSTFormatter(logging.Formatter):
+class MSTFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
-        dt = datetime.fromtimestamp(record.created, tz=pst)
+        dt = datetime.fromtimestamp(record.created, tz=mst)
         if datefmt:
             return dt.strftime(datefmt)
         return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
-file_handler.setFormatter(PSTFormatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+file_handler.setFormatter(MSTFormatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
 logger.addHandler(file_handler)
 
 # 2️⃣  CONSOLE LOGGER  – wrap stdout in a UTF-8 TextIOWrapper
@@ -412,7 +412,7 @@ def parse_row(row, hdr_map):
         "entry_source": None,
     }
 
-def process_csv_files(property_lookup):
+def process_csv_files(property_lookup, guest_overrides=None):
     """Process all CSV files and return parsed reservations"""
     all_reservations = []
     csv_files = [f for f in os.listdir(PROCESS_DIR) if f.lower().endswith(".csv")]
@@ -421,6 +421,9 @@ def process_csv_files(property_lookup):
     if not csv_files:
         logging.info(f"No CSV files to process in {PROCESS_DIR}")
         return all_reservations, processed_files
+    
+    if guest_overrides is None:
+        guest_overrides = {}
     
     for fname in sorted(csv_files):
         path = os.path.join(PROCESS_DIR, fname)
@@ -477,6 +480,23 @@ def process_csv_files(property_lookup):
                     if pid is None:
                         missing_props.append(res["uid"])
                         continue
+                    
+                    # Check for property owner overrides
+                    if guest_overrides and supplier == "itrip":
+                        # Get property owner name from the raw row
+                        owner_name = ""
+                        for col in raw:
+                            if col.lower().strip() in ["property owner", "owner"]:
+                                owner_name = raw[col].strip().lower()
+                                break
+                        
+                        # Check if this property owner has an override for this property
+                        for pattern in guest_overrides:
+                            if pattern[0] == pid and pattern[1] in owner_name:
+                                override_pid = guest_overrides[pattern]
+                                logging.info(f"Applying property owner override for '{owner_name}' on property {pid} -> {override_pid}")
+                                pid = override_pid
+                                break
                     
                     res["property_id"] = pid
                     parsed_reservations.append(res)
@@ -573,6 +593,38 @@ def build_property_lookup(properties_table):
     
     logging.info(f"Loaded {len(property_lookup)} property mappings")
     return property_lookup, id_to_name
+
+def build_guest_overrides(overrides_table):
+    """Build guest name -> property override mappings"""
+    overrides = {}
+    
+    try:
+        # Fetch all active overrides
+        formula = "{Active} = TRUE()"
+        records = overrides_table.all(
+            formula=formula,
+            fields=["Guest Name Pattern", "Original Property", "Override Property"]
+        )
+        
+        for rec in records:
+            fields = rec["fields"]
+            pattern = fields.get("Guest Name Pattern", "").strip().lower()
+            original_props = fields.get("Original Property", [])
+            override_props = fields.get("Override Property", [])
+            
+            if pattern and original_props and override_props:
+                # Store mapping: (original_property_id, guest_pattern) -> override_property_id
+                for orig_id in original_props:
+                    key = (orig_id, pattern)
+                    overrides[key] = override_props[0]  # Use first override property
+                    logging.debug(f"Loaded override: guest pattern '{pattern}' on property {orig_id} -> {override_props[0]}")
+        
+        logging.info(f"Loaded {len(overrides)} guest override mappings")
+    except Exception as e:
+        logging.warning(f"Could not load guest overrides: {e}")
+        # Return empty dict if table doesn't exist or has issues
+    
+    return overrides
 
 def fetch_all_reservations(table, feed_urls):
     """
@@ -1367,6 +1419,14 @@ def main():
         reservations_table = api.table(base_id, Config.get_airtable_table_name('reservations'))
         properties_table = api.table(base_id, Config.get_airtable_table_name('properties'))
         
+        # Try to load guest overrides table (may not exist in all environments)
+        guest_overrides = {}
+        try:
+            overrides_table = api.table(base_id, "Property Guest Overrides")
+            guest_overrides = build_guest_overrides(overrides_table)
+        except Exception as e:
+            logging.info("Property Guest Overrides table not found or accessible - proceeding without overrides")
+        
         # ————— Evolve “Tab 2” CSV exports —————
         guest_to_prop = build_guest_to_property_map(properties_table)
 
@@ -1399,7 +1459,7 @@ def main():
         property_lookup, id_to_name = build_property_lookup(properties_table)
         
         # 2. Process all CSV files
-        all_reservations, processed_paths = process_csv_files(property_lookup)
+        all_reservations, processed_paths = process_csv_files(property_lookup, guest_overrides)
         
         if not all_reservations:
             logging.info("No valid reservations found in any CSV files")

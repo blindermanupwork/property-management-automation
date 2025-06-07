@@ -144,54 +144,120 @@ async function syncMultipleJobs() {
         const propRec = await base('Properties').find(propId);
         const propertyName = propRec.fields['Property Name'] || propId;
         
-        // Build service name based on service type and date logic
-        let svcName;
+        // Enhanced service name generation logic - matches API handler logic
+        let baseSvcName;
         
         if (sameDayTurnover) {
-          svcName = `${serviceType} STR SAME DAY`;
-          console.log(`Same-day ${serviceType} -- Setting service name to: ${svcName}`);
+          baseSvcName = `${serviceType} STR SAME DAY`;
+          console.log(`Same-day ${serviceType} -- Setting base service name to: ${baseSvcName}`);
         } else {
           const checkOutDate = rec.fields['Check-out Date'];
-          console.log(`Finding next reservation for ${propertyName}`);
-          const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
           
-          if (nextReservation) {
-            const nextCheckInDate = nextReservation.fields['Check-in Date'];
-            const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
-            svcName = `${serviceType} STR Next Guest ${fmtDate(nextCheckInDate)}`;
-            console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting service name to: ${svcName}`);
+          // Only do next guest lookup for Turnover services like API handler
+          if (serviceType === 'Turnover' && checkOutDate) {
+            console.log(`Finding next reservation for ${propertyName}`);
+            const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+            
+            if (nextReservation) {
+              const nextCheckInDate = nextReservation.fields['Check-in Date'];
+              const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
+              const nextCheckIn = new Date(nextCheckInDate);
+              const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
+              const day = nextCheckIn.getDate();
+              baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+              console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting base service name to: ${baseSvcName}`);
+            } else {
+              baseSvcName = `${serviceType} STR Next Guest Unknown`;
+              console.log(`No Res UID found -- Setting base service name to: ${baseSvcName}`);
+            }
           } else {
-            svcName = `${serviceType} STR Next Guest Unknown`;
-            console.log(`No Res UID found -- Setting service name to: ${svcName}`);
+            // For non-Turnover services or when no checkout date, use fallback
+            baseSvcName = `${serviceType} STR Next Guest Unknown`;
+            console.log(`Non-turnover service or no checkout date -- Setting base service name to: ${baseSvcName}`);
           }
         }
         
-        // Append Service Line Custom Instructions if present
-        const serviceLineCustomInstructions = rec.fields['Service Line Custom Instructions'];
+        // Build final service name with Service Line Custom Instructions first
+        let svcName;
+        const serviceLineCustomInstructions = rec.fields['Custom Service Line Instructions'];
+        console.log(`DEBUG: baseSvcName = "${baseSvcName}"`);
+        console.log(`DEBUG: serviceLineCustomInstructions = "${serviceLineCustomInstructions}"`);
+        
+        // Check for long-term guest (2+ weeks) and modify service name accordingly
+        let isLongTermGuest = false;
+        const checkInDate = rec.fields['Check-in Date'];
+        const checkOutDate = rec.fields['Check-out Date'];
+        
+        if (checkInDate && checkOutDate) {
+          const checkIn = new Date(checkInDate);
+          const checkOut = new Date(checkOutDate);
+          const stayDurationDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+          
+          if (stayDurationDays >= 14) {
+            isLongTermGuest = true;
+            console.log(`DEBUG: Long-term guest detected - ${stayDurationDays} days stay`);
+          }
+        }
+        
         if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
           // Limit custom instructions length to prevent issues
           let customInstructions = serviceLineCustomInstructions.trim();
-          const maxCustomLength = 200; // Leave room for base service name
+          const maxCustomLength = 200; // Leave room for base service name and long-term prefix
           
           if (customInstructions.length > maxCustomLength) {
             customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
             console.log(`Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
           }
           
-          svcName += ` - ${customInstructions}`;
-          console.log(`Added custom instructions -- Final service name: ${svcName}`);
+          console.log(`DEBUG: customInstructions = "${customInstructions}"`);
+          
+          if (isLongTermGuest) {
+            svcName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
+            console.log(`Added long-term guest prefix with custom instructions -- Final service name: ${svcName}`);
+          } else {
+            svcName = `${customInstructions} - ${baseSvcName}`;
+            console.log(`Added custom instructions -- Final service name: ${svcName}`);
+          }
           console.log(`Final service name length: ${svcName.length} characters`);
+        } else {
+          if (isLongTermGuest) {
+            svcName = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
+            console.log(`Added long-term guest prefix (no custom instructions) -- Final service name: ${svcName}`);
+          } else {
+            svcName = baseSvcName;
+            console.log(`No custom instructions -- Final service name: ${svcName}`);
+          }
+        }
+        console.log(`DEBUG: FINAL svcName = "${svcName}"`);
+        
+        // Enhanced HCP ID retrieval - matches API handler logic
+        const custLinks = propRec.fields['HCP Customer ID'] || [];
+        let custId = '';
+        if (custLinks.length) {
+          // Get the Airtable record ID from the Properties table lookup field
+          const custRecordId = typeof custLinks[0] === 'object' ? custLinks[0].id : custLinks[0];
+          
+          try {
+            // Fetch the linked record from the Customers table
+            const custRecord = await base('Customers').find(custRecordId);
+            
+            // Get the actual HCP Customer ID field value from the Customers record
+            custId = custRecord.fields['HCP Customer ID'];
+            
+            console.log(`Airtable record ID: ${custRecordId}, HCP Customer ID: ${custId}`);
+          } catch (error) {
+            console.log(`⚠️  Error fetching customer record: ${error.message}`);
+            errorCount++;
+            continue;
+          }
         }
         
-        // Get HCP IDs
-        const custLinks = propRec.fields['HCP Customer ID'] || [];
-        if (!custLinks.length) {
+        if (!custId) {
           console.log(`⚠️  Skipping - No HCP Customer ID`);
           errorCount++;
           continue;
         }
         
-        const custId = custLinks[0];
         const addrId = propRec.fields['HCP Address ID'];
         
         if (!addrId) {
@@ -220,16 +286,34 @@ async function syncMultipleJobs() {
         console.log(`   Employee: ${HCP_EMPLOYEE_ID}`);
         console.log(`   Scheduled: ${finalTime}`);
         
-        // Create HCP job
+        // Enhanced job creation with job type IDs - matches API handler
+        // Define job type IDs for DEV environment
+        let jobTypeId;
+        if (serviceType === 'Return Laundry') {
+          jobTypeId = "jbt_01d29f7695404f5bb57ed7e8c5708afc"; // Return Laundry job type
+        } else if (serviceType === 'Inspection') {
+          jobTypeId = "jbt_7234d0af0a734f10bf155d2238cf92b7"; // Inspection job type
+        } else {
+          jobTypeId = "jbt_3744a354599d4d2fa54041a4cda4bd13"; // Turnover job type
+        }
+        
+        console.log(`Using ${serviceType} job type ${jobTypeId}`);
+        
+        // Create HCP job with enhanced data structure
         const jobBody = {
+          invoice_number: 0,
           customer_id: custId,
           address_id: addrId,
-          employee_ids: [HCP_EMPLOYEE_ID],
+          assigned_employee_ids: [HCP_EMPLOYEE_ID],
           schedule: {
             scheduled_start: finalTime,
-            scheduled_end: new Date(new Date(finalTime).getTime() + 3 * 60 * 60 * 1000).toISOString()
+            scheduled_end: new Date(new Date(finalTime).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour duration like API
+            arrival_window: 0
           },
-          work_status: 'scheduled'
+          line_items: [],
+          job_fields: {
+            job_type_id: jobTypeId
+          }
         };
         
         const jobResp = await hcp('/jobs', 'POST', jobBody);
@@ -237,7 +321,7 @@ async function syncMultipleJobs() {
         
         console.log(`   ✅ Created job: ${jobId}`);
         
-        // Copy template line items
+        // Enhanced line items handling with error recovery - matches API handler
         const templateItems = await hcp(`/jobs/${templateId}/line_items`);
         const lineItems = (templateItems.data || []).map((item, i) => ({
           name: i === 0 ? svcName : item.name,
@@ -247,23 +331,83 @@ async function syncMultipleJobs() {
           quantity: item.quantity,
           kind: item.kind,
           taxable: item.taxable,
-          service_item_id: item.service_item_id || null
+          service_item_id: item.service_item_id || null,
+          service_item_type: item.service_item_type || null
         }));
         
         if (lineItems.length > 0) {
-          await hcp(`/jobs/${jobId}/line_items/bulk_update`, 'PUT', { line_items: lineItems });
-          console.log(`   ✅ Updated ${lineItems.length} line items`);
+          console.log(`   DEBUG: Updating ${lineItems.length} line items for job ${jobId}`);
+          console.log(`   DEBUG: First line item name length: ${lineItems[0].name.length} characters`);
+          console.log(`   DEBUG: First line item name: "${lineItems[0].name.substring(0, 100)}${lineItems[0].name.length > 100 ? '...' : ''}"`);
+          
+          try {
+            await hcp(`/jobs/${jobId}/line_items/bulk_update`, 'PUT', { line_items: lineItems });
+            console.log(`   ✅ Successfully copied ${lineItems.length} line items from template`);
+          } catch (updateError) {
+            console.error(`   ERROR updating line items: ${updateError.message}`);
+            // Check if it's a length issue
+            if (lineItems[0].name.length > 255) {
+              console.log(`   WARNING: Service name is ${lineItems[0].name.length} characters, may exceed HCP limit`);
+              // Try with truncated name
+              const truncatedName = lineItems[0].name.substring(0, 250) + '...';
+              lineItems[0].name = truncatedName;
+              console.log(`   Retrying with truncated name: "${truncatedName}"`);
+              
+              try {
+                await hcp(`/jobs/${jobId}/line_items/bulk_update`, 'PUT', { line_items: lineItems });
+                console.log(`   ✅ Successfully updated line items with truncated name`);
+              } catch (retryError) {
+                console.error(`   ERROR on retry: ${retryError.message}`);
+              }
+            }
+          }
         }
         
-        // Update Airtable
-        await base('Reservations').update(rec.id, {
+        // Enhanced Airtable update with appointment ID capture - matches API handler
+        let appointmentId = null;
+        
+        // Give HCP time to create the appointment
+        await new Promise(resolve => setTimeout(resolve, 700));
+        
+        // Try to get appointment ID
+        try {
+          const jobDetails = await hcp(`/jobs/${jobId}`);
+          
+          if (jobDetails.appointments && jobDetails.appointments.length > 0) {
+            appointmentId = jobDetails.appointments[0].id;
+            console.log(`   📅 Found appointment ID: ${appointmentId}`);
+          } else {
+            console.log(`   📅 No appointments in job details, fetching separately...`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const appointmentsResponse = await hcp(`/jobs/${jobId}/appointments`);
+            
+            if (appointmentsResponse.appointments && appointmentsResponse.appointments.length > 0) {
+              appointmentId = appointmentsResponse.appointments[0].id;
+              console.log(`   📅 Found appointment ID via separate fetch: ${appointmentId}`);
+            } else {
+              console.log(`   ⚠ No appointment found for job ${jobId}`);
+            }
+          }
+        } catch (error) {
+          console.log(`   ⚠ Failed to fetch appointment ID: ${error.message}`);
+        }
+        
+        // Update Airtable with enhanced fields
+        const updateFields = {
           'Service Job ID': jobId,
           'Job Creation Time': new Date().toISOString(),
           'Job Status': 'Scheduled',
           'Sync Status': 'Synced',
           'Sync Date and Time': new Date().toISOString(),
           'Sync Details': `Created DEV job ${jobId} with service name: ${svcName}`
-        });
+        };
+        
+        if (appointmentId) {
+          updateFields['Service Appointment ID'] = appointmentId;
+        }
+        
+        await base('Reservations').update(rec.id, updateFields);
         
         console.log(`   ✅ Updated Airtable record`);
         successCount++;

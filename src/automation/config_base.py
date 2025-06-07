@@ -161,8 +161,8 @@ class ConfigBase:
         
     @property
     def log_timezone(self) -> pytz.timezone:
-        """Get timezone for logging (PST)"""
-        return pytz.timezone('America/Los_Angeles')
+        """Get timezone for logging (MST)"""
+        return pytz.timezone('America/Phoenix')
         
     def get_current_time(self) -> datetime:
         """Get current time in application timezone"""

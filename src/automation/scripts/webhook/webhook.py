@@ -17,17 +17,17 @@ import logging
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from src.automation.config_wrapper import Config
 
-# ── Configure logging with PST timezone ──────────────────────────────
-# PST timezone for logging
-pst_log = pytz.timezone('US/Pacific')
-class PSTFormatter(logging.Formatter):
+# ── Configure logging with MST timezone ──────────────────────────────
+# MST timezone for logging
+mst_log = pytz.timezone('America/Phoenix')
+class MSTFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
-        dt = datetime.fromtimestamp(record.created, tz=pst_log)
+        dt = datetime.fromtimestamp(record.created, tz=mst_log)
         if datefmt:
             return dt.strftime(datefmt)
         return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
-# Configure logger with PST timestamps
+# Configure logger with MST timestamps
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -35,14 +35,14 @@ logger.setLevel(logging.INFO)
 for handler in logger.handlers[:]:
     logger.removeHandler(handler)
 
-# File handler with PST
+# File handler with MST
 file_handler = logging.FileHandler(str(Config.get_logs_dir() / "webhook.log"))
-file_handler.setFormatter(PSTFormatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+file_handler.setFormatter(MSTFormatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
 logger.addHandler(file_handler)
 
-# Console handler with PST
+# Console handler with MST
 console_handler = logging.StreamHandler()
-console_handler.setFormatter(PSTFormatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+console_handler.setFormatter(MSTFormatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
 logger.addHandler(console_handler)
 
 # ── Configuration ───────────────────────────────────────────────────────────
@@ -631,7 +631,7 @@ def health_check():
         
         return jsonify({
             "status": "healthy",
-            "timestamp": datetime.now(pst_log).isoformat(),
+            "timestamp": datetime.now(mst_log).isoformat(),
             "version": "2.0.0",
             "features": {
                 "rate_limiting": RATE_LIMITING_ENABLED,
@@ -643,7 +643,7 @@ def health_check():
         logger.error(f"Health check failed: {e}")
         return jsonify({
             "status": "unhealthy",
-            "timestamp": datetime.now(pst_log).isoformat(),
+            "timestamp": datetime.now(mst_log).isoformat(),
             "error": str(e)
         }), 500
 

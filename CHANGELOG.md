@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🔧 Fixes
+- **Service Line Custom Instructions Format**: Fixed service name construction to properly concatenate custom instructions with base service name
+  - Now correctly formats as: `${customInstructions} - ${baseSvcName}` when custom instructions are present
+  - Fixed issue where only custom instructions were showing without the base service name
+  - Added debug logging to help diagnose service name construction issues
+  - Updated all HCP sync scripts (main, dev, prod) with the fix
+
 ## [2.2.1] - 2025-06-04
 
 ### 🚀 **HCP MCP Server Enhancements**

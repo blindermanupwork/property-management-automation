@@ -132,11 +132,40 @@ def run_hcp_automation(config):
     try:
         print("🔧 Running HCP service job sync...")
         
-        # HCP sync is handled by JavaScript API
-        # This is a placeholder for future Python implementation
-        time.sleep(1)  # Simulate processing
+        # Run the Node.js HCP sync script
+        hcp_script = config.get_script_path("hcp", "hcp_sync.js")
+        if not hcp_script.exists():
+            return {"success": False, "message": "HCP sync script not found"}
         
-        return {"success": True, "message": "HCP service job sync completed successfully"}
+        # Set environment variables for the script
+        env = os.environ.copy()
+        env['ENVIRONMENT'] = 'development' if not config.is_production else 'production'
+        
+        # Pass Airtable credentials
+        if config.is_production:
+            env['PROD_AIRTABLE_API_KEY'] = config.get_airtable_api_key()
+            env['PROD_AIRTABLE_BASE_ID'] = config.get_airtable_base_id()
+        else:
+            env['DEV_AIRTABLE_API_KEY'] = config.get_airtable_api_key()
+            env['DEV_AIRTABLE_BASE_ID'] = config.get_airtable_base_id()
+        
+        # Pass HCP token - use environment-specific token
+        if config.is_production:
+            hcp_token = config.get('PROD_HCP_TOKEN')
+        else:
+            hcp_token = config.get('DEV_HCP_TOKEN')
+        
+        if hcp_token:
+            env['HCP_TOKEN'] = hcp_token
+        
+        result = subprocess.run([
+            "node", str(hcp_script.absolute())
+        ], cwd=str(hcp_script.parent.absolute()), env=env)
+        
+        if result.returncode == 0:
+            return {"success": True, "message": "HCP service job sync completed successfully"}
+        else:
+            return {"success": False, "message": "HCP service job sync failed"}
         
     except Exception as e:
         return {"success": False, "message": f"HCP service job error: {str(e)}"}

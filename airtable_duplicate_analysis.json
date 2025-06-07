@@ -1,0 +1,302 @@
+{
+  "summary": {
+    "totalRecordsProcessed": 30,
+    "totalUniqueUIDs": 7,
+    "totalDuplicateRecords": 25,
+    "duplicateGroupsCount": 7
+  },
+  "duplicateGroups": {
+    "4336182": {
+      "reservationUID": "4336182",
+      "duplicateCount": 4,
+      "records": [
+        {
+          "recordId": "rec4jHxpuqaIZv0f0",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-06-05",
+          "checkOutDate": "2025-06-13",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recB1R7yY1gGY0EzR",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-06-05",
+          "checkOutDate": "2025-06-13",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recZ4XIUvDPWL5D1f",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-06-05",
+          "checkOutDate": "2025-06-13",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recCOukchQrr60BlY",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-06-05",
+          "checkOutDate": "2025-06-13",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        }
+      ]
+    },
+    "4386236": {
+      "reservationUID": "4386236",
+      "duplicateCount": 4,
+      "records": [
+        {
+          "recordId": "recnqTxQPHsEmQqQ2",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-28",
+          "checkOutDate": "2025-06-04",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recivmVSroCtgGRs5",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-28",
+          "checkOutDate": "2025-06-04",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recLXomyJVYefqrew",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-28",
+          "checkOutDate": "2025-06-04",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recZJzFAB0pmmC39f",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-05-28",
+          "checkOutDate": "2025-06-04",
+          "propertyAddress": "16628 N 54th St, Scottsdale, AZ 85254",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        }
+      ]
+    },
+    "4425086": {
+      "reservationUID": "4425086",
+      "duplicateCount": 4,
+      "records": [
+        {
+          "recordId": "reclmegsx8PU6fqAk",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-06-09",
+          "checkOutDate": "2025-06-14",
+          "propertyAddress": "8334 E Whispering Wind Dr, Scottsdale, AZ 85255",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "rec5fDwWv5XPNXSGz",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-06-09",
+          "checkOutDate": "2025-06-14",
+          "propertyAddress": "8334 E Whispering Wind Dr, Scottsdale, AZ 85255",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "rec1EyNDqO5GgH4oQ",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-06-09",
+          "checkOutDate": "2025-06-14",
+          "propertyAddress": "8334 E Whispering Wind Dr, Scottsdale, AZ 85255",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "rec9ndp6BmNp7aECR",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-06-09",
+          "checkOutDate": "2025-06-14",
+          "propertyAddress": "8334 E Whispering Wind Dr, Scottsdale, AZ 85255",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        }
+      ]
+    },
+    "4439474": {
+      "reservationUID": "4439474",
+      "duplicateCount": 3,
+      "records": [
+        {
+          "recordId": "recrtN4mgVE4rO6Oa",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "6196 W Kerry Ln, Glendale, AZ 85308",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        },
+        {
+          "recordId": "recKk6hstsCrPKppq",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "6196 W Kerry Ln, Glendale, AZ 85308",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        },
+        {
+          "recordId": "recXJwMeuRDtEiyXX",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "6196 W Kerry Ln, Glendale, AZ 85308",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        }
+      ]
+    },
+    "4498926": {
+      "reservationUID": "4498926",
+      "duplicateCount": 3,
+      "records": [
+        {
+          "recordId": "recqB70bR51U6rZFl",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "3919 N 86th St, Scottsdale, AZ 85251",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        },
+        {
+          "recordId": "recSMhc5xVQvq9BcT",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "3919 N 86th St, Scottsdale, AZ 85251",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        },
+        {
+          "recordId": "recppq71Z9xN8YogA",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "3919 N 86th St, Scottsdale, AZ 85251",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        }
+      ]
+    },
+    "4505271": {
+      "reservationUID": "4505271",
+      "duplicateCount": 4,
+      "records": [
+        {
+          "recordId": "rec1REuFSsgl0lVgN",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-04-30",
+          "checkOutDate": "2025-06-09",
+          "propertyAddress": "5950 N 78th St, 123, Scottsdale, AZ 85250",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recpdcRnys4wp5SAS",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-04-30",
+          "checkOutDate": "2025-06-09",
+          "propertyAddress": "5950 N 78th St, 123, Scottsdale, AZ 85250",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recwnIaMfjhkvpFfP",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-04-30",
+          "checkOutDate": "2025-06-09",
+          "propertyAddress": "5950 N 78th St, 123, Scottsdale, AZ 85250",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        },
+        {
+          "recordId": "recWdL5JAnEbOwLrH",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-04-30",
+          "checkOutDate": "2025-06-09",
+          "propertyAddress": "5950 N 78th St, 123, Scottsdale, AZ 85250",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-05T03:00:33.000Z"
+        }
+      ]
+    },
+    "4510375": {
+      "reservationUID": "4510375",
+      "duplicateCount": 3,
+      "records": [
+        {
+          "recordId": "recVYh6borwIWGHVA",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "8730 E Weldon Ave, Scottsdale, AZ 85251",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        },
+        {
+          "recordId": "recWlv51YQJfWNHwf",
+          "entrySource": "iTrip",
+          "status": "Old",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "8730 E Weldon Ave, Scottsdale, AZ 85251",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        },
+        {
+          "recordId": "recJJCU9hWumX8jJk",
+          "entrySource": "iTrip",
+          "status": "Modified",
+          "checkInDate": "2025-05-29",
+          "checkOutDate": "2025-06-02",
+          "propertyAddress": "8730 E Weldon Ave, Scottsdale, AZ 85251",
+          "serviceType": "Turnover",
+          "lastUpdated": "2025-06-02T19:00:40.000Z"
+        }
+      ]
+    }
+  }
+}
