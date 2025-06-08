@@ -16,7 +16,7 @@ export interface BulletproofAnalysisResult {
         errorCount: number;
     };
 }
-export interface LaundryAnalysis {
+export interface EnhancedLaundryAnalysis {
     returnLaundryJobs: number;
     laundryJobs: number;
     totalRevenue: number;
@@ -33,7 +33,7 @@ export interface LaundryAnalysis {
         errorCount: number;
     };
 }
-export interface ServiceItemAnalysis {
+export interface EnhancedServiceItemAnalysis {
     itemName: string;
     totalQuantity: number;
     totalCost: number;
@@ -53,20 +53,7 @@ export interface ServiceItemAnalysis {
         recordsFound: number;
     };
 }
-export interface CustomerRevenueAnalysis {
-    customerId: string;
-    customerName: string;
-    totalJobs: number;
-    totalRevenue: number;
-    averageJobValue: number;
-    jobStatuses: Record<string, number>;
-    topServices: Array<{
-        service: string;
-        count: number;
-        revenue: number;
-    }>;
-}
-export interface JobStatistics {
+export interface EnhancedJobStatistics {
     totalJobs: number;
     totalRevenue: number;
     averageJobValue: number;
@@ -84,30 +71,26 @@ export interface JobStatistics {
         errorCount: number;
     };
 }
-export declare class AnalysisService {
+export declare class BulletproofAnalysisService {
     private baseDir;
     private environment;
     constructor(environment: 'dev' | 'prod');
     /**
      * Bulletproof laundry analysis with enhanced error handling
      */
-    analyzeLaundryJobs(): Promise<LaundryAnalysis>;
+    analyzeLaundryJobs(): Promise<EnhancedLaundryAnalysis>;
     /**
      * Enhanced service item analysis
      */
-    analyzeServiceItems(itemPattern: string): Promise<ServiceItemAnalysis>;
-    /**
-     * Analyze customer revenue and job statistics
-     */
-    analyzeCustomerRevenue(customerId?: string): Promise<CustomerRevenueAnalysis[]>;
+    analyzeServiceItems(itemPattern: string): Promise<EnhancedServiceItemAnalysis>;
     /**
      * Comprehensive job statistics with enhanced insights
      */
-    analyzeJobStatistics(): Promise<JobStatistics>;
+    analyzeJobStatistics(): Promise<EnhancedJobStatistics>;
     /**
-     * Generate analysis report for all cached data
+     * Analyze towel usage with detailed insights
      */
-    generateAnalysisReport(): Promise<any>;
+    analyzeTowelUsage(): Promise<EnhancedServiceItemAnalysis>;
     private findValidCacheFiles;
     private isLaundryRelated;
     private isReturnLaundryJob;
@@ -116,4 +99,4 @@ export declare class AnalysisService {
     private extractCustomerName;
     private extractMonth;
 }
-//# sourceMappingURL=analysisService.d.ts.map
+//# sourceMappingURL=bulletproofAnalysisService.d.ts.map

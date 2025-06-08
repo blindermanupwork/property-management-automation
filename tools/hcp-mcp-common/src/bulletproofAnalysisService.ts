@@ -22,7 +22,7 @@ export interface BulletproofAnalysisResult {
   };
 }
 
-export interface LaundryAnalysis {
+export interface EnhancedLaundryAnalysis {
   returnLaundryJobs: number;
   laundryJobs: number;
   totalRevenue: number;
@@ -40,7 +40,7 @@ export interface LaundryAnalysis {
   };
 }
 
-export interface ServiceItemAnalysis {
+export interface EnhancedServiceItemAnalysis {
   itemName: string;
   totalQuantity: number;
   totalCost: number;
@@ -61,21 +61,7 @@ export interface ServiceItemAnalysis {
   };
 }
 
-export interface CustomerRevenueAnalysis {
-  customerId: string;
-  customerName: string;
-  totalJobs: number;
-  totalRevenue: number;
-  averageJobValue: number;
-  jobStatuses: Record<string, number>;
-  topServices: Array<{
-    service: string;
-    count: number;
-    revenue: number;
-  }>;
-}
-
-export interface JobStatistics {
+export interface EnhancedJobStatistics {
   totalJobs: number;
   totalRevenue: number;
   averageJobValue: number;
@@ -94,7 +80,7 @@ export interface JobStatistics {
   };
 }
 
-export class AnalysisService {
+export class BulletproofAnalysisService {
   private baseDir: string;
   private environment: 'dev' | 'prod';
   
@@ -106,7 +92,7 @@ export class AnalysisService {
   /**
    * Bulletproof laundry analysis with enhanced error handling
    */
-  async analyzeLaundryJobs(): Promise<LaundryAnalysis> {
+  async analyzeLaundryJobs(): Promise<EnhancedLaundryAnalysis> {
     const startTime = Date.now();
     const jobsDir = path.join(this.baseDir, 'jobs');
     
@@ -215,7 +201,7 @@ export class AnalysisService {
   /**
    * Enhanced service item analysis
    */
-  async analyzeServiceItems(itemPattern: string): Promise<ServiceItemAnalysis> {
+  async analyzeServiceItems(itemPattern: string): Promise<EnhancedServiceItemAnalysis> {
     const startTime = Date.now();
     const jobsDir = path.join(this.baseDir, 'jobs');
     
@@ -297,76 +283,9 @@ export class AnalysisService {
   }
 
   /**
-   * Analyze customer revenue and job statistics
-   */
-  async analyzeCustomerRevenue(customerId?: string): Promise<CustomerRevenueAnalysis[]> {
-    const jobsDir = path.join(this.baseDir, 'jobs');
-    
-    try {
-      const cacheFiles = await this.findValidCacheFiles(jobsDir);
-      
-      if (cacheFiles.length === 0) {
-        throw new Error('No valid cached job files found.');
-      }
-
-      const customerData: Record<string, any> = {};
-      
-      for (const filePath of cacheFiles) {
-        try {
-          const fileContent = await fs.readFile(filePath, 'utf8');
-          const data = JSON.parse(fileContent);
-          const jobs = data.data || data.jobs || data;
-          
-          if (!Array.isArray(jobs)) continue;
-
-          for (const job of jobs) {
-            try {
-              if (customerId && job.customer?.id !== customerId) continue;
-              
-              const cId = job.customer?.id;
-              if (!cId) continue;
-              
-              const revenue = this.extractJobRevenue(job);
-              const customerName = this.extractCustomerName(job);
-              const status = job.work_status || 'unknown';
-              
-              if (!customerData[cId]) {
-                customerData[cId] = {
-                  customerId: cId,
-                  customerName,
-                  totalJobs: 0,
-                  totalRevenue: 0,
-                  jobStatuses: {},
-                  topServices: []
-                };
-              }
-              
-              customerData[cId].totalJobs++;
-              customerData[cId].totalRevenue += revenue;
-              customerData[cId].jobStatuses[status] = (customerData[cId].jobStatuses[status] || 0) + 1;
-            } catch (jobError) {
-              console.warn(`[${this.environment}] Error processing job:`, jobError);
-            }
-          }
-        } catch (fileError) {
-          console.error(`[${this.environment}] Error processing file ${filePath}:`, fileError);
-        }
-      }
-
-      return Object.values(customerData).map((customer: any) => ({
-        ...customer,
-        averageJobValue: customer.totalJobs > 0 ? customer.totalRevenue / customer.totalJobs : 0
-      }));
-
-    } catch (error) {
-      throw new Error(`Customer revenue analysis failed: ${error}`);
-    }
-  }
-
-  /**
    * Comprehensive job statistics with enhanced insights
    */
-  async analyzeJobStatistics(): Promise<JobStatistics> {
+  async analyzeJobStatistics(): Promise<EnhancedJobStatistics> {
     const startTime = Date.now();
     const jobsDir = path.join(this.baseDir, 'jobs');
     
@@ -463,30 +382,10 @@ export class AnalysisService {
   }
 
   /**
-   * Generate analysis report for all cached data
+   * Analyze towel usage with detailed insights
    */
-  async generateAnalysisReport(): Promise<any> {
-    try {
-      const [laundryAnalysis, jobStats] = await Promise.all([
-        this.analyzeLaundryJobs().catch(err => ({ error: err.message })),
-        this.analyzeJobStatistics().catch(err => ({ error: err.message }))
-      ]);
-
-      const towelAnalysis = await this.analyzeServiceItems('towel').catch(err => ({ error: err.message }));
-      const customerRevenue = await this.analyzeCustomerRevenue().catch(err => ({ error: err.message }));
-
-      return {
-        generatedAt: new Date().toISOString(),
-        laundryAnalysis,
-        jobStatistics: jobStats,
-        towelUsage: towelAnalysis,
-        topCustomers: Array.isArray(customerRevenue) ? customerRevenue.slice(0, 10) : [],
-        cacheLocation: this.baseDir
-      };
-
-    } catch (error) {
-      throw new Error(`Analysis report generation failed: ${error}`);
-    }
+  async analyzeTowelUsage(): Promise<EnhancedServiceItemAnalysis> {
+    return this.analyzeServiceItems('towel');
   }
 
   // Private helper methods with enhanced robustness
@@ -616,5 +515,4 @@ export class AnalysisService {
       return 'unknown';
     }
   }
-
 }

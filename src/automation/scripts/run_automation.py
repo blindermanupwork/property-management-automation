@@ -13,15 +13,37 @@ import time
 import pytz
 
 def run_gmail_automation(config):
-    """Run Gmail downloader automation
+    """Run Gmail downloader automation with OAuth health monitoring
     
     Args:
         config: DevConfig or ProdConfig instance
     """
     try:
         gmail_script = config.get_script_path("gmail", "gmail_downloader.py")
+        oauth_monitor = config.get_script_path("gmail", "oauth_monitor.py")
+        
         if not gmail_script.exists():
             return {"success": False, "message": "Gmail downloader script not found"}
+        
+        # First, check OAuth token health
+        print("🔍 Checking Gmail OAuth token health...")
+        if oauth_monitor.exists():
+            oauth_result = subprocess.run([
+                sys.executable, str(oauth_monitor.absolute()), "--quiet"
+            ], cwd=str(oauth_monitor.parent.absolute()))
+            
+            if oauth_result.returncode != 0:
+                print("⚠️  OAuth token needs attention, attempting automatic refresh...")
+                # Try to refresh by running a simple token check
+                refresh_result = subprocess.run([
+                    sys.executable, str(gmail_script.absolute()), "--check-token"
+                ], cwd=str(gmail_script.parent.absolute()))
+                
+                if refresh_result.returncode != 0:
+                    return {
+                        "success": False, 
+                        "message": "Gmail OAuth token expired and cannot be auto-refreshed. Manual intervention required."
+                    }
         
         print("📧 Running Gmail downloader...")
         result = subprocess.run([

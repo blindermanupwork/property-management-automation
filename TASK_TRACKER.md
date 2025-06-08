@@ -4,11 +4,10 @@ boris to do
 
 claude to do
 
-- added 6-7-25: clean up /home/opc/automation/src/automation/scripts/airscripts-api and add claude.md of necessary things
-- added 6-7-25: gitignore task_tracker.md
-
 done
 
+- added 6-7-25: clean up /home/opc/automation/src/automation/scripts/airscripts-api and add claude.md of necessary things - completed 6-7-25
+- added 6-7-25: gitignore task_tracker.md - completed 6-7-25
 - added 6-7-25: fix dev create job api - ❌ Error 400: {"success":false,"error":"You should provide valid api key to perform this operation"} /home/opc/automation/src/automation/scripts/airscripts-api/scripts/dev-create-job.js - completed 6-7-25
 - added 6-7-25: review if we need /home/opc/automation/ystemctl status airscripts-api-https - completed 6-7-25
 - added 6-7-25: gitignore ~/archive - completed 6-7-25
