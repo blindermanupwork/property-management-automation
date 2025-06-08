@@ -1,15 +1,20 @@
 /**
- * HCP Data Analysis Service
- * Provides advanced analysis tools using Linux commands on cached data
+ * Bulletproof HCP Data Analysis Service
+ * Provides robust analysis tools with enhanced error handling and efficiency
  */
-export interface AnalysisResult {
+export interface BulletproofAnalysisResult {
     query: string;
     resultCount: number;
     totalValue?: number;
     summary: string;
     details: any[];
     cacheFiles: string[];
-    linuxCommands: string[];
+    executionTime: number;
+    dataQuality: {
+        filesProcessed: number;
+        recordsFound: number;
+        errorCount: number;
+    };
 }
 export interface LaundryAnalysis {
     returnLaundryJobs: number;
@@ -21,11 +26,18 @@ export interface LaundryAnalysis {
         jobCount: number;
         revenue: number;
     }>;
+    executionTime: number;
+    dataQuality: {
+        filesProcessed: number;
+        recordsAnalyzed: number;
+        errorCount: number;
+    };
 }
 export interface ServiceItemAnalysis {
     itemName: string;
     totalQuantity: number;
     totalCost: number;
+    totalRevenue: number;
     averagePrice: number;
     jobCount: number;
     usage: Array<{
@@ -35,6 +47,11 @@ export interface ServiceItemAnalysis {
         unitPrice: number;
         total: number;
     }>;
+    executionTime: number;
+    dataQuality: {
+        filesProcessed: number;
+        recordsFound: number;
+    };
 }
 export interface CustomerRevenueAnalysis {
     customerId: string;
@@ -49,15 +66,34 @@ export interface CustomerRevenueAnalysis {
         revenue: number;
     }>;
 }
+export interface JobStatistics {
+    totalJobs: number;
+    totalRevenue: number;
+    averageJobValue: number;
+    statusBreakdown: Record<string, number>;
+    revenueByStatus: Record<string, number>;
+    monthlyTrends: Array<{
+        month: string;
+        jobCount: number;
+        revenue: number;
+    }>;
+    executionTime: number;
+    dataQuality: {
+        filesProcessed: number;
+        recordsAnalyzed: number;
+        errorCount: number;
+    };
+}
 export declare class AnalysisService {
     private baseDir;
+    private environment;
     constructor(environment: 'dev' | 'prod');
     /**
-     * Analyze laundry-related jobs using Linux commands
+     * Bulletproof laundry analysis with enhanced error handling
      */
     analyzeLaundryJobs(): Promise<LaundryAnalysis>;
     /**
-     * Analyze specific service items (like towels)
+     * Enhanced service item analysis
      */
     analyzeServiceItems(itemPattern: string): Promise<ServiceItemAnalysis>;
     /**
@@ -65,14 +101,19 @@ export declare class AnalysisService {
      */
     analyzeCustomerRevenue(customerId?: string): Promise<CustomerRevenueAnalysis[]>;
     /**
-     * Get comprehensive job statistics
+     * Comprehensive job statistics with enhanced insights
      */
-    analyzeJobStatistics(): Promise<any>;
+    analyzeJobStatistics(): Promise<JobStatistics>;
     /**
      * Generate analysis report for all cached data
      */
     generateAnalysisReport(): Promise<any>;
-    private findCacheFiles;
-    private createAnalysisScript;
+    private findValidCacheFiles;
+    private isLaundryRelated;
+    private isReturnLaundryJob;
+    private matchesServiceItem;
+    private extractJobRevenue;
+    private extractCustomerName;
+    private extractMonth;
 }
 //# sourceMappingURL=analysisService.d.ts.map

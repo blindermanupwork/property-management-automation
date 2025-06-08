@@ -51,6 +51,8 @@ parser.add_argument('--force', action='store_true',
                     help='Force download even if already processed today')
 parser.add_argument('--use-label', type=str, default=None,
                     help='Search by label instead of subject (e.g., "iTrip")')
+parser.add_argument('--check-token', action='store_true',
+                    help='Check OAuth token health and refresh if needed')
 args = parser.parse_args()
 
 # Set up download folder
@@ -103,27 +105,141 @@ def is_already_processed(message_id):
         pass
     return False
 
-def get_gmail_service():
-    """Authenticate and return Gmail API service."""
-    creds = None
-    if os.path.exists(TOKEN_PATH):
+def validate_and_refresh_token():
+    """
+    Proactively validate and refresh Gmail OAuth token.
+    Returns True if token is valid/refreshed, False if manual intervention needed.
+    """
+    try:
+        if not os.path.exists(TOKEN_PATH):
+            logger.info("No token file exists - OAuth flow needed")
+            return False
+            
         with open(TOKEN_PATH, 'rb') as f:
             creds = pickle.load(f)
-            logger.debug("Loaded credentials from %s", TOKEN_PATH)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            logger.info("Refreshing expired credentials")
-            creds.refresh(Request())
+            
+        if creds.valid:
+            logger.info("✅ Token is valid")
+            return True
+            
+        if creds.expired and creds.refresh_token:
+            logger.info("Token expired, attempting refresh...")
+            try:
+                creds.refresh(Request())
+                with open(TOKEN_PATH, 'wb') as f:
+                    pickle.dump(creds, f)
+                logger.info("✅ Token refreshed successfully")
+                return True
+            except Exception as e:
+                logger.error(f"❌ Token refresh failed: {e}")
+                return False
         else:
-            logger.info("No valid credentials, running OAuth flow")
-            flow = InstalledAppFlow.from_client_secrets_file(CREDS_PATH, SCOPES)
+            logger.warning("Token invalid and no refresh token available")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Token validation failed: {e}")
+        return False
+
+def get_gmail_service():
+    """Authenticate and return Gmail API service with robust OAuth handling."""
+    creds = None
+    max_refresh_attempts = 3
+    
+    # Load existing credentials if available
+    if os.path.exists(TOKEN_PATH):
+        try:
+            with open(TOKEN_PATH, 'rb') as f:
+                creds = pickle.load(f)
+                logger.debug("Loaded credentials from %s", TOKEN_PATH)
+        except Exception as e:
+            logger.warning(f"Failed to load token file: {e}. Will re-authenticate.")
+            # Remove corrupted token file
+            try:
+                os.remove(TOKEN_PATH)
+                logger.info("Removed corrupted token file")
+            except:
+                pass
+            creds = None
+
+    # Check credential validity and attempt refresh
+    if creds:
+        if creds.valid:
+            logger.debug("Credentials are valid")
+            return build('gmail', 'v1', credentials=creds)
+        
+        elif creds.expired and creds.refresh_token:
+            logger.info("Credentials expired, attempting to refresh...")
+            
+            for attempt in range(max_refresh_attempts):
+                try:
+                    creds.refresh(Request())
+                    logger.info("✅ Successfully refreshed OAuth credentials")
+                    
+                    # Save refreshed credentials
+                    with open(TOKEN_PATH, 'wb') as f:
+                        pickle.dump(creds, f)
+                        logger.debug("Saved refreshed credentials to %s", TOKEN_PATH)
+                    
+                    return build('gmail', 'v1', credentials=creds)
+                    
+                except Exception as refresh_error:
+                    logger.warning(f"Refresh attempt {attempt + 1}/{max_refresh_attempts} failed: {refresh_error}")
+                    
+                    if attempt == max_refresh_attempts - 1:
+                        logger.error("❌ All refresh attempts failed. Will need to re-authenticate.")
+                        # Clear the token to force re-authentication
+                        try:
+                            os.remove(TOKEN_PATH)
+                            logger.info("Removed expired token file")
+                        except:
+                            pass
+                        creds = None
+                        break
+                    else:
+                        # Wait before retrying
+                        time.sleep(2 ** attempt)  # Exponential backoff
+        else:
+            logger.warning("Credentials missing refresh token or other issues")
+            creds = None
+
+    # If we reach here, we need to run the OAuth flow
+    if not os.path.exists(CREDS_PATH):
+        logger.error(f"❌ Credentials file not found: {CREDS_PATH}")
+        logger.error("Please ensure credentials.json exists with valid Google OAuth credentials")
+        raise FileNotFoundError(f"OAuth credentials file not found: {CREDS_PATH}")
+    
+    try:
+        logger.info("🔄 Running OAuth flow for new credentials...")
+        flow = InstalledAppFlow.from_client_secrets_file(CREDS_PATH, SCOPES)
+        
+        # Try to run the local server OAuth flow
+        try:
             creds = flow.run_local_server(port=0)
+            logger.info("✅ OAuth flow completed successfully via local server")
+        except Exception as server_error:
+            logger.warning(f"Local server OAuth failed: {server_error}")
+            logger.info("Falling back to console OAuth flow...")
+            creds = flow.run_console()
+            logger.info("✅ OAuth flow completed successfully via console")
+        
+        # Save new credentials
         with open(TOKEN_PATH, 'wb') as f:
             pickle.dump(creds, f)
-            logger.debug("Saved new credentials to %s", TOKEN_PATH)
-
-    return build('gmail', 'v1', credentials=creds)
+            logger.info(f"✅ Saved new credentials to {TOKEN_PATH}")
+        
+        # Set secure permissions on token file
+        os.chmod(TOKEN_PATH, 0o600)
+        
+        return build('gmail', 'v1', credentials=creds)
+        
+    except Exception as e:
+        logger.error(f"❌ OAuth authentication failed: {e}")
+        logger.error("Manual intervention required:")
+        logger.error("1. Check that credentials.json contains valid Google OAuth credentials")
+        logger.error("2. Verify the Google Cloud project has Gmail API enabled")
+        logger.error("3. Ensure OAuth consent screen is properly configured")
+        raise Exception(f"Gmail authentication failed: {e}")
 
 def find_parts_with_attachments(payload):
     """
@@ -317,6 +433,18 @@ def download_today_csv():
 
 def main():
     """Main entry point for the Gmail downloader script"""
+    # Handle token check mode
+    if args.check_token:
+        logger.info("🔍 Checking OAuth token health...")
+        is_valid = validate_and_refresh_token()
+        if is_valid:
+            logger.info("✅ OAuth token is healthy and ready for use")
+            return True
+        else:
+            logger.error("❌ OAuth token requires manual intervention")
+            logger.error("Run without --check-token to trigger OAuth flow")
+            return False
+    
     if args.list_only:
         logger.info("Running in LIST-ONLY mode (no downloads)")
     elif args.all_emails:
