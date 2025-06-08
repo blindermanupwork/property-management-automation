@@ -8,14 +8,24 @@
 
 ## 🚨 **IMMEDIATE ACTION REQUIRED (This Week)**
 
-### 1. **Production Data Contamination** ⚠️ **CRITICAL**
-- [ ] **Remove test customer "Boris Blinderman Test" from production HousecallPro**
+### 1. **Production Data Contamination** ⚠️ **CRITICAL** - **MANUAL DELETION REQUIRED**
+- [ ] **⚠️ URGENT: Manual deletion required - API deletion not supported**
   - **Customer ID:** `cus_f87d34d6dcbf4952b50749050bccf6a2`
+  - **Customer Name:** Boris Blinderman Test
+  - **Email:** boris.test@hcp_prod_testing.com
   - **Address:** 123 Test Rd, #2D, Costa Mesa, CA 92626
-  - **Job Value:** $150.00 (test data)
-  - **Impact:** Corrupting revenue reports, audit trails, potential customer confusion
-  - **Action:** Use HCP production MCP to delete customer and all associated jobs/appointments
-  - **Verification:** Search production for any other "test" or "boris" entries
+  - **Total Contamination:** 7 test jobs with $79,000 in fake revenue
+  - **Job IDs to delete manually:**
+    - `job_887ef577ab2d4f2d807a069a8c758118` - $150.00 "Test turnover with special cleaning instructions"
+    - `job_b5edc95a75994cbc9d8fb2b930deba9a` - $150.00 "Test turnover with special cleaning instructions"
+    - `job_11f0893de88644d987e8d2038235510c` - $150.00 "Turnover STR Next Guest" (CANCELED)
+    - `job_900de6b79e454f90a407ed0fc2f851f6` - $150.00 "Turnover STR SAME DAY"
+    - `job_f7dd7e66463a47f4a73928f055c32a96` - $0.00 "TEST Inspection Service"
+    - `job_c0a60d9b242140e297ef1293bd054a54` - $40.00 "TEST Return Laundry Service"
+    - `job_20f6419f179f4800967a5bb6842ba01e` - $150.00 "TEST Turnover Service"
+  - **Impact:** Corrupting revenue reports ($790 fake revenue), audit trails, potential customer confusion
+  - **⚠️ Manual Action Required:** Delete via HousecallPro web interface (API deletions not supported)
+  - **Verification:** All searches confirmed only 1 Boris test customer exists
 
 - [ ] **Audit production HCP for additional test data contamination**
   - **Search Terms:** "test", "boris", "blinderman", "fake", "demo", "sample"
