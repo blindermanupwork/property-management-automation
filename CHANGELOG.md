@@ -49,11 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated all HCP sync scripts (main, dev, prod) with the fix
 
 ### 📋 **Production Data Quality**
-- **Identified Test Data Contamination**: Boris Blinderman Test customer with 7 test jobs ($790 fake revenue)
+- **⚠️ CRITICAL: Test Data Contamination Documented**: Boris Blinderman Test customer with 7 test jobs ($790 fake revenue)
   - Customer ID: `cus_f87d34d6dcbf4952b50749050bccf6a2`
+  - Email: boris.test@hcp_prod_testing.com
   - Address: 123 Test Rd, #2D, Costa Mesa, CA 92626
-  - All jobs marked with "TEST" descriptions and fake data
-  - **Action Required**: Remove from production to restore data integrity
+  - **7 Jobs Identified**: All with "TEST" descriptions and fake data totaling $790
+  - **API Limitation**: HousecallPro API doesn't support deletion operations through MCP
+  - **Manual Action Required**: Delete via HousecallPro web interface to restore data integrity
+  - **Verification Complete**: Comprehensive search confirms only 1 Boris test customer exists
 
 ### 🔧 Fixes
 
