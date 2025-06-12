@@ -147,10 +147,11 @@ def run_hcp_automation(config):
     try:
         print("🔧 Running HCP service job sync...")
         
-        # Run the Node.js HCP sync script
-        hcp_script = config.get_script_path("hcp", "hcp_sync.js")
+        # Run the environment-specific HCP sync script
+        script_name = "dev-hcp-sync.cjs" if not config.is_production else "prod-hcp-sync.cjs"
+        hcp_script = config.get_script_path("hcp", script_name)
         if not hcp_script.exists():
-            return {"success": False, "message": "HCP sync script not found"}
+            return {"success": False, "message": f"HCP sync script not found: {script_name}"}
         
         # Set environment variables for the script
         env = os.environ.copy()

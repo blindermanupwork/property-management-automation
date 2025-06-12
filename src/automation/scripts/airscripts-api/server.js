@@ -46,7 +46,9 @@ app.use('/api/', limiter);
 // API key authentication middleware
 app.use('/api/', (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
+  console.log(`Auth check - Path: ${req.path}, API Key received: ${apiKey ? 'Yes' : 'No'}, Expected: ${process.env.API_KEY}`);
   if (!apiKey || apiKey !== process.env.API_KEY) {
+    console.log(`Auth failed - Received: "${apiKey}", Expected: "${process.env.API_KEY}"`);
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();

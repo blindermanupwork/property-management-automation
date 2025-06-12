@@ -52,9 +52,12 @@ itrip_reserv  = {"new":0, "modified":0, "unchanged":0, "removed":0, "total":0}
 evolve_reserv = {"new":0, "modified":0, "unchanged":0, "removed":0, "total":0}
 # ────────────────────────────────────────────────────────────────
 
+# Determine the correct field name based on environment
+sync_details_field = "Service Sync Details" if Config.environment == 'development' else "Sync Details"
+
 HCP_FIELDS = [
     "Service Job ID", "Job Creation Time", "Sync Status",
-    "Scheduled Service Time", "Sync Date and Time", "Sync Details",
+    "Scheduled Service Time", "Sync Date and Time", sync_details_field,
     "Job Status", "Custom Service Time", "Entry Source"
 ]
 
@@ -62,7 +65,7 @@ HCP_FIELDS = [
 WRITE_BLACKLIST = {
     "Final Service Time",          # computed roll-ups
     "Sync Date and Time",
-    "Sync Details"
+    sync_details_field  # Use the environment-specific field name
 }
 # Entry Type Detection for CSV Rows
 ENTRY_TYPE_KEYWORDS = {
@@ -235,11 +238,18 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
     
     old_f = latest["fields"]
     
-    # Mark ALL records as Old
+    # Mark ALL records as Old and prefix Service Job ID with "old_" to disconnect from webhooks
     for record in records:
+        update_fields = {"Status": "Old", "Last Updated": now_iso}
+        
+        # Prefix Service Job ID with "old_" to prevent webhook updates
+        service_job_id = record.get("fields", {}).get("Service Job ID")
+        if service_job_id and not service_job_id.startswith("old_"):
+            update_fields["Service Job ID"] = f"old_{service_job_id}"
+        
         update_batch.add({
             "id": record["id"],
-            "fields": {"Status": "Old", "Last Updated": now_iso}
+            "fields": update_fields
         })
     
     # Flush updates
@@ -252,9 +262,13 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
     # This ensures they're carried forward even if some would normally be excluded
     for hcp_field in HCP_FIELDS:
         if hcp_field in old_f:
-            # FORCE copy all HCP fields, even those in WRITE_BLACKLIST
-            # This ensures fields like "Service Job ID" are preserved
-            clone[hcp_field] = old_f[hcp_field]
+            # FORCE copy all HCP fields, except handle Service Job ID specially
+            if hcp_field == "Service Job ID" and status == "Removed":
+                # For removed reservations, clear the Service Job ID since no job exists
+                clone[hcp_field] = None
+            else:
+                # For Modified records, preserve the original Service Job ID
+                clone[hcp_field] = old_f[hcp_field]
     
     # Apply the changes and status
     clone.update(Status=status, **field_to_change, **{"Last Updated": now_iso})

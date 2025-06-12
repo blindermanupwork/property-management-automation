@@ -3,6 +3,9 @@ const fetch = require('node-fetch');
 const { getArizonaTime, formatDate, formatTime } = require('../utils/datetime');
 const { getAirtableConfig, getHCPConfig } = require('../utils/config');
 
+// Import sync message builder for dev environment
+let buildSyncMessage = null;
+
 // Arizona timezone constants (matching original scripts)
 const AZ_TZ = 'America/Phoenix';
 
@@ -72,8 +75,20 @@ function mapStatus(workStatus) {
 // Check all schedules (read-only verification)
 async function checkSchedules(req, res) {
   try {
+    // Determine environment from request
+    const environment = req.forceEnvironment || (req.path.includes('/dev/') ? 'development' : 'production');
+    
+    // Load sync message builder for dev environment
+    if (environment === 'development' && !buildSyncMessage) {
+      try {
+        const syncMessageBuilder = require('../../shared/syncMessageBuilder');
+        buildSyncMessage = syncMessageBuilder.buildSyncMessage;
+      } catch (e) {
+        console.warn('Could not load sync message builder for dev environment:', e.message);
+      }
+    }
+    
     // Get environment-specific config
-    const environment = req.forceEnvironment || process.env.ENVIRONMENT || 'development';
     const airtableConfig = getAirtableConfig(environment);
     const hcpConfig = getHCPConfig(environment);
     const base = new Airtable({ apiKey: airtableConfig.apiKey }).base(airtableConfig.baseId);
@@ -97,7 +112,7 @@ async function checkSchedules(req, res) {
 
     for (const record of records) {
       try {
-        const result = await checkSingleSchedule(base, hcpConfig, record.id);
+        const result = await checkSingleSchedule(base, hcpConfig, record.id, environment);
         results.push(result);
         checked++;
         
@@ -144,15 +159,25 @@ async function updateSchedule(req, res) {
   try {
     const { recordId } = req.params;
     
-    // Get environment-specific config
-    const environment = req.forceEnvironment || process.env.ENVIRONMENT || 'development';
+    // Determine environment from request
+    const environment = req.forceEnvironment || (req.path.includes('/dev/') ? 'development' : 'production');
+    
+    // Load sync message builder for dev environment
+    if (environment === 'development' && !buildSyncMessage) {
+      try {
+        const syncMessageBuilder = require('../../shared/syncMessageBuilder');
+        buildSyncMessage = syncMessageBuilder.buildSyncMessage;
+      } catch (e) {
+        console.warn('Could not load sync message builder for dev environment:', e.message);
+      }
+    }
     const airtableConfig = getAirtableConfig(environment);
     const hcpConfig = getHCPConfig(environment);
     const base = new Airtable({ apiKey: airtableConfig.apiKey }).base(airtableConfig.baseId);
     
     console.log(`Updating schedule for record ${recordId} in ${environment} environment`);
     
-    const result = await updateSingleSchedule(base, hcpConfig, recordId);
+    const result = await updateSingleSchedule(base, hcpConfig, recordId, environment);
     
     res.json({
       success: true,
@@ -169,7 +194,7 @@ async function updateSchedule(req, res) {
 }
 
 // Check single schedule (read-only)
-async function checkSingleSchedule(base, hcpConfig, recordId) {
+async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
   const reservation = await base('Reservations').find(recordId);
   
   const jobId = reservation.get('Service Job ID');
@@ -194,9 +219,18 @@ async function checkSingleSchedule(base, hcpConfig, recordId) {
   
   if (!schedStart) {
     // No schedule exists in HCP
+    let syncDetails;
+    if (buildSyncMessage && environment === 'development') {
+      syncDetails = buildSyncMessage('NO_APPOINTMENT', {
+        airtableValue: finalServiceTime
+      });
+    } else {
+      syncDetails = 'No schedule found in HCP';
+    }
+    
     const updateFields = {
       'Sync Status': 'Not Created',
-      'Sync Details': 'No schedule found in HCP',
+      'Sync Details': syncDetails,
       'Sync Date and Time': getArizonaTime()
     };
     
@@ -212,7 +246,7 @@ async function checkSingleSchedule(base, hcpConfig, recordId) {
       uid: reservationUID,
       jobId,
       syncStatus: 'Not Created',
-      syncDetails: 'No schedule found in HCP'
+      syncDetails: syncDetails
     };
   }
 
@@ -228,21 +262,53 @@ async function checkSingleSchedule(base, hcpConfig, recordId) {
   let syncStatus, syncDetails;
   const prefix = sameDayTurnover ? 'Same‑day Turnaround. ' : '';
 
-  if (!dateMatch) {
-    syncStatus = 'Wrong Date';
-    syncDetails = `${prefix}Final Service Time is **${azDate(expectedTime)}** but service is **${azDate(schedStart)}**.`;
-  } else if (!timeMatch) {
-    syncStatus = 'Wrong Time';
-    syncDetails = `${prefix}Final Service Time is **${azTime(expectedTime)}** but service is **${azTime(schedStart)}**.`;
+  if (buildSyncMessage && environment === 'development') {
+    // Use clear messaging for dev environment
+    if (!dateMatch) {
+      syncStatus = 'Wrong Date';
+      syncDetails = buildSyncMessage('WRONG_DATE', {
+        airtableValue: finalServiceTime,
+        hcpValue: schedStart.toISOString(),
+        prefix: prefix
+      });
+    } else if (!timeMatch) {
+      syncStatus = 'Wrong Time';
+      syncDetails = buildSyncMessage('WRONG_TIME', {
+        airtableValue: finalServiceTime,
+        hcpValue: schedStart.toISOString(),
+        prefix: prefix
+      });
+    } else {
+      syncStatus = 'Synced';
+      syncDetails = buildSyncMessage('SYNCED', {
+        airtableValue: finalServiceTime,
+        prefix: prefix
+      });
+    }
   } else {
-    syncStatus = 'Synced';
-    syncDetails = `${prefix}Service matches **${azDate(schedStart)} at ${azTime(schedStart)}**.`;
+    // Original messaging for prod environment
+    if (!dateMatch) {
+      syncStatus = 'Wrong Date';
+      syncDetails = `${prefix}Final Service Time is **${azDate(expectedTime)}** but service is **${azDate(schedStart)}**.`;
+    } else if (!timeMatch) {
+      syncStatus = 'Wrong Time';
+      syncDetails = `${prefix}Final Service Time is **${azTime(expectedTime)}** but service is **${azTime(schedStart)}**.`;
+    } else {
+      syncStatus = 'Synced';
+      syncDetails = `${prefix}Service matches **${azDate(schedStart)} at ${azTime(schedStart)}**.`;
+    }
   }
 
   const atStatus = mapStatus(job.work_status);
   if (atStatus === 'Canceled') {
     const when = new Date(job.updated_at || Date.now());
-    syncDetails = `Job canceled on ${azDate(when)} at ${azTime(when)}.`;
+    if (buildSyncMessage && environment === 'development') {
+      syncDetails = buildSyncMessage('JOB_CANCELED', {
+        canceledAt: when.toISOString()
+      });
+    } else {
+      syncDetails = `Job canceled on ${azDate(when)} at ${azTime(when)}.`;
+    }
   }
 
   // Try to get appointment ID if missing
@@ -260,10 +326,13 @@ async function checkSingleSchedule(base, hcpConfig, recordId) {
     }
   }
 
-  // Update Airtable with sync status (using string format)
+  // Update Airtable with sync status
+  // Use environment-specific field names
+  const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+  
   const updateFields = {
-    'Sync Status': syncStatus,
-    'Sync Details': syncDetails,
+    'Sync Status': syncStatus,  // Single select field - just the string value
+    [syncDetailsField]: syncDetails,      // Long text field
     'Sync Date and Time': getArizonaTime()
   };
 
@@ -301,7 +370,7 @@ async function checkSingleSchedule(base, hcpConfig, recordId) {
       
       // Update only essential fields
       const minimalFields = {
-        'Sync Details': updateFields['Sync Details'],
+        [syncDetailsField]: updateFields[syncDetailsField],
         'Sync Date and Time': updateFields['Sync Date and Time']
       };
       
@@ -328,8 +397,17 @@ async function checkSingleSchedule(base, hcpConfig, recordId) {
 }
 
 // Update single schedule (with automatic fixing)
-async function updateSingleSchedule(base, hcpConfig, recordId) {
-  const reservation = await base('Reservations').find(recordId);
+async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
+  console.log(`[updateSingleSchedule] Starting update for record ${recordId} in ${environment} environment`);
+  
+  let reservation;
+  try {
+    reservation = await base('Reservations').find(recordId);
+    console.log(`[updateSingleSchedule] Found reservation record`);
+  } catch (error) {
+    console.error(`[updateSingleSchedule] Error finding record:`, error.message);
+    throw error;
+  }
   
   const jobId = reservation.get('Service Job ID');
   const finalServiceTime = reservation.get('Final Service Time');
@@ -360,28 +438,60 @@ async function updateSingleSchedule(base, hcpConfig, recordId) {
   if (!schedStart) {
     needsUpdate = true;
     syncStatus = 'Creating Schedule';
-    syncDetails = `${prefix}Creating schedule for **${azDate(expectedTime)} at ${azTime(expectedTime)}**.`;
+    if (buildSyncMessage && environment === 'development') {
+      syncDetails = `${prefix}Creating schedule for ${azDate(expectedTime)} at ${azTime(expectedTime)}`;
+    } else {
+      syncDetails = `${prefix}Creating schedule for **${azDate(expectedTime)} at ${azTime(expectedTime)}**.`;
+    }
   } else {
     // Compare times using Arizona timezone
     const dateMatch = azDate(schedStart) === azDate(expectedTime);
     const timeMatch = azTime(schedStart) === azTime(expectedTime);
 
-    if (!dateMatch) {
-      needsUpdate = true;
-      syncStatus = 'Updating Date';
-      syncDetails = `${prefix}Updating from **${azDate(schedStart)}** to **${azDate(expectedTime)}**.`;
-    } else if (!timeMatch) {
-      needsUpdate = true;
-      syncStatus = 'Updating Time';
-      syncDetails = `${prefix}Updating from **${azTime(schedStart)}** to **${azTime(expectedTime)}**.`;
+    if (buildSyncMessage && environment === 'development') {
+      // Use clear messaging for dev environment
+      if (!dateMatch) {
+        needsUpdate = true;
+        syncStatus = 'Updating Date';
+        syncDetails = buildSyncMessage('WRONG_DATE', {
+          airtableValue: finalServiceTime,
+          hcpValue: schedStart.toISOString()
+        });
+      } else if (!timeMatch) {
+        needsUpdate = true;
+        syncStatus = 'Updating Time';
+        syncDetails = buildSyncMessage('WRONG_TIME', {
+          airtableValue: finalServiceTime,
+          hcpValue: schedStart.toISOString()
+        });
+      } else {
+        // Mark as needing verification even if it appears synced
+        needsUpdate = true;
+        syncStatus = 'Verifying';
+        syncDetails = 'Verifying schedule sync...';
+      }
     } else {
-      syncStatus = 'Synced';
-      syncDetails = `${prefix}Service matches **${azDate(schedStart)} at ${azTime(schedStart)}**.`;
+      // Original messaging for prod environment
+      if (!dateMatch) {
+        needsUpdate = true;
+        syncStatus = 'Updating Date';
+        syncDetails = `${prefix}Updating from **${azDate(schedStart)}** to **${azDate(expectedTime)}**.`;
+      } else if (!timeMatch) {
+        needsUpdate = true;
+        syncStatus = 'Updating Time';
+        syncDetails = `${prefix}Updating from **${azTime(schedStart)}** to **${azTime(expectedTime)}**.`;
+      } else {
+        // Mark as needing verification even if it appears synced
+        needsUpdate = true;
+        syncStatus = 'Verifying';
+        syncDetails = `${prefix}Verifying schedule sync...`;
+      }
     }
   }
 
-  if (needsUpdate) {
-    console.log(`Schedule needs update for job ${jobId}: ${syncDetails}`);
+  // Always update the schedule to ensure it's truly synced
+  if (needsUpdate || true) {
+    console.log(`Updating/verifying schedule for job ${jobId}: ${syncDetails}`);
     
     try {
       if (!schedStart) {
@@ -420,15 +530,51 @@ async function updateSingleSchedule(base, hcpConfig, recordId) {
       const updatedJob = await hcpFetch(hcpConfig, `/jobs/${jobId}`);
       const newScheduledTime = new Date(updatedJob.schedule.scheduled_start);
       
-      syncStatus = 'Synced';
-      syncDetails = `${prefix}Service updated to **${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}**.`;
+      // After update, check if it actually matches what we wanted
+      const finalDateMatch = azDate(newScheduledTime) === azDate(expectedTime);
+      const finalTimeMatch = azTime(newScheduledTime) === azTime(expectedTime);
+      
+      if (buildSyncMessage && environment === 'development') {
+        if (!finalDateMatch) {
+          syncStatus = 'Wrong Date';
+          syncDetails = buildSyncMessage('WRONG_DATE', {
+            airtableValue: expectedTime.toISOString(),
+            hcpValue: newScheduledTime.toISOString()
+          });
+        } else if (!finalTimeMatch) {
+          syncStatus = 'Wrong Time';
+          syncDetails = buildSyncMessage('WRONG_TIME', {
+            airtableValue: expectedTime.toISOString(),
+            hcpValue: newScheduledTime.toISOString()
+          });
+        } else {
+          syncStatus = 'Synced';
+          syncDetails = buildSyncMessage('SCHEDULE_UPDATED', {
+            newValue: newScheduledTime.toISOString()
+          });
+        }
+      } else {
+        if (!finalDateMatch || !finalTimeMatch) {
+          syncStatus = finalDateMatch ? 'Wrong Time' : 'Wrong Date';
+          syncDetails = `${prefix}Schedule mismatch: Expected **${azDate(expectedTime)} at ${azTime(expectedTime)}** but got **${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}**.`;
+        } else {
+          syncStatus = 'Synced';
+          syncDetails = `${prefix}Service updated to **${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}**.`;
+        }
+      }
       
       console.log(`Schedule successfully updated for job ${jobId}`);
       
     } catch (error) {
       console.error('Failed to update schedule:', error);
       syncStatus = 'Failed';
-      syncDetails = `${prefix}Failed to update schedule: ${error.message}`;
+      if (buildSyncMessage && environment === 'development') {
+        syncDetails = buildSyncMessage('SCHEDULE_UPDATE_FAILED', {
+          error: error.message
+        });
+      } else {
+        syncDetails = `${prefix}Failed to update schedule: ${error.message}`;
+      }
     }
   }
 
@@ -451,10 +597,13 @@ async function updateSingleSchedule(base, hcpConfig, recordId) {
     }
   }
 
-  // Update Airtable with final state (using string format)
+  // Update Airtable with final state
+  // Use environment-specific field names
+  const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+  
   const updateFields = {
-    'Sync Status': syncStatus,
-    'Sync Details': syncDetails,
+    'Sync Status': syncStatus,  // Single select field - just the string value
+    [syncDetailsField]: syncDetails,      // Long text field
     'Sync Date and Time': getArizonaTime()
   };
 
@@ -497,7 +646,7 @@ async function updateSingleSchedule(base, hcpConfig, recordId) {
       
       // Update only essential fields
       const minimalFields = {
-        'Sync Details': updateFields['Sync Details'],
+        [syncDetailsField]: updateFields[syncDetailsField],
         'Sync Date and Time': updateFields['Sync Date and Time']
       };
       

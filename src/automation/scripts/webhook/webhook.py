@@ -38,8 +38,10 @@ logger.setLevel(logging.INFO)
 for handler in logger.handlers[:]:
     logger.removeHandler(handler)
 
-# File handler with MST
-file_handler = logging.FileHandler(str(Config.get_logs_dir() / "webhook.log"))
+# File handler with MST - use environment-specific log file
+environment = os.environ.get('ENVIRONMENT', 'production')
+log_filename = f"webhook_{environment}.log" if environment == 'development' else "webhook.log"
+file_handler = logging.FileHandler(str(Config.get_logs_dir() / log_filename))
 file_handler.setFormatter(MSTFormatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
 logger.addHandler(file_handler)
 
@@ -57,7 +59,7 @@ AIRTABLE_BASE_ID = Config.get_airtable_base_id()
 AIRTABLE_TABLE_NAME = Config.get_airtable_table_name('reservations')
 AIRTABLE_PROPERTIES_TABLE = Config.get_airtable_table_name('properties')
 HCP_WEBHOOK_SECRET = os.environ.get("HCP_WEBHOOK_SECRET")
-SERVATIV_WEBHOOK_SECRET = "sk_servativ_webhook_7f4d9b2e8a3c1f6d"
+SERVATIV_WEBHOOK_SECRET = os.environ.get("SERVATIV_WEBHOOK_SECRET")
 
 # Validate required configuration
 missing_config = Config.validate_config()
@@ -247,6 +249,17 @@ logger.info("✅ Async webhook processing enabled")
 def get_arizona_time():
     return datetime.now(timezone.utc).astimezone(ARIZONA_TZ)
 
+def format_datetime_for_display(iso_string):
+    """Format ISO datetime string for display in Arizona time"""
+    if not iso_string:
+        return "(no time)"
+    try:
+        dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
+        az_dt = dt.astimezone(ARIZONA_TZ)
+        return az_dt.strftime("%b %d at %-I:%M %p")
+    except:
+        return iso_string
+
 def get_client_ip():
     """Get the real client IP, accounting for proxies"""
     if request.headers.get('X-Forwarded-For'):
@@ -367,10 +380,13 @@ def format_employee_names(employees):
 def update_sync_info(record_id, details):
     """Update sync information for a record"""
     try:
-        now = get_arizona_time().isoformat()
+        # Get current UTC time for Airtable (it expects UTC)
+        now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        # Use environment-specific field names
+        field_name = "Service Sync Details" if environment == 'development' else "Sync Details"
         return reservations_table.update(record_id, {
             "Sync Date and Time": now,
-            "Sync Details": details
+            field_name: details
         })
     except Exception as e:
         logger.error(f"Error updating sync info for record {record_id}: {e}")
@@ -410,7 +426,12 @@ def handle_status_update(job_data, existing_record):
         update_data["Job Completed Time"] = work_timestamps.get("completed_at")
         
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, f"Updated job status to {job_status}")
+        # Use clearer messages for dev environment
+        if environment == 'development':
+            sync_details = f"✅ Updated HCP job status to \"{job_status}\""
+        else:
+            sync_details = f"Updated job status to {job_status}"
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Updated status for record {record_id}: {job_status}")
         return result
     except Exception as e:
@@ -426,7 +447,12 @@ def handle_employee_assignment(job_data, existing_record):
             assignee = None
         record_id = existing_record.get("id")
         result = reservations_table.update(record_id, {"Assignee": assignee})
-        update_sync_info(record_id, f"Updated assignee to: {assignee or '(empty)'}")
+        # Use clearer messages for dev environment
+        if environment == 'development':
+            sync_details = f"✅ Updated HCP assignee to: {assignee or '(unassigned)'}"
+        else:
+            sync_details = f"Updated assignee to: {assignee or '(empty)'}"
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Updated assignee for record {record_id}: {assignee or '(empty)'}")
         return result
     except Exception as e:
@@ -441,7 +467,16 @@ def handle_scheduling(job_data, existing_record, is_rescheduled=False):
         scheduled_start = schedule_data.get("scheduled_start")
         update_data = {"Scheduled Service Time": scheduled_start}
         result = reservations_table.update(record_id, update_data)
-        sync_details = "Rescheduled job" if is_rescheduled else "Updated schedule"
+        # Use clearer messages for dev environment
+        logger.info(f"DEBUG: Environment is '{environment}' (type: {type(environment)})")
+        if environment == 'development':
+            if is_rescheduled:
+                sync_details = "✅ Rescheduled HCP job schedule"
+            else:
+                sync_details = "✅ Updated HCP job schedule"
+        else:
+            sync_details = "Rescheduled job" if is_rescheduled else "Updated schedule"
+        logger.info(f"DEBUG: Setting sync_details to: '{sync_details}'")
         update_sync_info(record_id, sync_details)
         logger.info(f"✅ Updated schedule for record {record_id}")
         return result
@@ -474,7 +509,12 @@ def handle_appointment_discarded(appointment_data, existing_record):
         }
         
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, f"Appointment {appointment_id} discarded, job unscheduled")
+        # Use clearer messages for dev environment
+        if environment == 'development':
+            sync_details = f"⚠️ HCP appointment {appointment_id} discarded, job unscheduled"
+        else:
+            sync_details = f"Appointment {appointment_id} discarded, job unscheduled"
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Appointment {appointment_id} discarded for record: {record_id}")
         return result
     except Exception as e:
@@ -505,7 +545,12 @@ def handle_appointment_scheduled(appointment_data, existing_record):
         logger.info(f"⏰ Scheduled start: {start_time or '(empty)'}")
         
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, f"Appointment {appointment_id} scheduled, assignee: {assignee or '(empty)'}")
+        # Use clearer messages for dev environment
+        if environment == 'development':
+            sync_details = f"✅ Appointment scheduled: {format_datetime_for_display(start_time)}, assignee: {assignee or '(unassigned)'}"
+        else:
+            sync_details = f"Appointment {appointment_id} scheduled, assignee: {assignee or '(empty)'}"
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Appointment {appointment_id} scheduled for record: {record_id}")
         return result
     except Exception as e:
@@ -524,18 +569,72 @@ def handle_appointment_rescheduled(appointment_data, existing_record):
         assignee = format_appointment_employee_names(dispatched_employees)
         start_time = appointment_data.get("start_time")
         
+        logger.info(f"📋 Appointment ID: {appointment_id}")
+        logger.info(f"👤 Assignee: {assignee or '(empty)'}")
+        logger.info(f"⏰ Rescheduled start: {start_time or '(empty)'}")
+        
+        # Check what actually changed BEFORE updating
+        if environment == 'development':
+            # Check what actually changed
+            old_assignee = existing_record.get('fields', {}).get('Assignee', '')
+            old_time = existing_record.get('fields', {}).get('Scheduled Service Time', '')
+            
+            # Check if we recently processed an assignee webhook
+            last_sync_details = existing_record.get('fields', {}).get('Service Sync Details', '')
+            recently_updated_assignee = ('Assignee updated:' in last_sync_details or 
+                                       'assignees removed' in last_sync_details or
+                                       'Assignee removed' in last_sync_details)
+            
+            logger.info(f"🔍 Comparing - Old assignee: '{old_assignee}', New assignee: '{assignee}'")
+            logger.info(f"🔍 Last sync details: '{last_sync_details[:50]}...'")
+            logger.info(f"🔍 Recently updated assignee: {recently_updated_assignee}")
+            
+            assignee_changed = str(old_assignee).strip() != str(assignee or '').strip()
+            
+            # Compare times more accurately
+            time_changed = False
+            try:
+                if old_time and start_time:
+                    old_dt = datetime.fromisoformat(old_time.replace('Z', '+00:00'))
+                    new_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    # Consider times different if they differ by more than 1 minute
+                    time_changed = abs((old_dt - new_dt).total_seconds()) > 60
+                elif old_time != start_time:
+                    time_changed = True
+            except:
+                time_changed = str(old_time) != str(start_time)
+            
+            # Skip update if this appears to be a duplicate from assignee change
+            # (HCP sends rescheduled webhook after pros_unassigned/assigned)
+            if recently_updated_assignee and not time_changed:
+                logger.info(f"Skipping duplicate rescheduled webhook after recent assignee change")
+                return None  # Don't update, the assignee webhook already handled it
+            
+            if assignee_changed and not time_changed:
+                logger.info(f"Skipping duplicate rescheduled webhook after assignee change")
+                return None  # Don't update, the assignee webhook already handled it
+            
+            if time_changed:
+                if assignee:
+                    sync_details = f"✅ Schedule updated: {format_datetime_for_display(start_time)}, assignee: {assignee}"
+                else:
+                    sync_details = f"✅ Schedule updated: {format_datetime_for_display(start_time)} (no assignee)"
+            else:
+                # No real changes, skip this update
+                logger.info(f"No actual changes detected in rescheduled webhook")
+                return None
+        else:
+            sync_details = f"Appointment {appointment_id} rescheduled, assignee: {assignee or '(empty)'}"
+        
+        # Now update Airtable with the changes
         update_data = {
             "Service Appointment ID": appointment_id,
             "Assignee": assignee,
             "Scheduled Service Time": start_time
         }
         
-        logger.info(f"📋 Appointment ID: {appointment_id}")
-        logger.info(f"👤 Assignee: {assignee or '(empty)'}")
-        logger.info(f"⏰ Rescheduled start: {start_time or '(empty)'}")
-        
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, f"Appointment {appointment_id} rescheduled, assignee: {assignee or '(empty)'}")
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Appointment {appointment_id} rescheduled for record: {record_id}")
         return result
     except Exception as e:
@@ -562,7 +661,12 @@ def handle_appointment_pros_assigned(appointment_data, existing_record):
         logger.info(f"👤 New assignee: {assignee or '(empty)'}")
         
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, f"Pros assigned to appointment {appointment_id}: {assignee or '(empty)'}")
+        # Use clearer messages for dev environment
+        if environment == 'development':
+            sync_details = f"✅ Assignee updated: {assignee or '(none)'}"
+        else:
+            sync_details = f"Pros assigned to appointment {appointment_id}: {assignee or '(empty)'}"
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Pros assigned to appointment {appointment_id} for record: {record_id}")
         return result
     except Exception as e:
@@ -570,7 +674,13 @@ def handle_appointment_pros_assigned(appointment_data, existing_record):
         return None
 
 def handle_appointment_pros_unassigned(appointment_data, existing_record):
-    """Handle pros unassigned from appointment events"""
+    """Handle pros unassigned from appointment events
+    
+    Note: HCP often sends two webhooks when changing assignees:
+    1. appointment_pros_unassigned - removing old assignee
+    2. appointment_pros_assigned - adding new assignee
+    This results in two separate Service Sync Details updates.
+    """
     try:
         logger.info("Processing job.appointment.appointment_pros_unassigned webhook")
         job_id = appointment_data.get("job_id", "")
@@ -591,7 +701,17 @@ def handle_appointment_pros_unassigned(appointment_data, existing_record):
         logger.info(f"👤 Remaining assignee: {assignee or '(none)'}")
         
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, f"Pros unassigned from appointment {appointment_id}, remaining: {assignee or '(none)'}")
+        # Use clearer messages for dev environment
+        if environment == 'development':
+            if assignee:
+                # There are still some assignees remaining
+                sync_details = f"⚠️ Assignee removed, remaining: {assignee}"
+            else:
+                # All assignees removed
+                sync_details = f"⚠️ All assignees removed"
+        else:
+            sync_details = f"Pros unassigned from appointment {appointment_id}, remaining: {assignee or '(none)'}"
+        update_sync_info(record_id, sync_details)
         logger.info(f"✅ Pros unassigned from appointment {appointment_id} for record: {record_id}")
         return result
     except Exception as e:

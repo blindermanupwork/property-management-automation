@@ -330,6 +330,16 @@
 ### **Primary Logic**:
 - **IF** **"Service Job ID"** field has value
   - **THEN** call AirScripts API `/api/[environment]/schedules/update-schedule` endpoint
+  - **THEN** check current schedule status in HCP:
+    
+    **IF** job has no schedule (schedule is null)
+    - **THEN** create new schedule in HCP
+    - **THEN** set **"Sync Status"** = "Creating Schedule"
+    
+    **IF** job has existing schedule with wrong date or time
+    - **THEN** update existing schedule in HCP
+    - **THEN** set **"Sync Status"** = "Updating Date" or "Updating Time"
+    
   - **THEN** determine service time priority:
     
     **IF** **"Custom Service Time"** field has value
@@ -338,17 +348,21 @@
     **IF** **"Custom Service Time"** field is empty
     - **THEN** use **"Final Service Time"** field for scheduling
   
-  - **THEN** update HCP job schedule via API:
+  - **THEN** create or update HCP job schedule via API:
     - scheduled_start = **"Service Date"** + selected service time
     - scheduled_end = scheduled_start + 1 hour (default duration)
-    - arrival_window = 0 minutes (exact time)
+    - arrival_window = 60 minutes (default)
+    - notify = true (notify customer)
+    - notify_pro = true (notify employee)
+    - dispatched_employees = [default employee ID]
   
   - **THEN** API updates Airtable record:
     - **"Scheduled Service Time"** = updated scheduled_start (ISO format)
-    - **"Sync Status"** = "Synced", "Wrong Date", or "Wrong Time"
+    - **"Sync Status"** = "Synced", "Wrong Date", "Wrong Time", "Not Created", or "Creating Schedule"
     - **"Sync Details"** = comparison details between expected and actual
     - **"Sync Date and Time"** = current Arizona timestamp
     - **"Job Status"** = current HCP work_status (mapped to Airtable values)
+    - **"Service Appointment ID"** = fetched from HCP if missing
 
 - **IF** **"Service Job ID"** field is empty
   - **THEN** display error message: "Must create job first"

@@ -389,7 +389,7 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 
 ### **Webhook Forwarding System**
 - **Dual Authentication**: Supports both HCP signature and forwarding secret authentication
-- **Forwarding Auth**: `X-Internal-Auth: sk_servativ_webhook_7f4d9b2e8a3c1f6d`
+- **Forwarding Auth**: `X-Internal-Auth: [SERVATIV_WEBHOOK_SECRET from env]`
 - **Behavior**: Always returns 200 status to prevent webhook disabling
 - **Integration**: Accepts forwarded webhooks from Servativ's Java service
 

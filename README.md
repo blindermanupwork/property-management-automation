@@ -264,7 +264,7 @@ PROD_HCP_TOKEN=...
 https://servativ.themomentcatchers.com/webhooks/hcp
 
 # Forwarding authentication header
-X-Internal-Auth: sk_servativ_webhook_7f4d9b2e8a3c1f6d
+X-Internal-Auth: [SERVATIV_WEBHOOK_SECRET from environment]
 ```
 
 ## 📊 Operations & Monitoring

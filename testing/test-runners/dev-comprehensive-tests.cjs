@@ -550,7 +550,7 @@ class DevTestSuite {
       const requiredElements = [
         'webhook',
         'X-Internal-Auth',
-        'sk_servativ_webhook_7f4d9b2e8a3c1f6d',
+        'SERVATIV_WEBHOOK_SECRET',
         'signature'
       ];
       

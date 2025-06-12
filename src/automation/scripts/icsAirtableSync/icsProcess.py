@@ -100,17 +100,20 @@ ignore_future_end = False       # Set to True if IGNORE_EVENTS_ENDING_MONTHS_AWA
 
 LOG_FILE = str(Config.get_logs_dir() / "ics_sync.log")
 
+# Determine the correct field name based on environment
+sync_details_field = "Service Sync Details" if Config.environment == 'development' else "Sync Details"
+
 # Fields to skip when cloning records (records Airtable won't let us write back)
 WRITE_BLACKLIST = {
     "Final Service Time",          # computed roll-ups
     "Sync Date and Time",
-    "Sync Details"
+    sync_details_field  # Use the environment-specific field name
 }
 
 # Service fields to preserve when cloning records
 HCP_FIELDS = [
     "Service Job ID", "Job Creation Time", "Sync Status",
-    "Scheduled Service Time", "Sync Date and Time", "Sync Details",
+    "Scheduled Service Time", "Sync Date and Time", sync_details_field,
     "Job Status", "Custom Service Time", "Entry Source"
 ]
 
