@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.2** - HCP MCP Bulletproof Analysis & Critical Fixes
+**Current Version: 2.2.3** - Comprehensive Operational Documentation & Training Materials
 
 ## 📁 Project Structure (as of June 11, 2025)
 
@@ -89,7 +89,16 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Service line custom instructions**: Unicode support with 200-char truncation
 - ✅ **Webhook forwarding system**: Dual authentication support implemented
 - ✅ **Real-time console output**: All automation processes show live progress
+- ✅ **Environment-specific webhook logs**: Separate logs for dev (webhook_development.log) and prod (webhook.log)
 
+
+## HCP Sync Script Locations
+
+### Main HCP Sync Scripts
+- **Development**: `/home/opc/automation/src/automation/scripts/hcp/dev-hcp-sync.cjs`
+- **Production**: `/home/opc/automation/src/automation/scripts/hcp/prod-hcp-sync.cjs`
+
+These scripts handle the creation and synchronization of HCP jobs from Airtable reservations. They are called by the automation runner through `src/automation/scripts/run_automation.py`.
 
 ## Development Commands
 
@@ -152,8 +161,10 @@ node tools/test-mcp-connection.js              # Test MCP server connectivity
 # Note: These are symlinks to src/automation/scripts/system/
 
 # View logs
-tail -f src/automation/logs/automation_dev*.log     # Development logs
-tail -f src/automation/logs/automation_prod*.log    # Production logs
+tail -f src/automation/logs/automation_dev*.log     # Development automation logs
+tail -f src/automation/logs/automation_prod*.log    # Production automation logs
+tail -f src/automation/logs/webhook_development.log  # Development webhook logs
+tail -f src/automation/logs/webhook.log             # Production webhook logs
 
 # Check cron status
 crontab -l                                     # View current cron jobs
@@ -213,7 +224,8 @@ This is a comprehensive property management automation system that orchestrates 
 - Use `run_automation_prod.py` for production (Airtable: `appZzebEIqCU5R9ER`)
 - Environment-specific configuration files: `config/environments/dev/.env` and `config/environments/prod/.env`
 - CSV directories: `CSV_*_development/` vs `CSV_*_production/`
-- Logs: `automation_dev*.log` vs `automation_prod*.log`
+- Automation logs: `automation_dev*.log` vs `automation_prod*.log`
+- Webhook logs: `webhook_development.log` vs `webhook.log`
 
 ### File and Path Handling
 - Always use `python3` command (not `python`) for execution
@@ -417,13 +429,19 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
      -H "Content-Type: application/json" -d '{"foo":"bar"}'
    ```
 
-4. **Check webhook logs**:
+4. **Check webhook logs** (separate logs for each environment):
    ```bash
-   # All webhook activity
+   # Production webhook activity
    tail -f /home/opc/automation/src/automation/logs/webhook.log
    
-   # Filter for specific job
+   # Development webhook activity  
+   tail -f /home/opc/automation/src/automation/logs/webhook_development.log
+   
+   # Filter for specific job in prod
    grep "job_fdf67b8c04c943e98d75230105a033ab" /home/opc/automation/src/automation/logs/webhook.log
+   
+   # Filter for specific job in dev
+   grep "job_fdf67b8c04c943e98d75230105a033ab" /home/opc/automation/src/automation/logs/webhook_development.log
    ```
 
 ### **Enhanced HCP MCP Capabilities (v2.2.1)**
