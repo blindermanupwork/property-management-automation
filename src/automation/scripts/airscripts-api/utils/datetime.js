@@ -3,12 +3,10 @@
  * Handles Arizona timezone for business operations
  */
 
-// Get current time in Arizona timezone
+// Get current time in UTC (for Airtable which expects UTC timestamps)
 function getArizonaTime() {
-  const now = new Date();
-  // Arizona is UTC-7 (MST, no daylight saving)
-  const arizonaTime = new Date(now.getTime() - (7 * 60 * 60 * 1000));
-  return arizonaTime.toISOString();
+  // Return UTC time as Airtable expects UTC timestamps
+  return new Date().toISOString();
 }
 
 // Format date like "January 15"

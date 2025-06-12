@@ -3,6 +3,9 @@ const fetch = require('node-fetch');
 const { getArizonaTime, formatDate, formatTime } = require('../utils/datetime');
 const { getAirtableConfig, getHCPConfig } = require('../utils/config');
 
+// Import sync message builder for dev environment
+let buildSyncMessage = null;
+
 // HCP API helper with retry logic
 async function hcpFetch(hcpConfig, path, method = 'GET', body = null) {
   const maxRetries = 3;
@@ -77,8 +80,20 @@ async function createJob(req, res) {
   try {
     const { recordId } = req.params;
     
-    // Get environment-specific config
-    const environment = req.forceEnvironment || process.env.ENVIRONMENT || 'development';
+    // Determine environment from request
+    const environment = req.forceEnvironment || (req.path.includes('/dev/') ? 'development' : 'production');
+    
+    // Load sync message builder for dev environment
+    if (environment === 'development' && !buildSyncMessage) {
+      try {
+        const syncMessageBuilder = require('../../shared/syncMessageBuilder');
+        buildSyncMessage = syncMessageBuilder.buildSyncMessage;
+        console.log('✅ Loaded sync message builder for dev environment');
+      } catch (e) {
+        console.error('❌ Could not load sync message builder for dev environment:', e.message);
+        console.error('Full error:', e);
+      }
+    }
     const airtableConfig = getAirtableConfig(environment);
     const hcpConfig = getHCPConfig(environment);
     const base = new Airtable({ apiKey: airtableConfig.apiKey }).base(airtableConfig.baseId);
@@ -431,27 +446,62 @@ async function createJob(req, res) {
     const timeMatch = azTime(schedLive) === azTime(schedStart);
 
     let syncStatus, syncDetails;
-    if (!dateMatch) {
-      syncStatus = 'Wrong Date';
-      syncDetails = `Final Service Time is **${azDate(schedStart)}** but service is **${azDate(schedLive)}**.`;
-    } else if (!timeMatch) {
-      syncStatus = 'Wrong Time';
-      syncDetails = `Final Service Time is **${azTime(schedStart)}** but service is **${azTime(schedLive)}**.`;
+    
+    console.log(`🔍 Sync check - Environment: ${environment}, buildSyncMessage available: ${!!buildSyncMessage}`);
+    
+    if (buildSyncMessage && environment === 'development') {
+      // Use clear messaging for dev environment
+      if (!dateMatch) {
+        syncStatus = 'Wrong Date';
+        syncDetails = buildSyncMessage('WRONG_DATE', {
+          airtableValue: schedStart.toISOString(),
+          hcpValue: schedLive.toISOString()
+        });
+      } else if (!timeMatch) {
+        syncStatus = 'Wrong Time';
+        syncDetails = buildSyncMessage('WRONG_TIME', {
+          airtableValue: schedStart.toISOString(),
+          hcpValue: schedLive.toISOString()
+        });
+      } else {
+        syncStatus = 'Synced';
+        syncDetails = buildSyncMessage('SYNCED', {
+          airtableValue: schedStart.toISOString()
+        });
+      }
     } else {
-      syncStatus = 'Synced';
-      syncDetails = `Service matches **${azDate(schedLive)} at ${azTime(schedLive)}**.`;
+      // Original messaging for prod environment
+      if (!dateMatch) {
+        syncStatus = 'Wrong Date';
+        syncDetails = `Final Service Time is **${azDate(schedStart)}** but service is **${azDate(schedLive)}**.`;
+      } else if (!timeMatch) {
+        syncStatus = 'Wrong Time';
+        syncDetails = `Final Service Time is **${azTime(schedStart)}** but service is **${azTime(schedLive)}**.`;
+      } else {
+        syncStatus = 'Synced';
+        syncDetails = `Service matches **${azDate(schedLive)} at ${azTime(schedLive)}**.`;
+      }
     }
 
     if (atStatus === 'Canceled') {
       const when = new Date(liveJob.updated_at || Date.now());
-      syncDetails = `Job canceled on ${azDate(when)} at ${azTime(when)}.`;
+      if (buildSyncMessage && environment === 'development') {
+        syncDetails = buildSyncMessage('JOB_CANCELED', {
+          canceledAt: when.toISOString()
+        });
+      } else {
+        syncDetails = `Job canceled on ${azDate(when)} at ${azTime(when)}.`;
+      }
     }
 
     // Final update to Airtable with complete sync info
+    // Use environment-specific field names
+    const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+    
     const updateFields = {
       'Scheduled Service Time': schedLive.toISOString(),
       'Sync Status': syncStatus,
-      'Sync Details': syncDetails,
+      [syncDetailsField]: syncDetails,
       'Sync Date and Time': getArizonaTime()
     };
 
@@ -530,8 +580,11 @@ async function cancelJob(req, res) {
       console.warn(`Job ${jobId} has no schedule - nothing to delete`);
       
       // Update Airtable to reflect that there was no schedule
+      // Use environment-specific field names
+      const syncDetailsField = environment === 'development' ? 'Service Sync Details' : 'Sync Details';
+      
       const updateFields = {
-        'Sync Details': `Job has no schedule to delete. Already unscheduled. ${getArizonaTime()}`,
+        [syncDetailsField]: `Job has no schedule to delete. Already unscheduled. ${getArizonaTime()}`,
         'Sync Date and Time': getArizonaTime()
       };
       
@@ -560,8 +613,11 @@ async function cancelJob(req, res) {
     }
     
     // Update Airtable to reflect schedule deletion
+    // Use environment-specific field names
+    const syncDetailsField = environment === 'development' ? 'Service Sync Details' : 'Sync Details';
+    
     const updateFields = {
-      'Sync Details': `Job schedule deleted from HCP on ${getArizonaTime()}`,
+      [syncDetailsField]: `Job schedule deleted from HCP on ${getArizonaTime()}`,
       'Sync Date and Time': getArizonaTime(),
       'Scheduled Service Time': null,
       'Service Appointment ID': null

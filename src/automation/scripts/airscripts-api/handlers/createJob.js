@@ -4,6 +4,9 @@ import { logger } from '../utils/logger.js';
 import { validateCreateJobRequest } from '../validators/index.js';
 import fs from 'fs';
 
+// Import sync message builder for dev environment
+let buildSyncMessage = null;
+
 // Arizona timezone helpers
 const AZ_TZ = "America/Phoenix";
 const azDate = d => d.toLocaleDateString("en-US", {
@@ -15,6 +18,18 @@ const azTime = d => d.toLocaleTimeString("en-US", {
 
 export async function createJob(req, res) {
   try {
+    // Determine environment from request path
+    const environment = req.path.includes('/api/dev/') ? 'development' : 'production';
+    
+    // Load sync message builder for dev environment
+    if (environment === 'development' && !buildSyncMessage) {
+      try {
+        const syncMessageBuilder = await import('../../shared/syncMessageBuilder.js');
+        buildSyncMessage = syncMessageBuilder.buildSyncMessage;
+      } catch (e) {
+        console.warn('Could not load sync message builder for dev environment:', e.message);
+      }
+    }
     // Validate request
     const { error, value } = validateCreateJobRequest(req.body);
     if (error) {
@@ -120,7 +135,7 @@ export async function createJob(req, res) {
         scheduled_end: schedEnd.toISOString(), 
         arrival_window: 0 
       },
-      assigned_employee_ids: [process.env.HCP_DEFAULT_EMPLOYEE_ID || "pro_78945c979905480996c6c85d7a925eb9"],
+      assigned_employee_ids: [process.env.HCP_DEFAULT_EMPLOYEE_ID],
       line_items: [],
       job_fields: { job_type_id: jobTypeId }
     });
@@ -209,7 +224,7 @@ Has Custom Instructions: ${serviceLineCustomInstructions?.trim() ? 'YES' : 'NO'}
     await base('Reservations').update(recordId, updateFields);
     
     // Sync status
-    await syncJobStatus(base, reservation, jobId, finalTime, sameDayTurnover);
+    const syncResult = await syncJobStatus(base, reservation, jobId, finalTime, sameDayTurnover, environment);
     
     logger.info('Job created successfully', { 
       reservationUID, 
@@ -223,9 +238,11 @@ Has Custom Instructions: ${serviceLineCustomInstructions?.trim() ? 'YES' : 'NO'}
       appointmentId,
       message: `Job ${jobId} created successfully`,
       serviceName: serviceName,  // Add service name to response for debugging
-      employeeId: process.env.HCP_EMPLOYEE_ID,
+      employeeId: process.env.HCP_DEFAULT_EMPLOYEE_ID,
       scheduledTime: finalTime,
-      environment: process.env.NODE_ENV
+      syncStatus: syncResult.syncStatus,
+      syncDetails: syncResult.syncDetails,
+      environment: environment
     });
     
   } catch (error) {
@@ -237,7 +254,7 @@ Has Custom Instructions: ${serviceLineCustomInstructions?.trim() ? 'YES' : 'NO'}
   }
 }
 
-async function syncJobStatus(base, reservation, jobId, expectedTime, sameDayTurnover) {
+async function syncJobStatus(base, reservation, jobId, expectedTime, sameDayTurnover, environment) {
   const hcp = getHCPClient();
   const job = await hcp.getJob(jobId);
   
@@ -246,16 +263,43 @@ async function syncJobStatus(base, reservation, jobId, expectedTime, sameDayTurn
   
   let syncStatus, syncDetails;
   
-  if (expectedTime.toDateString() !== schedStart.toDateString()) {
-    syncStatus = 'Wrong Date';
-    syncDetails = `${prefix}Final Service Time is ${azDate(expectedTime)} but service is ${azDate(schedStart)}.`;
-  } else if (expectedTime.getHours() !== schedStart.getHours() || 
-             expectedTime.getMinutes() !== schedStart.getMinutes()) {
-    syncStatus = 'Wrong Time';
-    syncDetails = `${prefix}Final Service Time is ${azTime(expectedTime)} but service is ${azTime(schedStart)}.`;
+  if (buildSyncMessage && environment === 'development') {
+    // Use clear messaging for dev environment
+    if (expectedTime.toDateString() !== schedStart.toDateString()) {
+      syncStatus = 'Wrong Date';
+      syncDetails = buildSyncMessage('WRONG_DATE', {
+        airtableValue: expectedTime.toISOString(),
+        hcpValue: schedStart.toISOString(),
+        prefix: prefix
+      });
+    } else if (expectedTime.getHours() !== schedStart.getHours() || 
+               expectedTime.getMinutes() !== schedStart.getMinutes()) {
+      syncStatus = 'Wrong Time';
+      syncDetails = buildSyncMessage('WRONG_TIME', {
+        airtableValue: expectedTime.toISOString(),
+        hcpValue: schedStart.toISOString(),
+        prefix: prefix
+      });
+    } else {
+      syncStatus = 'Synced';
+      syncDetails = buildSyncMessage('SYNCED', {
+        airtableValue: expectedTime.toISOString(),
+        prefix: prefix
+      });
+    }
   } else {
-    syncStatus = 'Synced';
-    syncDetails = `${prefix}Service matches ${azDate(schedStart)} at ${azTime(schedStart)}.`;
+    // Original messaging for prod environment
+    if (expectedTime.toDateString() !== schedStart.toDateString()) {
+      syncStatus = 'Wrong Date';
+      syncDetails = `${prefix}Final Service Time is ${azDate(expectedTime)} but service is ${azDate(schedStart)}.`;
+    } else if (expectedTime.getHours() !== schedStart.getHours() || 
+               expectedTime.getMinutes() !== schedStart.getMinutes()) {
+      syncStatus = 'Wrong Time';
+      syncDetails = `${prefix}Final Service Time is ${azTime(expectedTime)} but service is ${azTime(schedStart)}.`;
+    } else {
+      syncStatus = 'Synced';
+      syncDetails = `${prefix}Service matches ${azDate(schedStart)} at ${azTime(schedStart)}.`;
+    }
   }
   
   const statusMap = {
@@ -268,11 +312,18 @@ async function syncJobStatus(base, reservation, jobId, expectedTime, sameDayTurn
   
   const jobStatus = statusMap[job.work_status?.toLowerCase()] || null;
   
+  // Use environment-specific field names
+  const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+  
+  const syncTimestamp = new Date().toISOString();
+  console.log('DEBUG: Setting Sync Date and Time to:', syncTimestamp);
+  console.log('DEBUG: Current local time:', new Date().toString());
+  
   const updates = {
     'Scheduled Service Time': schedStart.toISOString(),
     'Sync Status': { name: syncStatus },
-    'Sync Details': syncDetails,
-    'Sync Date and Time': new Date().toISOString()
+    [syncDetailsField]: syncDetails,
+    'Sync Date and Time': syncTimestamp
   };
   
   if (jobStatus) {
@@ -280,4 +331,6 @@ async function syncJobStatus(base, reservation, jobId, expectedTime, sameDayTurn
   }
   
   await base('Reservations').update(reservation.id, updates);
+  
+  return { syncStatus, syncDetails };
 }

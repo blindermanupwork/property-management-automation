@@ -1,38 +1,46 @@
 #!/usr/bin/env node
 
 /**
- * PROD HCP Sync Script
- * Syncs HCP job data with PROD Airtable base for multiple reservations
+ * DEV HCP Sync Script
+ * Syncs HCP job data with DEV Airtable base for multiple reservations
  * With Service Line Custom Instructions support
- * 
- * ⚠️ PRODUCTION SCRIPT - DO NOT RUN WITHOUT APPROVAL ⚠️
  */
 
-require('dotenv').config({ path: '/home/opc/automation/config/environments/prod/.env' });
+require('dotenv').config({ path: '/home/opc/automation/config/environments/dev/.env' });
 
 const Airtable = require('airtable');
-const fetch = require('node-fetch');
+// Use native fetch in Node 18+
+const { fetch } = globalThis;
 
-// Force PROD environment
-process.env.NODE_ENV = 'production';
-process.env.AIRTABLE_ENV = 'production';
+// Import sync message builder for dev environment
+let buildSyncMessage = null;
+try {
+  const syncMessageBuilder = require('../shared/syncMessageBuilder');
+  buildSyncMessage = syncMessageBuilder.buildSyncMessage;
+  console.log('✅ Loaded sync message builder for dev environment');
+} catch (e) {
+  console.warn('⚠️ Could not load sync message builder for dev environment:', e.message);
+}
 
-// PROD Configuration
-const AIRTABLE_API_KEY = process.env.PROD_AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.PROD_AIRTABLE_BASE_ID;
-const HCP_TOKEN = process.env.PROD_HCP_TOKEN;
-const HCP_EMPLOYEE_ID = process.env.PROD_HCP_EMPLOYEE_ID;
+// Force DEV environment
+process.env.NODE_ENV = 'development';
+process.env.AIRTABLE_ENV = 'development';
+
+// DEV Configuration
+const AIRTABLE_API_KEY = process.env.DEV_AIRTABLE_API_KEY;
+const AIRTABLE_BASE_ID = process.env.DEV_AIRTABLE_BASE_ID;
+const HCP_TOKEN = process.env.DEV_HCP_TOKEN;
+const HCP_EMPLOYEE_ID = process.env.DEV_HCP_EMPLOYEE_ID;
 
 if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID || !HCP_TOKEN || !HCP_EMPLOYEE_ID) {
-  console.error('❌ Missing required PROD environment variables');
-  console.error('Required: PROD_AIRTABLE_API_KEY, PROD_AIRTABLE_BASE_ID, PROD_HCP_TOKEN, PROD_HCP_EMPLOYEE_ID');
+  console.error('❌ Missing required DEV environment variables');
+  console.error('Required: DEV_AIRTABLE_API_KEY, DEV_AIRTABLE_BASE_ID, DEV_HCP_TOKEN, DEV_HCP_EMPLOYEE_ID');
   process.exit(1);
 }
 
-console.log('⚠️  ⚠️  ⚠️  PRODUCTION ENVIRONMENT ⚠️  ⚠️  ⚠️');
-console.log('🔧 Running HCP Sync in PRODUCTION environment');
-console.log(`📊 Using PROD Airtable Base: ${AIRTABLE_BASE_ID}`);
-console.log(`👤 Using PROD HCP Employee: ${HCP_EMPLOYEE_ID}`);
+console.log('🔧 Running HCP Sync in DEV environment');
+console.log(`📊 Using DEV Airtable Base: ${AIRTABLE_BASE_ID}`);
+console.log(`👤 Using DEV HCP Employee: ${HCP_EMPLOYEE_ID}`);
 
 // Initialize Airtable
 const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
@@ -101,7 +109,7 @@ function findNextReservation(propertyId, checkOutDate, allRecords) {
 // Main sync function
 async function syncMultipleJobs() {
   try {
-    console.log('\n🔍 Fetching all reservations from PRODUCTION Airtable...');
+    console.log('\n🔍 Fetching all reservations from DEV Airtable...');
     
     // Fetch ALL records for next guest lookup
     const allRecords = await base('Reservations').select({
@@ -115,17 +123,101 @@ async function syncMultipleJobs() {
       const hasJob = rec.fields['Service Job ID'];
       const serviceType = rec.fields['Service Type'];
       const finalTime = rec.fields['Final Service Time'];
-      const status = rec.fields['Status'];
       
-      return !hasJob && serviceType && finalTime && status === 'New';
+      // Create job if: NO job ID exists AND has service type AND has final time
+      return !hasJob && serviceType && finalTime;
     });
     
     console.log(`🎯 ${recordsToProcess.length} reservations need job creation`);
     
+    // Check ALL records that have jobs for sync verification
+    const recordsToVerify = allRecords.filter(rec => {
+      const hasJob = rec.fields['Service Job ID'];
+      const finalTime = rec.fields['Final Service Time'];
+      
+      // Verify sync for: ANY record with job ID AND final time
+      return hasJob && finalTime;
+    });
+    
+    console.log(`🔍 ${recordsToVerify.length} existing jobs will be checked for sync status`);
+    
     let successCount = 0;
     let errorCount = 0;
+    let verifyCount = 0;
     
-    // Process each record
+    // First, verify existing jobs
+    for (const rec of recordsToVerify) {
+      const jobId = rec.fields['Service Job ID'];
+      const finalTime = rec.fields['Final Service Time'];
+      const resUID = rec.fields['Reservation UID'] || rec.id;
+      
+      console.log(`\n🔍 Verifying sync for: ${resUID} - Job ${jobId}`);
+      
+      try {
+        // Get current job schedule from HCP
+        const jobDetails = await hcp(`/jobs/${jobId}`);
+        const schedLive = new Date(jobDetails.schedule.scheduled_start);
+        const schedExpected = new Date(finalTime);
+        
+        // Compare times in Arizona timezone
+        const azDate = d => d.toLocaleDateString('en-US', {
+          timeZone: AZ_TZ, month: 'long', day: 'numeric'
+        });
+        const azTime = d => d.toLocaleTimeString('en-US', {
+          timeZone: AZ_TZ, hour: 'numeric', minute: '2-digit', hour12: true
+        });
+        
+        const dateMatch = azDate(schedLive) === azDate(schedExpected);
+        const timeMatch = azTime(schedLive) === azTime(schedExpected);
+        
+        // Build sync status and details
+        let syncStatus, syncDetails;
+        
+        if (buildSyncMessage) {
+          if (!dateMatch) {
+            syncStatus = 'Wrong Date';
+            syncDetails = buildSyncMessage('WRONG_DATE', {
+              airtableValue: finalTime,
+              hcpValue: schedLive.toISOString()
+            });
+          } else if (!timeMatch) {
+            syncStatus = 'Wrong Time';
+            syncDetails = buildSyncMessage('WRONG_TIME', {
+              airtableValue: finalTime,
+              hcpValue: schedLive.toISOString()
+            });
+          } else {
+            syncStatus = 'Synced';
+            syncDetails = buildSyncMessage('SYNCED', {
+              airtableValue: finalTime
+            });
+          }
+        } else {
+          syncStatus = dateMatch && timeMatch ? 'Synced' : (!dateMatch ? 'Wrong Date' : 'Wrong Time');
+          syncDetails = `Schedule verification: ${dateMatch && timeMatch ? 'In sync' : 'Mismatch detected'}`;
+        }
+        
+        // Update Airtable with verification results
+        await base('Reservations').update(rec.id, {
+          'Sync Status': syncStatus,
+          'Schedule Sync Details': syncDetails,
+          'Sync Date and Time': new Date().toISOString(),
+          'Scheduled Service Time': schedLive.toISOString()
+        });
+        
+        console.log(`   ✅ Updated sync status: ${syncStatus}`);
+        if (syncStatus !== 'Synced') {
+          console.log(`      Expected: ${azDate(schedExpected)} at ${azTime(schedExpected)}`);
+          console.log(`      Actual:   ${azDate(schedLive)} at ${azTime(schedLive)}`);
+        }
+        verifyCount++;
+        
+      } catch (error) {
+        console.error(`   ❌ Error verifying job ${jobId}: ${error.message}`);
+      }
+    }
+    
+    // Process each record that needs job creation
     for (const rec of recordsToProcess) {
       const resUID = rec.fields['Reservation UID'] || rec.id;
       const serviceType = rec.fields['Service Type'];
@@ -290,14 +382,14 @@ async function syncMultipleJobs() {
         console.log(`   Scheduled: ${finalTime}`);
         
         // Enhanced job creation with job type IDs - matches API handler
-        // Define job type IDs for PROD environment
+        // Define job type IDs for DEV environment
         let jobTypeId;
         if (serviceType === 'Return Laundry') {
-          jobTypeId = "jbt_434c62f58d154eb4a968531702b96e8e"; // Return Laundry job type PROD
+          jobTypeId = "jbt_01d29f7695404f5bb57ed7e8c5708afc"; // Return Laundry job type
         } else if (serviceType === 'Inspection') {
-          jobTypeId = "jbt_b5d9457caf694beab5f350d42de3e57f"; // Inspection job type PROD
+          jobTypeId = "jbt_7234d0af0a734f10bf155d2238cf92b7"; // Inspection job type
         } else {
-          jobTypeId = "jbt_20319ca089124b00af1b8b40150424ed"; // Turnover job type PROD
+          jobTypeId = "jbt_3744a354599d4d2fa54041a4cda4bd13"; // Turnover job type
         }
         
         console.log(`Using ${serviceType} job type ${jobTypeId}`);
@@ -396,14 +488,60 @@ async function syncMultipleJobs() {
           console.log(`   ⚠ Failed to fetch appointment ID: ${error.message}`);
         }
         
+        // Verify the job schedule matches what we requested
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const finalJob = await hcp(`/jobs/${jobId}`);
+        const schedLive = new Date(finalJob.schedule.scheduled_start);
+        const schedExpected = new Date(finalTime);
+        
+        // Compare times in Arizona timezone
+        const azDate = d => d.toLocaleDateString('en-US', {
+          timeZone: AZ_TZ, month: 'long', day: 'numeric'
+        });
+        const azTime = d => d.toLocaleTimeString('en-US', {
+          timeZone: AZ_TZ, hour: 'numeric', minute: '2-digit', hour12: true
+        });
+        
+        const dateMatch = azDate(schedLive) === azDate(schedExpected);
+        const timeMatch = azTime(schedLive) === azTime(schedExpected);
+        
         // Update Airtable with enhanced fields
+        // Use clear sync messaging for dev environment
+        let syncStatus, syncDetails;
+        
+        if (buildSyncMessage) {
+          if (!dateMatch) {
+            syncStatus = 'Wrong Date';
+            syncDetails = buildSyncMessage('WRONG_DATE', {
+              airtableValue: finalTime,
+              hcpValue: schedLive.toISOString()
+            });
+          } else if (!timeMatch) {
+            syncStatus = 'Wrong Time';
+            syncDetails = buildSyncMessage('WRONG_TIME', {
+              airtableValue: finalTime,
+              hcpValue: schedLive.toISOString()
+            });
+          } else {
+            syncStatus = 'Synced';
+            syncDetails = buildSyncMessage('SYNCED', {
+              airtableValue: finalTime
+            });
+          }
+        } else {
+          // Fallback for prod environment
+          syncStatus = dateMatch && timeMatch ? 'Synced' : (!dateMatch ? 'Wrong Date' : 'Wrong Time');
+          syncDetails = `Created DEV job ${jobId} with service name: ${svcName}`;
+        }
+        
         const updateFields = {
           'Service Job ID': jobId,
           'Job Creation Time': new Date().toISOString(),
           'Job Status': 'Scheduled',
-          'Sync Status': 'Synced',
+          'Sync Status': syncStatus,
           'Sync Date and Time': new Date().toISOString(),
-          'Sync Details': `Created PROD job ${jobId} with service name: ${svcName}`
+          'Schedule Sync Details': syncDetails,  // Use the new field name for dev
+          'Scheduled Service Time': schedLive.toISOString()
         };
         
         if (appointmentId) {
@@ -426,8 +564,9 @@ async function syncMultipleJobs() {
     
     console.log('\n📊 Sync Summary:');
     console.log(`✅ Successfully created: ${successCount} jobs`);
+    console.log(`🔍 Verified sync status: ${verifyCount} jobs`);
     console.log(`❌ Errors: ${errorCount}`);
-    console.log('\n⚠️  PRODUCTION sync completed ⚠️');
+    console.log(`📋 Total records in view: ${allRecords.length}`);
     
   } catch (error) {
     console.error('❌ Fatal error:', error);
