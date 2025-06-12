@@ -14,7 +14,7 @@ export declare const HCP_API: {
     MAX_PAGE_SIZE: number;
     JOB_STATUSES: readonly ["unscheduled", "scheduled", "in_progress", "completed", "canceled"];
     EMPLOYEE_ROLES: readonly ["admin", "employee", "field_employee"];
-    LINE_ITEM_KINDS: readonly ["service", "product", "discount", "fee"];
+    LINE_ITEM_KINDS: readonly ["labor", "materials", "discount", "fee"];
     ADDRESS_TYPES: readonly ["service", "billing"];
     CONTACT_TYPES: readonly ["phone", "email", "other"];
     APPOINTMENT_STATUSES: readonly ["scheduled", "in_progress", "completed", "canceled"];

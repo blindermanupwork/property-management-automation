@@ -70,6 +70,15 @@ app.use('/api/schedules', (req, res) => {
   });
 });
 
+// Serve test data files (no authentication required for testing)
+app.use('/test-data', express.static('/home/opc/automation/test_data', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.ics')) {
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    }
+  }
+}));
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });

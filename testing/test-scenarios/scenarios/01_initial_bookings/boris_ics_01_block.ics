@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Boris Test Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Boris Test Property Calendar
+X-WR-CALDESC:Test calendar for Boris dev environment - Entry type classification test
+
+BEGIN:VEVENT
+DTSTART:20250610T140000Z
+DTEND:20250612T110000Z
+SUMMARY:Maintenance Block - Property Repairs
+DESCRIPTION:Testing keyword-based classification - should be classified as Block entry type, not Reservation
+UID:boris_ics_block_test_001@test.com
+DTSTAMP:20250609T103416Z
+LOCATION:Boris Test Condo
+ORGANIZER:Boris Test Maintenance Team
+END:VEVENT
+
+END:VCALENDAR

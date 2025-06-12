@@ -4,6 +4,77 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Current Version: 2.2.2** - HCP MCP Bulletproof Analysis & Critical Fixes
 
+## 📁 Project Structure (as of June 11, 2025)
+
+```
+/home/opc/automation/
+├── README.md                    # Project overview
+├── CLAUDE.md                    # This file - AI instructions
+├── CLAUDE.local.md              # Private AI instructions
+├── TASK_TRACKER.md              # Active task tracking
+├── VERSION                      # Current version (2.2.2)
+├── .env                         # Environment variables
+├── package.json                 # Node.js dependencies
+│
+├── src/                         # Main source code
+│   ├── run_automation_dev.py    # Dev automation runner
+│   ├── run_automation_prod.py   # Prod automation runner
+│   ├── run_anywhere.py          # Universal runner
+│   └── automation/
+│       ├── config.py            # Base configuration
+│       ├── config_dev.py        # Dev configuration
+│       ├── config_prod.py       # Prod configuration
+│       ├── config_wrapper.py    # Config wrapper
+│       ├── controller.py        # Main controller
+│       ├── config/
+│       │   ├── environments/    # Environment configs
+│       │   └── templates/       # Configuration templates
+│       │       └── hcp_job_templates.json
+│       ├── logs/                # All system logs
+│       └── scripts/
+│           ├── CSVtoAirtable/   # CSV processing
+│           ├── icsAirtableSync/ # ICS processing
+│           ├── evolve/          # Evolve scraping
+│           ├── webhook/         # Webhook handling
+│           ├── hcp/             # HousecallPro sync
+│           ├── airscripts-api/  # API server
+│           ├── airtable-agent/  # AI agent
+│           ├── system/          # System scripts
+│           │   ├── cron_setup_dev.sh
+│           │   ├── cron_setup_prod.sh
+│           │   └── cron_remove.sh
+│           └── data-exports/    # Data export scripts
+│               ├── airtable-export-dev.mjs
+│               ├── export-airtable-data.js
+│               ├── export-all-real-data.mjs
+│               └── webhook-trigger-export.mjs
+│
+├── tools/                       # MCP servers and tools
+│   ├── airtable-mcp-server/     # Airtable MCP
+│   ├── hcp-mcp-dev/             # HCP Dev MCP
+│   ├── hcp-mcp-prod/            # HCP Prod MCP
+│   └── hcp-mcp-common/          # Shared MCP code
+│
+├── testing/                     # All testing related
+│   ├── test-runners/            # Test execution scripts
+│   │   ├── *.py                 # Python tests
+│   │   └── *.cjs                # JavaScript tests
+│   └── test-scenarios/          # Test data files
+│       ├── scenarios/           # Organized test scenarios
+│       └── *.csv/*.ics          # Test data files
+│
+├── docs/                        # Documentation
+│   ├── guides/                  # User guides
+│   ├── architecture/            # System design
+│   ├── api/                     # API documentation
+│   ├── testing/                 # Test documentation
+│   └── deployment/              # Deployment guides
+│
+├── app/                         # React Native mobile app
+├── config/                      # Configuration files
+└── archive/                     # Archived/obsolete files (IGNORED BY GIT)
+```
+
 ## Project Status & Context
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
@@ -13,7 +84,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)
 - ✅ **🚀 BULLETPROOF HCP MCP**: Native TypeScript analysis, <10ms execution, zero bash failures
-- ✅ **Gmail OAuth automation**: 99% reduction in manual intervention, auto-refresh implemented
+- ✅ **CloudMailin Integration**: Replaced Gmail OAuth with webhook-based email processing
 - ✅ **Enhanced search capabilities**: Address search, job filtering, revenue analysis
 - ✅ **Service line custom instructions**: Unicode support with 200-char truncation
 - ✅ **Webhook forwarding system**: Dual authentication support implemented
@@ -40,8 +111,9 @@ python3 src/run_anywhere.py                    # Run automation
 python3 test_setup.py                          # Validate setup
 
 # Testing
-pytest tests/ -v                               # Run tests with verbose output
-pytest tests/ --cov=automation                 # Run tests with coverage
+cd testing/test-runners
+python3 comprehensive-e2e-test.py              # Run end-to-end tests
+python3 critical-business-logic-tests.py       # Run business logic tests
 
 # Code quality
 black src/ tests/                              # Format code
@@ -77,6 +149,7 @@ node tools/test-mcp-connection.js              # Test MCP server connectivity
 ./cron_setup_dev.sh                           # Setup development cron (every 4hr at :10)
 ./cron_setup_prod.sh                          # Setup production cron (every 4hr at :00)
 ./cron_remove.sh                              # Remove old cron jobs
+# Note: These are symlinks to src/automation/scripts/system/
 
 # View logs
 tail -f src/automation/logs/automation_dev*.log     # Development logs
@@ -103,14 +176,14 @@ crontab -l                                     # View current cron jobs
 - `evolve-scraper` - Evolve property scraper  
 - `csv-processor` - CSV processing tool
 - `ics-sync` - Calendar synchronization
-- `gmail-downloader` - Gmail CSV downloader
+- ~~`gmail-downloader`~~ - DEPRECATED (replaced by CloudMailin webhook)
 
 ## Architecture Overview
 
 This is a comprehensive property management automation system that orchestrates multiple data flows:
 
 1. **Data Sources**:
-   - Gmail: Downloads iTrip reservation CSVs via OAuth
+   - CloudMailin: Receives iTrip reservation CSVs via email forwarding (Gmail OAuth is DEPRECATED)
    - Evolve: Scrapes property data using Selenium
    - ICS Feeds: Syncs calendar data from property management systems
    - Webhooks: Real-time updates from external services
@@ -224,9 +297,18 @@ get_customer("cus_123")  // Get customer details first
 ```javascript
 // CRUD operations for job line items
 get_job_line_items(job_id="job_123")
-create_job_line_item(job_id="job_123", name="Cleaning Service", unit_price=100, quantity=1, kind="service")
+create_job_line_item(job_id="job_123", name="Cleaning Service", unit_price=100, quantity=1, kind="labor")
 update_job_line_item(job_id="job_123", line_item_id="li_456", name="Deep Clean", unit_price=150)
 delete_job_line_item(job_id="job_123", line_item_id="li_456")
+
+// ⚠️ CRITICAL: Line Item Kind Values
+// Use CORRECT HCP API values - these are case-sensitive and must match exactly:
+// ✅ "labor" (for services/work)
+// ✅ "materials" (for sheets, towels, supplies)
+// ✅ "discount"
+// ✅ "fee"
+// 
+// ❌ WRONG: "service", "product" - these will cause API errors
 ```
 
 ### 🚀 BULLETPROOF Analysis Tools (v2.2.2)
@@ -295,10 +377,54 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 
 ### **Webhook Forwarding System**
 - **Dual Authentication**: Supports both HCP signature and forwarding secret authentication
-- **Endpoint**: `https://servativ.themomentcatchers.com/webhooks/hcp`
 - **Forwarding Auth**: `X-Internal-Auth: sk_servativ_webhook_7f4d9b2e8a3c1f6d`
 - **Behavior**: Always returns 200 status to prevent webhook disabling
 - **Integration**: Accepts forwarded webhooks from Servativ's Java service
+
+#### **🚨 CRITICAL: Webhook URL Configuration**
+- **Dev HCP Webhooks** (Boris's HCP account): `https://servativ.themomentcatchers.com/webhooks/hcp-dev`
+  - Routes to port 5001 (webhook-dev service)
+  - Updates Airtable dev base (app67yWFv0hKdl6jM)
+  - Service: `sudo systemctl status webhook-dev`
+  
+- **Prod HCP Webhooks** (3rd party forwarded): `https://servativ.themomentcatchers.com/webhooks/hcp`
+  - Routes to port 5000 (webhook service)  
+  - Updates Airtable prod base (appZzebEIqCU5R9ER)
+  - Service: `sudo systemctl status webhook`
+
+#### **⚠️ Common Webhook Issues & Solutions**
+1. **"No matching reservation found" errors**:
+   - Check which webhook service is receiving the request (port 5000 vs 5001)
+   - Verify the job exists in the correct Airtable base (dev vs prod)
+   - Dev jobs MUST use `/webhooks/hcp-dev` endpoint
+
+2. **Port 443 conflicts**:
+   - nginx and airscripts-api-https both try to use port 443
+   - Solution: Stop airscripts-api-https, start nginx
+   ```bash
+   sudo systemctl stop airscripts-api-https
+   sudo systemctl start nginx
+   ```
+
+3. **Testing webhooks**:
+   ```bash
+   # Test dev webhook
+   curl -X POST https://servativ.themomentcatchers.com/webhooks/hcp-dev \
+     -H "Content-Type: application/json" -d '{"foo":"bar"}'
+   
+   # Test prod webhook  
+   curl -X POST https://servativ.themomentcatchers.com/webhooks/hcp \
+     -H "Content-Type: application/json" -d '{"foo":"bar"}'
+   ```
+
+4. **Check webhook logs**:
+   ```bash
+   # All webhook activity
+   tail -f /home/opc/automation/src/automation/logs/webhook.log
+   
+   # Filter for specific job
+   grep "job_fdf67b8c04c943e98d75230105a033ab" /home/opc/automation/src/automation/logs/webhook.log
+   ```
 
 ### **Enhanced HCP MCP Capabilities (v2.2.1)**
 

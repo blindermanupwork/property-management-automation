@@ -6,9 +6,13 @@ This script processes all reservation records and updates their service informat
 Usage:
     python update_service_fields.py              # Process all records
     python update_service_fields.py <ID>         # Test on single record by ID field value
+    python update_service_fields.py --dev        # Force development environment
+    python update_service_fields.py --prod       # Force production environment
     
 Example:
     python update_service_fields.py 30777        # Test on record where ID field = 30777
+    python update_service_fields.py --prod       # Process all records in production
+    python update_service_fields.py 30777 --dev  # Test single record in development
 """
 
 import os
@@ -24,7 +28,6 @@ import threading
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from automation.config_wrapper import Config
 from airtable import Airtable
 from dotenv import load_dotenv
 import time
@@ -34,37 +37,37 @@ parser = argparse.ArgumentParser(description='Update Service Line Description an
 parser.add_argument('id_value', nargs='?', help='Optional: Test on a specific record by ID field value (use "list" to see sample IDs)')
 parser.add_argument('--batch-size', type=int, default=50, help='Number of records to process in parallel (default: 50)')
 parser.add_argument('--max-workers', type=int, default=10, help='Maximum number of parallel workers (default: 10)')
+parser.add_argument('--dev', action='store_true', help='Force development environment')
+parser.add_argument('--prod', action='store_true', help='Force production environment')
 args = parser.parse_args()
 
-# Load environment variables - try multiple locations
-env_loaded = False
-env_locations = [
-    Path(__file__).parent.parent.parent.parent / '.env',  # Project root
-    Path.cwd() / '.env',  # Current directory
-    Path.home() / 'automation' / '.env',  # Home directory
-]
-
-for env_path in env_locations:
-    if env_path.exists():
-        load_dotenv(env_path)
-        print(f"Loaded .env from: {env_path}")
-        env_loaded = True
-        break
-
-if not env_loaded:
-    print("Warning: No .env file found in expected locations:")
-    for loc in env_locations:
-        print(f"  - {loc}")
-
 # Airtable configuration - environment-aware
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+# Command line flags override environment variable
+if args.prod:
+    os.environ['ENVIRONMENT'] = 'production'
+elif args.dev:
+    os.environ['ENVIRONMENT'] = 'development'
+else:
+    # Default to development if not specified
+    if 'ENVIRONMENT' not in os.environ:
+        os.environ['ENVIRONMENT'] = 'development'
+
+# Import Config after setting environment
+from automation.config_wrapper import Config
+
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development')
+
 if ENVIRONMENT == 'production':
-    AIRTABLE_API_KEY = os.getenv('PROD_AIRTABLE_API_KEY')
-    AIRTABLE_BASE_ID = os.getenv('PROD_AIRTABLE_BASE_ID')
+    from automation.config_prod import ProdConfig
+    config = ProdConfig()
+    AIRTABLE_API_KEY = config.get_airtable_api_key()
+    AIRTABLE_BASE_ID = config.get_airtable_base_id()
     print(f"Using PRODUCTION environment (API key: ...{AIRTABLE_API_KEY[-10:] if AIRTABLE_API_KEY else 'None'})")
 else:
-    AIRTABLE_API_KEY = os.getenv('DEV_AIRTABLE_API_KEY')
-    AIRTABLE_BASE_ID = os.getenv('DEV_AIRTABLE_BASE_ID')
+    from automation.config_dev import DevConfig
+    config = DevConfig()
+    AIRTABLE_API_KEY = config.get_airtable_api_key()
+    AIRTABLE_BASE_ID = config.get_airtable_base_id()
     print(f"Using DEVELOPMENT environment (API key: ...{AIRTABLE_API_KEY[-10:] if AIRTABLE_API_KEY else 'None'})")
 
 if not AIRTABLE_API_KEY or not AIRTABLE_BASE_ID:

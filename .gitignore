@@ -43,3 +43,29 @@ src/automation/scripts/airtable-agent/node_modules/
 
 # Internal task tracking (local only)
 TASK_TRACKER.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backups
+*.bak
+*.backup
+*.old
+*.orig
+
+# Archives
+archive/

@@ -722,12 +722,40 @@ def has_changes(csv_record, airtable_record):
     # No important changes detected
     return False
 
+def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_type):
+    """Check if a record with the same property, dates, and type already exists."""
+    try:
+        # Build formula to find exact matches
+        formula = (
+            f"AND("
+            f"{{Property ID}} = '{property_id}', "
+            f"{{Check-in Date}} = '{checkin_date}', "
+            f"{{Check-out Date}} = '{checkout_date}', "
+            f"{{Entry Type}} = '{entry_type}', "
+            f"OR({{Status}} = 'New', {{Status}} = 'Modified')"
+            f")"
+        )
+        
+        # Check if any matching records exist
+        records = table.all(formula=formula, max_records=1)
+        
+        if records:
+            logging.info(f"Found duplicate: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
+            return True
+        return False
+    except Exception as e:
+        logging.warning(f"Error checking for duplicate: {e}")
+        return False
+
 def sync_reservations(csv_reservations, all_reservation_records, table):
     """Synchronize CSV data with Airtable following a simple logical approach:
     1. Pull all active records from iTrip/Evolve with checkin >= today
     2. Process CSV files to identify new/modified/removed reservations
     3. Apply the appropriate action for each category
+    MODIFIED: Tracks duplicate detections and prevents false removals.
     """
+    # Track property/date combinations that had duplicates
+    duplicate_detected_dates = set()
     now_iso = datetime.now(arizona_tz).isoformat(sep=" ", timespec="seconds")
     today = date.today().isoformat()
     
@@ -799,17 +827,67 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
     for res in csv_reservations:
         uid = res["uid"]
         feed_url = res["feed_url"]
-        key = (uid, feed_url)
-        processed_uids.add(key)
         
-        # Get existing records
-        all_records = all_reservation_records.get(key, [])
+        # Try both composite and original UID for lookup
+        composite_key = (f"{uid}_{res['property_id']}", feed_url) if res.get('property_id') else (uid, feed_url)
+        original_key = (uid, feed_url)
+        
+        # Use the key that finds records (composite takes precedence)
+        all_records = all_reservation_records.get(composite_key, [])
+        if all_records:
+            key = composite_key
+            logging.info(f"🔍 Found existing records for {uid} using composite key")
+        else:
+            all_records = all_reservation_records.get(original_key, [])
+            key = original_key
+            if all_records:
+                logging.info(f"🔍 Found existing records for {uid} using original key")
+            else:
+                logging.info(f"🔍 No existing records found for {uid} (tried both composite and original)")
+        
+        processed_uids.add(key)
         
         # Is this a new or existing reservation?
         if key in airtable_map:
             # EXISTING reservation - check for changes
             airtable_record = airtable_map[key]
             at_fields = airtable_record["fields"]
+            
+            # IMPORTANT: Check if this UID is trying to create a duplicate
+            # This handles cases where CSV has same reservation with different UIDs
+            at_property_links = at_fields.get("Property ID", [])
+            at_property_id = at_property_links[0] if at_property_links else None
+            
+            # If the property ID doesn't match, check if we'd be creating a duplicate
+            if at_property_id != res["property_id"] and res["property_id"] and check_for_duplicate(
+                table, 
+                res["property_id"], 
+                res["dtstart"], 
+                res["dtend"], 
+                res["entry_type"]
+            ):
+                logging.info(f"Ignoring duplicate: UID {uid} would create duplicate for property {res['property_id']}")
+                unchanged_count += 1
+                
+                # Track this duplicate detection
+                duplicate_key = (res["property_id"], res["dtstart"], res["dtend"], res["entry_type"])
+                duplicate_detected_dates.add(duplicate_key)
+                
+                # Add to summary as duplicate ignored
+                summary_key = (res["entry_source"], res["property_id"])
+                summary[summary_key].append({
+                    "uid": uid,
+                    "old": "-",
+                    "new": "Duplicate_Ignored",
+                    "cin": res["dtstart"],
+                    "cout": res["dtend"],
+                    "overlap": res["overlapping"],
+                    "sameday": res["same_day_turnover"],
+                    "entry_type": res["entry_type"],
+                    "property_address": res.get("property_address", ""),
+                    "modified": False
+                })
+                continue
             
             # Compare critical fields
             at_checkin = normalize_date_for_comparison(at_fields.get("Check-in Date", ""))
@@ -828,9 +906,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
             flags_changed = (at_overlap != res["overlapping"] or at_sameday != res["same_day_turnover"])
             entry_type_changed = (at_entry_type != res["entry_type"])
             service_type_changed = (at_service_type != res["service_type"])
-            itrip_info_changed = (res["entry_source"] == "iTrip" and at_itrip_info != res.get("contractor_info", ""))
+            # REMOVED: itrip_info_changed - don't track contractor info changes
             
-            if dates_changed or property_changed or flags_changed or entry_type_changed or service_type_changed or itrip_info_changed:
+            if dates_changed or property_changed or flags_changed or entry_type_changed or service_type_changed:
                 # Something changed - create modified record
                 new_fields = {
                     "Check-in Date": res["dtstart"],
@@ -865,9 +943,7 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                 if service_type_changed:
                     logging.info(f"🔍 SERVICE TYPE CHANGED for {uid}: "
                                 f"'{at_service_type}' vs '{res['service_type']}'")
-                if itrip_info_changed:
-                    logging.info(f"🔍 ITRIP INFO CHANGED for {uid}: "
-                                f"'{at_itrip_info}' vs '{res.get('contractor_info', '')}'")
+                # REMOVED: itrip_info_changed logging since we no longer track it
                 
                 # Mark as old and create new record
                 mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
@@ -907,9 +983,50 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                     "modified": False            # ← was True
                 })
         else:
-            # NEW reservation - create it
+            # NEW reservation - but first check if it's a duplicate with different UID
+            # This prevents creating duplicates when CSV contains same reservation with different UIDs
+            logging.info(f"🔍 Processing NEW reservation {uid} for property {res.get('property_id', 'None')}")
+            
+            if res["property_id"] and check_for_duplicate(
+                table, 
+                res["property_id"], 
+                res["dtstart"], 
+                res["dtend"], 
+                res["entry_type"]
+            ):
+                logging.info(f"Ignoring duplicate event: {uid} for property {res['property_id']}")
+                # Track as unchanged since we're not creating it
+                unchanged_count += 1
+                
+                # Track this duplicate detection
+                duplicate_key = (res["property_id"], res["dtstart"], res["dtend"], res["entry_type"])
+                duplicate_detected_dates.add(duplicate_key)
+                
+                # Add to summary as duplicate ignored
+                summary_key = (res["entry_source"], res["property_id"])
+                summary[summary_key].append({
+                    "uid": uid,
+                    "old": "-",
+                    "new": "Duplicate_Ignored",
+                    "cin": res["dtstart"],
+                    "cout": res["dtend"],
+                    "overlap": res["overlapping"],
+                    "sameday": res["same_day_turnover"],
+                    "entry_type": res["entry_type"],
+                    "property_address": res.get("property_address", ""),
+                    "modified": False
+                })
+                continue
+            
+            # Create composite UID for new records
+            if res["property_id"]:
+                composite_uid = f"{uid}_{res['property_id']}"
+            else:
+                composite_uid = uid
+            
+            # NEW reservation - create it with composite UID
             new_fields = {
-                "Reservation UID": uid,
+                "Reservation UID": composite_uid,  # Use composite UID
                 "ICS URL": res["feed_url"],
                 "Check-in Date": res["dtstart"],
                 "Check-out Date": res["dtend"],
@@ -931,13 +1048,18 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
             if res["property_id"]:
                 new_fields["Property ID"] = [res["property_id"]]
             
-            # Mark any existing non-active records as Old
+            # Mark any existing ACTIVE records as Old (don't re-mark already-Old records)
             if all_records:
-                for record in all_records:
+                active_to_mark = [r for r in all_records if r["fields"].get("Status") in ("New", "Modified")]
+                for record in active_to_mark:
                     update_batch.add({
                         "id": record["id"],
                         "fields": {"Status": "Old", "Last Updated": now_iso}
                     })
+                if active_to_mark:
+                    logging.info(f"🔍 Marking {len(active_to_mark)} active records as Old for new reservation {uid}")
+                else:
+                    logging.info(f"🔍 No active records to mark as Old for new reservation {uid}")
             
             # Create the new record
             create_batch.add({"fields": new_fields})
@@ -960,7 +1082,16 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
     
     # STEP 6: Handle removals (in Airtable but not in CSV)
     for (uid, feed_url), records in all_reservation_records.items():
-        if (uid, feed_url) not in processed_uids:
+        # Check if this record was processed using either composite or original UID
+        was_processed = (uid, feed_url) in processed_uids
+        
+        # For composite UIDs, also check if the base UID was processed
+        if not was_processed and '_' in uid and uid.count('_') == 1:
+            base_uid = uid.rsplit('_', 1)[0]
+            was_processed = (base_uid, feed_url) in processed_uids
+        
+        if not was_processed:
+            logging.info(f"🔍 Found unprocessed record for removal: {uid}")
             # Get active records that need to be removed
             active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
             
@@ -977,6 +1108,20 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                     
                     # Only remove future reservations (checkin >= today)
                     if checkin_date >= today:
+                        # NEW: Check if this record matches a duplicate that was detected
+                        # If so, don't mark it as removed - it's the same reservation with a different UID
+                        property_links = fields.get("Property ID", [])
+                        if property_links:
+                            record_property_id = property_links[0]
+                            record_checkin = normalize_date_for_comparison(fields.get("Check-in Date", ""))
+                            record_checkout = normalize_date_for_comparison(fields.get("Check-out Date", ""))
+                            record_entry_type = fields.get("Entry Type", "")
+                            
+                            duplicate_key = (record_property_id, record_checkin, record_checkout, record_entry_type)
+                            if duplicate_key in duplicate_detected_dates:
+                                logging.info(f"Skipping removal of {uid} - same reservation detected with different UID")
+                                continue
+                        
                         # Mark as removed
                         mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
                         removed_count += 1
@@ -1236,6 +1381,23 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
 
     create_batch = BatchCollector(reservations_table, op="create")
     update_batch = BatchCollector(reservations_table, op="update")
+    
+    # Build a lookup for composite UIDs to handle the new format
+    # Map base_uid -> property_id -> records
+    composite_lookup = defaultdict(lambda: defaultdict(list))
+    for (uid, feed), records in existing_records.items():
+        if feed == feed_url:
+            # Check if this is a composite UID
+            if '_' in uid and uid.count('_') == 1:
+                base_uid, prop_id = uid.rsplit('_', 1)
+                if prop_id.startswith('rec'):  # Airtable record ID format
+                    composite_lookup[base_uid][prop_id].extend(records)
+            else:
+                # Non-composite UID - add to all properties (legacy support)
+                for rec in records:
+                    prop_links = rec["fields"].get("Property ID", [])
+                    if prop_links:
+                        composite_lookup[uid][prop_links[0]].extend([rec])
 
     # Track statistics
     stats = {
@@ -1246,6 +1408,9 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
         "removed_blocks": 0,
         "unchanged_blocks": 0
     }
+    
+    # Track processed UIDs to avoid duplicates within the same file
+    processed_uids = set()
 
     try:
         with open(file_path, newline="", encoding="utf-8-sig") as f:
@@ -1306,19 +1471,44 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
 
                 prop_id = prop_info["id"]
                 prop_name = prop_info["name"]
+                
+                # Create the composite UID for tracking
+                composite_uid = f"{uid}_{prop_id}"
+                
+                # Skip if we've already processed this UID in this file
+                if composite_uid in processed_uids:
+                    logging.debug(f"Skipping duplicate UID in same file: {composite_uid}")
+                    continue
+                processed_uids.add(composite_uid)
 
                 # Retrieve any existing records for this reservation
-                key = (uid, feed_url)
-                records = existing_records.get(key, [])
+                # First try composite UID lookup, then fall back to old method
+                records = composite_lookup.get(uid, {}).get(prop_id, [])
+                if not records:
+                    # Fallback to old lookup method for backward compatibility
+                    key = (uid, feed_url)
+                    records = existing_records.get(key, [])
                 active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
 
                 # Handle different status scenarios
                 if status == "booked":
                     if not active_records:
+                        # Check for duplicate blocks before creating
+                        if check_for_duplicate(
+                            reservations_table,
+                            prop_id,
+                            checkin_display,
+                            checkout_display,
+                            "Block"
+                        ):
+                            logging.info(f"Ignoring duplicate block: {composite_uid} for property {prop_id}")
+                            stats["skipped_duplicates"] = stats.get("skipped_duplicates", 0) + 1
+                            continue
+                        
                         # No active record exists - create a new block
                         create_batch.add({
                             "fields": {
-                                "Reservation UID": uid,
+                                "Reservation UID": composite_uid,  # Use composite UID
                                 "ICS URL": feed_url,
                                 "Check-in Date": checkin_display,
                                 "Check-out Date": checkout_display,
@@ -1331,7 +1521,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                             }
                         })
                         stats["new_blocks"] += 1
-                        logging.debug(f"Creating new block for {uid} at {prop_name}")
+                        logging.debug(f"Creating new block for {composite_uid} at {prop_name}")
                     else:
                         # Check if anything changed in the existing block
                         latest = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
@@ -1370,11 +1560,11 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                                 "Modified"
                             )
                             stats["modified_blocks"] += 1
-                            logging.debug(f"Modified block for {uid} at {prop_name}")
+                            logging.debug(f"Modified block for {composite_uid} at {prop_name}")
                         else:
                             # No changes - don't update Airtable at all
                             stats["unchanged_blocks"] += 1
-                            logging.debug(f"Unchanged block for {uid} at {prop_name}")
+                            logging.debug(f"Unchanged block for {composite_uid} at {prop_name}")
                 
                 elif status == "cancelled" and active_records:
                     # Mark as removed
@@ -1386,7 +1576,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                         "Removed"
                     )
                     stats["removed_blocks"] += 1
-                    logging.debug(f"Marked block as removed for {uid} at {prop_name}")
+                    logging.debug(f"Marked block as removed for {composite_uid} at {prop_name}")
 
         # Flush batches only if file parsed without fatal error
         create_batch.done()
@@ -1399,6 +1589,7 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
             f" • {stats['modified_blocks']} modified"
             f" • {stats['unchanged_blocks']} unchanged"
             f" • {stats['removed_blocks']} removed"
+            f" • {stats.get('skipped_duplicates', 0)} skipped (duplicates)"
             f" • {stats['skipped_no_property']} skipped (no property)"
         )
         return True, stats

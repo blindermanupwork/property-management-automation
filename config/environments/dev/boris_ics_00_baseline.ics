@@ -1,0 +1,8 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Boris Test Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Boris Test Property Calendar
+X-WR-CALDESC:Test calendar for Boris dev environment - Empty baseline
+END:VCALENDAR

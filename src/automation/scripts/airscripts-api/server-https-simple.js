@@ -21,10 +21,40 @@ const PORT = process.env.HTTPS_PORT || 3443;
 
 // Middleware
 app.use(morgan('combined'));
-app.use(cors({
-  origin: ['https://airtable.com', 'https://blocks.airtable.com'],
-  credentials: true
-}));
+
+// More permissive CORS for Airtable
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Log all requests for debugging
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} from origin: ${origin}`);
+  
+  // Allow Airtable and common origins
+  if (!origin || 
+      origin.includes('airtable.com') || 
+      origin.includes('localhost') ||
+      origin === 'https://servativ.themomentcatchers.com') {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else {
+    // For other origins, still allow but log it
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.log('WARNING: Request from unexpected origin:', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  
+  // Handle preflight immediately
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
 app.use(express.json());
 
 // Rate limiting
@@ -43,6 +73,17 @@ app.use('/api/', (req, res, next) => {
   next();
 });
 
+// Test endpoint for debugging
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'API is working',
+    timestamp: new Date().toISOString(),
+    headers: req.headers
+  });
+});
+
+
 // Routes - Environment-specific endpoints
 app.use('/api/dev/jobs', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, jobRoutes);
 app.use('/api/dev/schedules', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, scheduleRoutes);
@@ -52,6 +93,15 @@ app.use('/api/prod/schedules', (req, res, next) => { req.forceEnvironment = 'pro
 // Legacy routes (use current ENVIRONMENT setting)
 app.use('/api/jobs', jobRoutes);
 app.use('/api/schedules', scheduleRoutes);
+
+// Serve test data files (no authentication required for testing)
+app.use('/test-data', express.static('/home/opc/automation/test_data', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.ics')) {
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    }
+  }
+}));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -69,10 +119,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// HTTPS server options
+// HTTPS server options - Using Let's Encrypt certificates
 const httpsOptions = {
-  key: fs.readFileSync('./certs/key.pem'),
-  cert: fs.readFileSync('./certs/cert.pem')
+  key: fs.readFileSync('./certs/letsencrypt-key.pem'),
+  cert: fs.readFileSync('./certs/letsencrypt-cert.pem')
 };
 
 // Start HTTPS server
