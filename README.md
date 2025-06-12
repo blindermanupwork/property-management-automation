@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.2** - Service Line Custom Instructions Fix & HCP MCP Enhancements
+**Version 2.2.3** - Comprehensive Operational Documentation & Training Materials
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -407,15 +407,32 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 - Centralized configuration system
 - Cross-platform compatibility improvements
 
+## 📚 Operational Documentation
+
+### **Daily Operations Guides**
+Complete operational documentation for property management staff:
+
+- **[Operational Scenarios](docs/operations/OPERATIONAL_SCENARIOS.md)** - 30 real-world scenarios with step-by-step resolutions
+- **[Scenarios by View](docs/operations/OPERATIONAL_SCENARIOS_BY_VIEW.md)** - Scenarios organized by Airtable views
+- **[Quick Reference](docs/operations/SCENARIOS_QUICK_REFERENCE.md)** - Emergency procedures and decision trees
+- **[Training Checklist](docs/operations/OPERATIONAL_TRAINING_CHECKLIST.md)** - 3-week training program for new operators
+- **[Data Examples](docs/operations/OPERATIONAL_DATA_EXAMPLES.md)** - Real data patterns and edge cases
+- **[View Scenarios](docs/operations/AIRTABLE_VIEW_SCENARIOS.md)** - View-specific workflows and filters
+
+### **Technical Documentation**
+- **[System Logical Flow](docs/audit/SYSTEM_LOGICAL_FLOW.md)** - Complete system architecture and workflows
+- **[Sync Field Logic](docs/operations/SYNC_FIELD_LOGIC_EXPLAINED.md)** - Understanding sync statuses and troubleshooting
+- **[API Documentation](docs/api/)** - API endpoints and integration guides
+
 ## 🤝 Support
 
 For issues, feature requests, or contributions:
 
-1. **Check Documentation**: Review this README and configuration guides
+1. **Check Documentation**: Review this README and operational guides
 2. **Run Diagnostics**: Use `python3 src/run_anywhere.py --info` and `--test`
 3. **Check Logs**: Review environment-specific log files
 4. **Validate Config**: Ensure .env files are properly configured
 
 ---
 
-**🎉 The system is now enterprise-ready with complete environment separation, enhanced security, and production-grade reliability!**
+**🎉 The system is now enterprise-ready with complete environment separation, enhanced security, production-grade reliability, and comprehensive operational documentation!**
