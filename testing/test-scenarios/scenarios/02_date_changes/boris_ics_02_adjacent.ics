@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Boris Test Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Boris Test Property Calendar
+X-WR-CALDESC:Test calendar for Boris dev environment - Adjacent reservation test
+
+BEGIN:VEVENT
+DTSTART:20250611T140000Z
+DTEND:20250612T110000Z
+SUMMARY:Regular Reservation - Boris ICS Test Condo - Tom Wilson
+DESCRIPTION:Testing adjacent reservations (checkout = checkin) should NOT be marked as overlapping
+UID:boris_ics_adjacent_test_001@test.com
+DTSTAMP:20250609T103416Z
+LOCATION:Boris Test Condo
+ORGANIZER:Boris Test Reservations
+END:VEVENT
+
+END:VCALENDAR

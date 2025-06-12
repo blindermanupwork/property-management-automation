@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Boris Test Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Boris Test Property Calendar
+X-WR-CALDESC:Test calendar for Boris dev environment - Property matching failure test
+
+BEGIN:VEVENT
+DTSTART:20250611T140000Z
+DTEND:20250612T110000Z
+SUMMARY:Test Reservation - Nonexistent Property #999 - Error Test
+DESCRIPTION:Testing graceful handling of invalid property references - should fail with clear error
+UID:boris_ics_invalid_test_001@test.com
+DTSTAMP:20250609T103416Z
+LOCATION:Nonexistent Property #999
+ORGANIZER:Boris Test Error Handling
+END:VEVENT
+
+END:VCALENDAR

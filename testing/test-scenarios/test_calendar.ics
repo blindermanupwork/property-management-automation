@@ -1,0 +1,36 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Boris Test Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Boris Test Property Calendar
+X-WR-CALDESC:Test calendar for Boris dev environment
+
+BEGIN:VEVENT
+DTSTART:20250610T140000Z
+DTEND:20250612T110000Z
+SUMMARY:Turnover - Boris ICS Test Condo - Tom Wilson
+DESCRIPTION:Boris test property - Turnover service needed
+UID:boris_ics_c9c53273@test.com
+DTSTAMP:20250609T103416Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART:20250611T140000Z
+DTEND:20250613T110000Z
+SUMMARY:Return Laundry - Boris ICS Test Condo - Lisa Garcia
+DESCRIPTION:Boris test property - Return laundry service
+UID:boris_ics_772a4afb@test.com
+DTSTAMP:20250609T103416Z
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART:20250612T140000Z
+DTEND:20250614T110000Z
+SUMMARY:Inspection - Boris ICS Test Condo - Mark Taylor
+DESCRIPTION:Boris test property - Property inspection needed
+UID:boris_ics_7fd44c4a@test.com
+DTSTAMP:20250609T103416Z
+END:VEVENT
+
+END:VCALENDAR

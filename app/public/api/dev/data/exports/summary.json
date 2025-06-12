@@ -1,0 +1,78 @@
+{
+  "lastExport": "2025-06-09T15:33:04.977Z",
+  "totalRecords": 3121,
+  "dataSource": "airtable_dev_api_live",
+  "environment": "development",
+  "exportFiles": [
+    "reservations.json",
+    "metadata.json"
+  ],
+  "sampleRecord": {
+    "id": "rec02iBSCbGxONaDx",
+    "createdTime": "2025-06-04T19:09:13.000Z",
+    "fields": {
+      "ID": 28336,
+      "Check-in Date": "2025-05-31",
+      "Check-out Date": "2025-06-05",
+      "Status": "Removed",
+      "Last Updated": "2025-06-04T19:09:12.000Z",
+      "Final Service Time": "2025-06-05T17:15:00.000Z",
+      "Service Job Link": {
+        "label": "Job Link Button",
+        "url": ""
+      },
+      "Sync Status": "Not Created",
+      "Reservation UID": "7f662ec65913-8b0a21ff798d93d0c0e285592800f8b7@airbnb.com",
+      "Entry Type": "Block",
+      "Service Type": "Needs Review",
+      "Entry Source": "Airbnb",
+      "Property ID": [
+        "recTUM474T8R6MaBk"
+      ],
+      "ICS URL": "https://www.airbnb.com.au/calendar/ical/1148007077912020115.ics?s=7bf0a44e410661d85d16a65f77b1337e",
+      "Delete Job Schedule": {
+        "label": "Delete Job Schedule",
+        "url": "https://airtable.com/tblaPnk0jxF47xWhL/rec02iBSCbGxONaDx?blocks=blipUTWZZBJrbaIXs"
+      },
+      "HCP Address (from Property ID)": [
+        "7625 E Camelback Rd 346B, Scottsdale AZ 85251"
+      ],
+      "Full Name (from HCP Customer ID) (from Property ID)": [
+        "Erfan Haroon"
+      ],
+      "Create Job & Sync Status": {
+        "label": "Create Job & Sync Status",
+        "url": "https://airtable.com/tblaPnk0jxF47xWhL/rec02iBSCbGxONaDx?blocks=blijEoUiKUxa6Z2MS"
+      },
+      "Service Line Description": "Needs Review STR Next Guest June 9",
+      "Next Guest Date": "2025-06-09",
+      "Add/Update Schedule": {
+        "label": "Add/Update Schedule",
+        "url": "https://airtable.com/tblaPnk0jxF47xWhL/rec02iBSCbGxONaDx?blocks=bli5VPlRk8HV2aUqa"
+      }
+    }
+  },
+  "recordFields": [
+    "ID",
+    "Check-in Date",
+    "Check-out Date",
+    "Status",
+    "Last Updated",
+    "Final Service Time",
+    "Service Job Link",
+    "Sync Status",
+    "Reservation UID",
+    "Entry Type",
+    "Service Type",
+    "Entry Source",
+    "Property ID",
+    "ICS URL",
+    "Delete Job Schedule",
+    "HCP Address (from Property ID)",
+    "Full Name (from HCP Customer ID) (from Property ID)",
+    "Create Job & Sync Status",
+    "Service Line Description",
+    "Next Guest Date",
+    "Add/Update Schedule"
+  ]
+}

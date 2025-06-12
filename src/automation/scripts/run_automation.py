@@ -13,50 +13,43 @@ import time
 import pytz
 
 def run_gmail_automation(config):
-    """Run Gmail downloader automation with OAuth health monitoring
+    """Run Gmail downloader automation with IMAP (no OAuth required)
     
     Args:
         config: DevConfig or ProdConfig instance
     """
     try:
-        gmail_script = config.get_script_path("gmail", "gmail_downloader.py")
-        oauth_monitor = config.get_script_path("gmail", "oauth_monitor.py")
+        # Use IMAP downloader instead of OAuth version
+        gmail_script = config.get_script_path("gmail", "gmail_imap_downloader.py")
         
         if not gmail_script.exists():
-            return {"success": False, "message": "Gmail downloader script not found"}
+            return {"success": False, "message": "Gmail IMAP downloader script not found"}
         
-        # First, check OAuth token health
-        print("🔍 Checking Gmail OAuth token health...")
-        if oauth_monitor.exists():
-            oauth_result = subprocess.run([
-                sys.executable, str(oauth_monitor.absolute()), "--quiet"
-            ], cwd=str(oauth_monitor.parent.absolute()))
-            
-            if oauth_result.returncode != 0:
-                print("⚠️  OAuth token needs attention, attempting automatic refresh...")
-                # Try to refresh by running a simple token check
-                refresh_result = subprocess.run([
-                    sys.executable, str(gmail_script.absolute()), "--check-token"
-                ], cwd=str(gmail_script.parent.absolute()))
-                
-                if refresh_result.returncode != 0:
-                    return {
-                        "success": False, 
-                        "message": "Gmail OAuth token expired and cannot be auto-refreshed. Manual intervention required."
-                    }
+        # Get email credentials from environment
+        gmail_email = os.environ.get('GMAIL_EMAIL')
+        gmail_password = os.environ.get('GMAIL_PASSWORD')  # App password
         
-        print("📧 Running Gmail downloader...")
+        if not gmail_email or not gmail_password:
+            return {
+                "success": False, 
+                "message": "Gmail credentials not found. Set GMAIL_EMAIL and GMAIL_PASSWORD environment variables."
+            }
+        
+        print("📧 Running Gmail IMAP downloader...")
         result = subprocess.run([
-            sys.executable, str(gmail_script.absolute()), "--force"
+            sys.executable, str(gmail_script.absolute()), 
+            "--email", gmail_email,
+            "--password", gmail_password,
+            "--days", "1"  # Look back 1 day to catch any missed emails
         ], cwd=str(gmail_script.parent.absolute()))
         
         if result.returncode == 0:
-            return {"success": True, "message": "Gmail download completed successfully"}
+            return {"success": True, "message": "Gmail IMAP download completed successfully"}
         else:
-            return {"success": False, "message": "Gmail download failed"}
+            return {"success": False, "message": "Gmail IMAP download failed"}
             
     except Exception as e:
-        return {"success": False, "message": f"Gmail error: {str(e)}"}
+        return {"success": False, "message": f"Gmail IMAP error: {str(e)}"}
     
 def run_evolve_automation(config):
     """Run Evolve scraper automation

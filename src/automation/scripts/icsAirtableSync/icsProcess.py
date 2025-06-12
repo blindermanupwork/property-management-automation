@@ -332,6 +332,7 @@ ENTRY_SOURCE_KEYWORDS = {
     'lodgify': 'Lodgify',
     'ownerrez': 'OwnerRez',
     'yourporter': 'YourPorter',
+    'boris': 'Boris',
     # Add keywords found within aggregated feeds
     'channel: airbnb': 'Airbnb',
     'channel: vrbo': 'VRBO',
@@ -805,7 +806,10 @@ def update_cron_table(cron_table, update_collector, create_collector, feed_url: 
 # Data Preparation and Processing Functions
 # ---------------------------------------------------------------------------
 def get_records_by_uid_feed(table):
-    """Gets existing records keyed by (UID, ICS_URL)."""
+    """
+    Gets existing records keyed by (UID, ICS_URL).
+    MODIFIED: Handles both old UIDs and new composite UIDs.
+    """
     by_feed = defaultdict(list)
     # Fetch fields needed for comparison AND for copying to new records
     fields_to_fetch = [
@@ -934,23 +938,119 @@ def has_changes(event, airtable_record):
     # No important changes detected
     return False
 
+def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_type):
+    """
+    Check if a record with the same property, dates, and type already exists.
+    Returns True if duplicate found, False otherwise.
+    """
+    if not property_id:
+        return False
+    
+    try:
+        # Get all records with matching dates and entry type first (more reliable)
+        date_formula = (
+            f"AND("
+            f"DATESTR({{Check-in Date}}) = '{checkin_date}', "
+            f"DATESTR({{Check-out Date}}) = '{checkout_date}', "
+            f"{{Entry Type}} = '{entry_type}'"
+            f")"
+        )
+        
+        existing = table.all(formula=date_formula, fields=["Reservation UID", "Status", "Property ID"])
+        
+        # Filter for matching property ID in Python (more reliable than Airtable formula)
+        matching_records = []
+        for record in existing:
+            record_property_ids = record["fields"].get("Property ID", [])
+            if isinstance(record_property_ids, list) and property_id in record_property_ids:
+                matching_records.append(record)
+        
+        if matching_records:
+            status = matching_records[0]["fields"].get("Status", "Unknown")
+            logging.info(f"Found duplicate: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type} (Status: {status})")
+            return True
+            
+    except Exception as e:
+        logging.error(f"Error checking for duplicates: {e}")
+        
+    return False
+
 def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, update_batch):
     """
     Synchronize a single ICS event with Airtable.
-    Uses mark_all_as_old_and_clone for proper history tracking.
+    MODIFIED: Uses composite UID and checks for duplicates.
     """
-    uid = event["uid"]
+    original_uid = event["uid"]
     feed_url = event["ics_url"]
     property_id = url_to_prop.get(feed_url)
     now_iso = datetime.now(arizona_tz).isoformat(sep=" ", timespec="seconds")
     
-    # Get ALL existing records for this (UID, feed_url) pair
-    all_records = existing_records.get((uid, feed_url), [])
+    # Create composite UID
+    if property_id:
+        composite_uid = f"{original_uid}_{property_id}"
+    else:
+        composite_uid = original_uid
+        logging.warning(f"No property_id for feed {feed_url}, using original UID")
+    
+    # Use composite UID for lookups
+    all_records = existing_records.get((composite_uid, feed_url), [])
     
     # Filter for active records (New or Modified)
     active_records = [r for r in all_records if r["fields"].get("Status") in ("New", "Modified")]
     
-    # Handle based on whether we have active records
+    # ALWAYS check for duplicates first, regardless of whether we have records with this UID
+    # This prevents creating duplicates when the ICS feed provides different UIDs for the same reservation
+    if property_id and check_for_duplicate(
+        table, 
+        property_id, 
+        event["dtstart"], 
+        event["dtend"], 
+        event["entry_type"]
+    ):
+        # Check if this is our existing record or a different one
+        if active_records:
+            # We have records with this UID - check if they match these dates
+            latest_active = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
+            if (latest_active["fields"].get("Check-in Date") == event["dtstart"] and 
+                latest_active["fields"].get("Check-out Date") == event["dtend"]):
+                # This is our own record, not a duplicate
+                if has_changes(event, latest_active):
+                    # Create new fields to change
+                    new_fields = {
+                        "Check-in Date": event["dtstart"],
+                        "Check-out Date": event["dtend"],
+                        "Entry Type": event["entry_type"],
+                        "Service Type": event["service_type"],
+                        "Entry Source": event["entry_source"],
+                        "Overlapping Dates": event["overlapping"],
+                        "Same-day Turnover": event["same_day_turnover"],
+                    }
+                    
+                    # Add Block Type if it exists
+                    if event["block_type"]:
+                        new_fields["Block Type"] = event["block_type"]
+                    
+                    # Add Property ID if it exists
+                    if property_id:
+                        new_fields["Property ID"] = [property_id]
+                    
+                    # Mark ALL existing records as Old and create one new Modified record
+                    mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
+                    
+                    return "Modified"
+                else:
+                    # No changes - don't update Airtable at all
+                    return "Unchanged"
+            else:
+                # Different dates - this is a true duplicate with a different UID
+                logging.info(f"Ignoring duplicate event: {original_uid} for property {property_id}")
+                return "Duplicate_Ignored"
+        else:
+            # No records with this UID, but duplicate exists with different UID
+            logging.info(f"Ignoring duplicate event: {original_uid} for property {property_id} (different UID, same dates)")
+            return "Duplicate_Ignored"
+    
+    # No duplicates found, proceed with normal logic
     if active_records:
         # Get the most recent active record for comparison
         latest_active = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
@@ -984,9 +1084,10 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             # No changes - don't update Airtable at all
             return "Unchanged"
     else:
-        # Create new record
+        
+        # Create new record with composite UID
         new_fields = {
-            "Reservation UID": uid,
+            "Reservation UID": composite_uid,  # Use composite UID
             "ICS URL": feed_url,
             "Check-in Date": event["dtstart"],
             "Check-out Date": event["dtend"],
@@ -1023,22 +1124,31 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
 def process_ics_feed(url, events, existing_records, url_to_prop, table, create_batch, update_batch):
     """
     Process all events from a single ICS feed.
-    Track which events were processed to identify removals later.
+    MODIFIED: Tracks duplicate_ignored status and prevents false removals.
     """
     if not events:
         logging.info(f"Feed {url} has 0 events within the date filter range. Skipping.")
-        return {"New": 0, "Modified": 0, "Unchanged": 0, "Removed": 0}
+        return {"New": 0, "Modified": 0, "Unchanged": 0, "Removed": 0, "Duplicate_Ignored": 0}
     
     logging.info(f"Processing feed: {url} with {len(events)} events")
     
     # Track status counts and processed (UID, URL) pairs
-    stats = {"New": 0, "Modified": 0, "Unchanged": 0}
-    processed_uid_url_pairs = set()  # <-- Change to track UID+URL pairs
+    stats = {"New": 0, "Modified": 0, "Unchanged": 0, "Duplicate_Ignored": 0}
+    processed_uid_url_pairs = set()
+    duplicate_detected_dates = set()  # Track property/date combinations that had duplicates
     
     # Process each event
     for event in events:
         uid = event["uid"]
-        processed_uid_url_pairs.add((uid, url))  # <-- Track the pair
+        property_id = url_to_prop.get(url)
+        
+        # Create composite UID for tracking
+        if property_id:
+            composite_uid = f"{uid}_{property_id}"
+        else:
+            composite_uid = uid
+            
+        processed_uid_url_pairs.add((composite_uid, url))
         
         status = sync_ics_event(
             event, 
@@ -1048,6 +1158,11 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             create_batch, 
             update_batch
         )
+        
+        # If this was a duplicate, track the property/date combination
+        if status == "Duplicate_Ignored" and property_id:
+            duplicate_key = (property_id, event["dtstart"], event["dtend"], event["entry_type"])
+            duplicate_detected_dates.add(duplicate_key)
         
         # Update stats
         if status in stats:
@@ -1073,6 +1188,20 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             # Skip if the stay is fully past
             if fields.get("Check-out Date", "") < today_iso:
                 continue
+            
+            # NEW: Check if this record matches a duplicate that was detected
+            # If so, don't mark it as removed - it's the same reservation with a different UID
+            property_ids = fields.get("Property ID", [])
+            if property_ids:
+                record_property_id = property_ids[0]
+                record_checkin = fields.get("Check-in Date", "")
+                record_checkout = fields.get("Check-out Date", "")
+                record_entry_type = fields.get("Entry Type", "")
+                
+                duplicate_key = (record_property_id, record_checkin, record_checkout, record_entry_type)
+                if duplicate_key in duplicate_detected_dates:
+                    logging.info(f"Skipping removal of {uid} - same reservation detected with different UID")
+                    continue
                 
             # Mark this record as Removed through mark_all_as_old_and_clone
             mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
@@ -1081,7 +1210,8 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     # Return stats including removals
     stats["Removed"] = removed_count
     logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
-                f"{stats['Unchanged']} unchanged, {stats['Removed']} removed")
+                f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
+                f"{stats['Duplicate_Ignored']} duplicates ignored")
     
     return stats
 

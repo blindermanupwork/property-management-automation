@@ -36,8 +36,8 @@ export const HCP_API = {
 
   // Line item kinds
   LINE_ITEM_KINDS: [
-    'service',
-    'product',
+    'labor',
+    'materials',
     'discount',
     'fee'
   ] as const,
