@@ -69,3 +69,6 @@ desktop.ini
 
 # Archives
 archive/
+
+# Reports (internal use only)
+reports/

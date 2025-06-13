@@ -261,6 +261,14 @@ This is a comprehensive property management automation system that orchestrates 
   - **Enhanced Search Tools**: `search_addresses`, `get_jobs_by_address`
   - **Smart Cache System**: JSONPath support, data inclusion, error resilience
   - **Detailed Error Types**: CustomerHasNoJobs, CustomerNotFound, InvalidPermissions
+- `trello-mcp-server`: Provides Claude access to Trello boards and cards
+  - **Board Management**: List boards, set active board, manage workspaces
+  - **Card Operations**: Create, update, move, and archive cards with markdown descriptions
+  - **List Management**: Create and archive lists
+  - **Attachments**: Attach images to cards from URLs
+  - **Activity Tracking**: Get recent board activity
+  - **Rate Limiting**: Automatic handling of Trello API limits (300 req/10s)
+  - **Active Board**: Servativ (ID: 684c85bde6851c221fffb25f)
 - Use `airtable-dev` or `airtable-prod` MCP server based on context
 - Test MCP connectivity with `node tools/test-mcp-connection.js`
 
