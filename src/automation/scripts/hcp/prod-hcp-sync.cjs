@@ -384,20 +384,26 @@ async function syncMultipleJobs() {
         console.log(`   Employee: ${HCP_EMPLOYEE_ID}`);
         console.log(`   Scheduled: ${finalTime}`);
         
-        // Enhanced job creation with job type IDs - matches API handler
-        // Define job type IDs for PROD environment
+        // Enhanced job creation with job type IDs from environment
         let jobTypeId;
         if (serviceType === 'Return Laundry') {
-          jobTypeId = "jbt_434c62f58d154eb4a968531702b96e8e"; // Return Laundry job type PROD
+          jobTypeId = process.env.PROD_HCP_JOB_TYPE_RETURN_LAUNDRY;
         } else if (serviceType === 'Inspection') {
-          jobTypeId = "jbt_b5d9457caf694beab5f350d42de3e57f"; // Inspection job type PROD
+          jobTypeId = process.env.PROD_HCP_JOB_TYPE_INSPECTION;
         } else {
-          jobTypeId = "jbt_20319ca089124b00af1b8b40150424ed"; // Turnover job type PROD
+          // Default to Turnover for any other service type
+          jobTypeId = process.env.PROD_HCP_JOB_TYPE_TURNOVER;
+        }
+        
+        // Fallback to Turnover if job type ID is not found
+        if (!jobTypeId) {
+          console.log(`⚠️  No job type ID found for ${serviceType}, defaulting to Turnover`);
+          jobTypeId = process.env.PROD_HCP_JOB_TYPE_TURNOVER;
         }
         
         console.log(`Using ${serviceType} job type ${jobTypeId}`);
         
-        // Create HCP job with enhanced data structure
+        // Create HCP job with job type ID
         const jobBody = {
           invoice_number: 0,
           customer_id: custId,

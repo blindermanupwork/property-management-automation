@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.3] - 2025-06-12
 
 ### Added
+- **Long-term Guest Detection** - Automatic detection of 14+ day stays
+  - Adds "LONG TERM GUEST DEPARTING" prefix to service names
+  - Works in all job creation methods (dev/prod sync scripts, API)
+  - Helps cleaners prepare for extended stay requirements
+  - Format: `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`
 - Comprehensive operational documentation suite for property management
   - `OPERATIONAL_SCENARIOS.md` - 30 real-world scenarios with step-by-step resolutions
   - `OPERATIONAL_SCENARIOS_BY_VIEW.md` - Scenarios organized by Airtable views with real examples
@@ -23,11 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated documentation to reflect current date (June 12, 2025)
 - Enhanced operational procedures with real job IDs and property examples
+- Updated Airtable "Service Line Description" field description to document long-term guest feature
 
 ### Fixed
 - Corrected date references in documentation (was showing December 6, now June 12)
 - Updated examples to use actual incomplete jobs from current date
 - Fixed Removed view logic to show records WITH service job IDs (not without)
+- Removed duplicate `handlers/createJob.js` file (was unused, actual handler is in `handlers/jobs.js`)
 
 ## [2.2.2] - 2025-06-09
 

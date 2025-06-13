@@ -181,6 +181,11 @@ nano config/environments/prod/.env
   - Automatic truncation to 200 characters for compatibility
   - Full Unicode support (accents, special characters, emojis)
   - Debug logging for troubleshooting service name construction
+- **Long-term Guest Detection** (NEW)
+  - Automatically detects stays of 14+ days
+  - Adds "LONG TERM GUEST DEPARTING" to service name
+  - Works with all job creation methods (dev/prod sync, API)
+  - Format: `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`
 
 ### **6. HCP MCP Server Integration** (Enhanced v2.2.1)
 Claude AI can interact with HousecallPro data through enhanced MCP servers:
@@ -395,7 +400,8 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 
 ## 📝 Version History
 
-### **Version 2.2.2** (Current)
+### **Version 2.2.3** (Current)
+- ✅ **Long-term Guest Detection** (14+ day stays get "LONG TERM GUEST DEPARTING" prefix)
 - ✅ **Service Line Custom Instructions Fix** (proper format: `${customInstructions} - ${baseSvcName}`)
 - ✅ **HCP MCP Server Enhancements** (new search tools, analysis capabilities)
 - ✅ **Complete environment separation** (dev/prod isolation)

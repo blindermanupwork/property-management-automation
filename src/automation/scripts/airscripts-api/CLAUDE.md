@@ -24,10 +24,9 @@ The AirScripts API is a Node.js Express server that replaces complex Airtable em
 - `package.json` - Dependencies (safe to update dependencies)
 
 ### Business Logic
-- `handlers/createJob.js` - Job creation logic (safe to modify)
-- `handlers/jobs.js` - Job management handlers (safe to modify)
+- `handlers/jobs.js` - Job management handlers including createJob, cancelJob functions (safe to modify)
 - `handlers/schedules.js` - Schedule management (safe to modify)
-- `routes/jobs.js` - Job routing (safe to modify routing logic)
+- `routes/jobs.js` - Job routing (imports handlers from `handlers/jobs.js`)
 - `routes/schedules.js` - Schedule routing (safe to modify routing logic)
 
 ### Services & Utilities
