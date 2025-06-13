@@ -205,6 +205,25 @@ async function createJob(req, res) {
       }
     }
     
+    // Store base service name before modifications
+    const baseSvcName = serviceName;
+    
+    // Check for long-term guest (2+ weeks) and modify service name accordingly
+    let isLongTermGuest = false;
+    const checkInDate = reservation.get('Check-in Date');
+    const checkOutDate = reservation.get('Check-out Date');
+    
+    if (checkInDate && checkOutDate) {
+      const checkIn = new Date(checkInDate);
+      const checkOut = new Date(checkOutDate);
+      const stayDurationDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+      
+      if (stayDurationDays >= 14) {
+        isLongTermGuest = true;
+        console.log(`DEBUG: Long-term guest detected - ${stayDurationDays} days stay`);
+      }
+    }
+    
     // Add Custom Service Line Instructions if present
     const serviceLineCustomInstructions = reservation.get('Custom Service Line Instructions');
     console.log(`DEBUG: Custom Service Line Instructions: "${serviceLineCustomInstructions}"`);
@@ -214,18 +233,28 @@ async function createJob(req, res) {
     if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
       // Limit custom instructions length to prevent issues
       let customInstructions = serviceLineCustomInstructions.trim();
-      const maxCustomLength = 200; // Leave room for base service name
+      const maxCustomLength = 200; // Leave room for base service name and long-term prefix
       
       if (customInstructions.length > maxCustomLength) {
         customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
         console.log(`DEBUG: Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
       }
       
-      serviceName = `${customInstructions} - ${serviceName}`;
-      console.log(`DEBUG: Final service name with custom instructions: "${serviceName}"`);
+      if (isLongTermGuest) {
+        serviceName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
+        console.log(`Added long-term guest prefix with custom instructions -- Final service name: ${serviceName}`);
+      } else {
+        serviceName = `${customInstructions} - ${baseSvcName}`;
+        console.log(`Added custom instructions -- Final service name: ${serviceName}`);
+      }
       console.log(`DEBUG: Final service name length: ${serviceName.length} characters`);
     } else {
-      console.log(`DEBUG: Final service name (no custom instructions): "${serviceName}"`);
+      if (isLongTermGuest) {
+        serviceName = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
+        console.log(`Added long-term guest prefix (no custom instructions) -- Final service name: ${serviceName}`);
+      } else {
+        console.log(`DEBUG: Final service name (no custom instructions): "${serviceName}"`);
+      }
     }
 
     // Check if job already exists
