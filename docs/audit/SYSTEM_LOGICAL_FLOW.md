@@ -304,12 +304,35 @@
         - **THEN** truncate to 197 characters + "..."
       - **THEN** set line item name = **"Service Line Custom Instructions"** + " - " + service name
       
-      **IF** **"Same-day Turnover"** = true
-      - **THEN** service name = **"Service Type"** + " STR SAME DAY"
+      **Service Name Construction Order**:
       
-      **IF** **"Same-day Turnover"** = false AND **"Service Type"** = "Turnover"
-      - **THEN** find next reservation for same property
-      - **THEN** service name = **"Service Type"** + " STR Next Guest [Date]" or " STR Next Guest Unknown"
+      **STEP 1: Determine base service name**
+      - **IF** **"Same-day Turnover"** = true
+        - **THEN** baseSvcName = **"Service Type"** + " STR SAME DAY"
+      - **ELSE IF** **"Service Type"** = "Turnover" AND checkout date exists
+        - **THEN** find next reservation for same property
+        - **IF** next reservation found: baseSvcName = **"Service Type"** + " STR Next Guest [Month Day]"
+        - **ELSE**: baseSvcName = **"Service Type"** + " STR Next Guest Unknown"
+      - **ELSE** baseSvcName = **"Service Type"** + " STR Next Guest Unknown"
+      
+      **STEP 2: Check for long-term guest**
+      - **IF** (Check-out Date - Check-in Date) >= 14 days
+        - **THEN** isLongTermGuest = true
+      
+      **STEP 3: Build final service name**
+      - **IF** **"Service Line Custom Instructions"** has value AND isLongTermGuest = true
+        - **THEN** svcName = **"Custom Instructions"** + " - LONG TERM GUEST DEPARTING " + baseSvcName
+      - **ELSE IF** **"Service Line Custom Instructions"** has value AND isLongTermGuest = false
+        - **THEN** svcName = **"Custom Instructions"** + " - " + baseSvcName
+      - **ELSE IF** no custom instructions AND isLongTermGuest = true
+        - **THEN** svcName = "LONG TERM GUEST DEPARTING " + baseSvcName
+      - **ELSE** svcName = baseSvcName
+      
+      **Example Scenarios**:
+      - Same-day + Long-term + Custom: "CUSTOM TEXT - LONG TERM GUEST DEPARTING Turnover STR SAME DAY"
+      - Same-day + Long-term + No custom: "LONG TERM GUEST DEPARTING Turnover STR SAME DAY"
+      - Same-day + Regular guest: "CUSTOM TEXT - Turnover STR SAME DAY"
+      - Regular + Long-term: "CUSTOM TEXT - LONG TERM GUEST DEPARTING Turnover STR Next Guest July 15"
     
     - **THEN** update Airtable record:
       - **"Service Job ID"** = created job ID

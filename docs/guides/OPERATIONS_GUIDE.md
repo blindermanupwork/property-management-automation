@@ -56,8 +56,8 @@
 1. Switch to **"Job Creation Queue"** view
 2. Filter for today's and tomorrow's checkouts
 3. Review any custom service line instructions needed:
-   - Long-term guests (>2 weeks) → Add "Long-term guest checkout"
-   - Special requests → Add specific instructions
+   - Long-term guests (>2 weeks) → Automatically adds "LONG TERM GUEST DEPARTING" prefix
+   - Special requests → Add specific instructions in the field
 4. Click **"Create Job & Sync Status"** button for each reservation
 5. Monitor for errors:
    - ❌ "Property missing HCP Customer ID" → Add property to Properties table first
@@ -130,8 +130,8 @@
 
 **Long-term Reservations (>2 weeks):**
 - Automatically flagged for review
-- Add "Long-term guest checkout" to Custom Service Line Instructions
-- Consider special cleaning requirements
+- System automatically adds "LONG TERM GUEST DEPARTING" to service name
+- Consider special cleaning requirements for extended stays
 
 3. Drag cards to appropriate columns to update Service Type
 
@@ -191,7 +191,7 @@
 #### **Long-term Guests Review**
 1. Open **"Long-term Guests"** view
 2. Review all stays >2 weeks checking out this week
-3. Verify Custom Service Line Instructions include "Long-term guest checkout"
+3. System automatically adds "LONG TERM GUEST DEPARTING" to service names
 4. Consider special requirements:
    - Extra cleaning time needed
    - Assignee with experience in deep cleaning
@@ -300,6 +300,35 @@
 - Filter by specific assignees for workload management
 - Filter by property groups for regional focus
 - Filter by date ranges for specific planning periods
+
+### **Understanding Service Names in HCP**
+**How the system builds service names for cleaners:**
+
+The service name cleaners see in HousecallPro is built in this order:
+1. **Custom Instructions** (if any)
+2. **Long-term Guest Alert** (if 14+ day stay)
+3. **Base Service Type** (including same-day indicator)
+
+**Examples of what cleaners will see:**
+- `"POOL NEEDS CLEANING - LONG TERM GUEST DEPARTING Turnover STR SAME DAY"`
+  - Custom instruction: Pool needs cleaning
+  - Long-term guest: Yes (14+ days)
+  - Same-day turnover: Yes
+  
+- `"LONG TERM GUEST DEPARTING Turnover STR SAME DAY"`
+  - No custom instructions
+  - Long-term guest: Yes
+  - Same-day turnover: Yes
+  
+- `"15-DAY STAY TEST - LONG TERM GUEST DEPARTING Turnover STR Next Guest July 15"`
+  - Custom instruction: 15-day stay test
+  - Long-term guest: Yes
+  - Regular turnover with next guest on July 15
+  
+- `"CHECK GARAGE DOOR - Turnover STR SAME DAY"`
+  - Custom instruction: Check garage door
+  - Regular guest (not long-term)
+  - Same-day turnover
 
 ### **Quality Assurance Checks**
 **Daily verification routine:**

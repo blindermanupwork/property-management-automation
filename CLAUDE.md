@@ -39,6 +39,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │           ├── hcp/             # HousecallPro sync
 │           ├── airscripts-api/  # API server
 │           ├── airtable-agent/  # AI agent
+│           ├── airtable-automations/ # Airtable automation scripts
+│           │   ├── find-next-guest-date.js
+│           │   ├── update-service-line-description.js
+│           │   └── README.md
 │           ├── system/          # System scripts
 │           │   ├── cron_setup_dev.sh
 │           │   ├── cron_setup_prod.sh
@@ -79,7 +83,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.2)
+### Current System State (v2.2.3)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)
@@ -87,6 +91,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **CloudMailin Integration**: Replaced Gmail OAuth with webhook-based email processing
 - ✅ **Enhanced search capabilities**: Address search, job filtering, revenue analysis
 - ✅ **Service line custom instructions**: Unicode support with 200-char truncation
+- ✅ **Long-term guest detection**: Auto-adds "LONG TERM GUEST DEPARTING" for 14+ day stays
 - ✅ **Webhook forwarding system**: Dual authentication support implemented
 - ✅ **Real-time console output**: All automation processes show live progress
 - ✅ **Environment-specific webhook logs**: Separate logs for dev (webhook_development.log) and prod (webhook.log)
@@ -479,6 +484,11 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 - **Cleaner Assignment**: Done in HCP, syncs back to Airtable automatically
 - **Schedule Updates**: "Custom Service Time" + "Add/Update Schedule" button workflow
 - **Time Management**: All scheduling uses MST (Mountain Standard Time)
+
+### **Important Code Structure Notes**
+- **API Handlers**: Job creation logic is in `handlers/jobs.js` (NOT `handlers/createJob.js` which was removed)
+- **Long-term Guest Logic**: Implemented in dev-hcp-sync.cjs, prod-hcp-sync.cjs, and handlers/jobs.js
+- **Job Type IDs**: Stored in environment variables (never hardcoded)
 
 ### **Production Data Volumes**
 - **ICS Processing**: 246 feeds (production), 255 feeds (development)

@@ -91,6 +91,56 @@ if (customInstructions.length > maxCustomLength) {
 final_service_name = `${customInstructions} - ${baseServiceName}`;
 ```
 
+#### Long-term Guest Detection (14+ Days)
+```javascript
+// Implementation (dev-hcp-sync.cjs, prod-hcp-sync.cjs, handlers/jobs.js)
+const checkInDate = rec.fields['Check-in Date'];
+const checkOutDate = rec.fields['Check-out Date'];
+
+if (checkInDate && checkOutDate) {
+  const checkIn = new Date(checkInDate);
+  const checkOut = new Date(checkOutDate);
+  const stayDurationDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+  
+  if (stayDurationDays >= 14) {
+    isLongTermGuest = true;
+    serviceName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
+  }
+}
+```
+
+#### Service Name Construction Order
+```javascript
+// 1. First determine base service name
+if (sameDayTurnover) {
+  baseSvcName = `${serviceType} STR SAME DAY`;
+} else if (serviceType === 'Turnover' && checkOutDate) {
+  // Look for next guest
+  baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+} else {
+  baseSvcName = `${serviceType} STR Next Guest Unknown`;
+}
+
+// 2. Then build full service name with long-term guest logic
+if (customInstructions && isLongTermGuest) {
+  svcName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
+} else if (customInstructions && !isLongTermGuest) {
+  svcName = `${customInstructions} - ${baseSvcName}`;
+} else if (!customInstructions && isLongTermGuest) {
+  svcName = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
+} else {
+  svcName = baseSvcName;
+}
+```
+
+#### Example Service Name Scenarios
+- **Same-day + Long-term + Custom**: `"CUSTOM TEXT - LONG TERM GUEST DEPARTING Turnover STR SAME DAY"`
+- **Same-day + Long-term + No custom**: `"LONG TERM GUEST DEPARTING Turnover STR SAME DAY"`
+- **Same-day + Regular + Custom**: `"CUSTOM TEXT - Turnover STR SAME DAY"`
+- **Same-day + Regular + No custom**: `"Turnover STR SAME DAY"`
+- **Regular + Long-term + Custom**: `"CUSTOM TEXT - LONG TERM GUEST DEPARTING Turnover STR Next Guest July 15"`
+- **Regular + Long-term + No custom**: `"LONG TERM GUEST DEPARTING Turnover STR Next Guest Unknown"`
+
 #### Pricing Logic
 ```javascript
 // Template-based pricing (hcp_sync.js:374-421)
