@@ -105,13 +105,19 @@ automation/                                 # Project root
 │   ├── cron_remove.sh                     # Remove old cron jobs
 │   └── backups/                           # Backup storage
 │
-└── 🔧 Development Tools & MCP Servers
-    ├── tools/airtable-mcp-server/          # Airtable MCP integration for Claude
-    ├── tools/hcp-mcp-dev/                 # HousecallPro MCP server (development)
-    ├── tools/hcp-mcp-prod/                # HousecallPro MCP server (production)
-    ├── tools/hcp-mcp-common/              # Shared HCP MCP functionality
-    ├── test_setup.py                      # Setup validation
-    └── docs/                              # Documentation
+├── 🔧 Development Tools & MCP Servers
+│   ├── tools/airtable-mcp-server/          # Airtable MCP integration for Claude
+│   ├── tools/hcp-mcp-dev/                 # HousecallPro MCP server (development)
+│   ├── tools/hcp-mcp-prod/                # HousecallPro MCP server (production)
+│   ├── tools/hcp-mcp-common/              # Shared HCP MCP functionality
+│   ├── test_setup.py                      # Setup validation
+│   └── docs/                              # Documentation
+│
+└── 📚 Reference Scripts
+    └── src/automation/scripts/airtable-automations/
+        ├── README.md                       # Script documentation
+        ├── find-next-guest-date.js        # Next guest and same-day detection
+        └── update-service-line-description.js # Service line builder with long-term logic
 ```
 
 ## 🚦 Installation & Setup
@@ -212,6 +218,22 @@ Claude AI can interact with HousecallPro data through enhanced MCP servers:
 - Small responses (<500KB) include data directly
 - Enhanced cache search with JSONPath-like queries
 - Better handling of nested JSON structures
+
+### **7. Airtable Automation Scripts** (NEW)
+Reference scripts for Airtable automations located in `src/automation/scripts/airtable-automations/`:
+
+#### **find-next-guest-date.js**
+- Finds the next guest reservation for a property
+- Detects same-day turnovers using >= date comparison
+- Updates `Next Guest Date` and `Same-day Turnover` fields
+
+#### **update-service-line-description.js**
+- Builds complete service line descriptions with 3-step construction:
+  1. Base service name (with same-day/next guest info)
+  2. Long-term guest detection (14+ days)
+  3. Final assembly with custom instructions
+- Uses pre-calculated `Next Guest Date` when available
+- Truncates custom instructions to 200 characters
 
 ## 🔧 Configuration System
 

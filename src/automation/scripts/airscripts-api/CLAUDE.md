@@ -153,7 +153,9 @@ tail -5 server.log
 - Uses HCP API v1 endpoints
 - Requires valid HCP token and employee ID
 - Handles appointment scheduling automatically
-- Supports custom service line instructions
+- Supports custom service line instructions (200 char limit)
+- **Long-term Guest Detection**: Automatically adds "LONG TERM GUEST DEPARTING" prefix for 14+ day stays
+- **Handler Location**: `handlers/jobs.js` (not createJob.js which was removed)
 
 ### Airtable Integration
 - Environment-aware base selection

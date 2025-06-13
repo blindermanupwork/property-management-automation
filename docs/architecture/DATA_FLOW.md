@@ -524,6 +524,78 @@
 
 ---
 
+## 🏠 **HousecallPro Sync Automation** 
+
+**Trigger**: Every 4 hours as part of controller automation
+**System Action**: Automated job creation and schedule synchronization
+
+### **Primary Logic** (dev-hcp-sync.cjs / prod-hcp-sync.cjs):
+- **STEP 1**: Query Airtable for reservations needing HCP jobs
+  - **FOR EACH** reservation WHERE:
+    - **"Entry Type"** = "Reservation" 
+    - **AND** **"Service Job ID"** is empty
+    - **AND** **"Service Type"** NOT in ["Canceled", "Needs Review"]
+    - **AND** **"Check-out Date"** >= 7 days ago
+    - **AND** **"Check-out Date"** <= 3 months in future
+  
+- **STEP 2**: For each eligible reservation, create HCP job
+  - **THEN** get property from **"Property ID"** link
+  - **THEN** validate HCP Customer ID and Address ID exist
+  
+  **Long-term Guest Detection**:
+  - **IF** (Check-out Date - Check-in Date) >= 14 days
+    - **THEN** set isLongTermGuest = true
+    - **THEN** add "LONG TERM GUEST DEPARTING" to service name
+  
+  **Service Name Construction (3-step process)**:
+  
+  **Step 1 - Base Service Name**:
+  - **IF** sameDayTurnover = true
+    - **THEN** baseSvcName = `${serviceType} STR SAME DAY`
+  - **ELSE IF** serviceType = "Turnover" AND checkout date exists
+    - **THEN** look for next guest reservation
+    - **IF** found: baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`
+    - **ELSE**: baseSvcName = `${serviceType} STR Next Guest Unknown`
+  - **ELSE** baseSvcName = `${serviceType} STR Next Guest Unknown`
+  
+  **Step 2 - Long-term Guest Check**:
+  - **IF** (checkOutDate - checkInDate) >= 14 days
+    - **THEN** isLongTermGuest = true
+  
+  **Step 3 - Final Service Name**:
+  - **IF** customInstructions AND isLongTermGuest
+    - **THEN** svcName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`
+  - **ELSE IF** customInstructions AND NOT isLongTermGuest
+    - **THEN** svcName = `${customInstructions} - ${baseSvcName}`
+  - **ELSE IF** NO customInstructions AND isLongTermGuest
+    - **THEN** svcName = `LONG TERM GUEST DEPARTING ${baseSvcName}`
+  - **ELSE** svcName = baseSvcName
+  
+  **Example Outputs**:
+  - Same-day + Long-term + Custom: "POOL NEEDS CLEANING - LONG TERM GUEST DEPARTING Turnover STR SAME DAY"
+  - Same-day + Long-term: "LONG TERM GUEST DEPARTING Turnover STR SAME DAY"
+  - Regular + Long-term: "15-DAY STAY TEST - LONG TERM GUEST DEPARTING Turnover STR Next Guest July 15"
+  
+  **Job Type Selection**:
+  - **IF** **"Service Type"** = "Turnover" → use TURNOVER job type ID
+  - **IF** **"Service Type"** = "Return Laundry" → use RETURN_LAUNDRY job type ID  
+  - **IF** **"Service Type"** = "Inspection" → use INSPECTION job type ID
+  - **ELSE** default to TURNOVER job type ID
+  
+- **STEP 3**: Create HCP job via API
+  - **THEN** create job with schedule and appointment
+  - **THEN** copy line items from job template
+  - **THEN** update first line item with service name
+  
+- **STEP 4**: Update Airtable with results
+  - **"Service Job ID"** = created job ID
+  - **"Job Creation Time"** = current timestamp
+  - **"Service Appointment ID"** = appointment ID
+  - **"Sync Status"** = initial sync status
+  - **"Sync Details"** = creation details
+
+---
+
 ## 🌐 **AirScripts API Server Management**
 
 **Trigger**: Persistent HTTP server for Airtable button automations

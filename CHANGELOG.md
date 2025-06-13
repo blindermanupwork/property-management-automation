@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Works in all job creation methods (dev/prod sync scripts, API)
   - Helps cleaners prepare for extended stay requirements
   - Format: `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`
+- **Airtable Automation Reference Scripts** - Fixed and documented scripts for Airtable automations
+  - `find-next-guest-date.js` - Finds next guest with same-day turnover detection
+  - `update-service-line-description.js` - Builds service descriptions with long-term guest logic
+  - Both scripts saved in `src/automation/scripts/airtable-automations/`
+  - Fixed date comparison bug (changed > to >= for same-day detection)
 - Comprehensive operational documentation suite for property management
   - `OPERATIONAL_SCENARIOS.md` - 30 real-world scenarios with step-by-step resolutions
   - `OPERATIONAL_SCENARIOS_BY_VIEW.md` - Scenarios organized by Airtable views with real examples
@@ -35,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated examples to use actual incomplete jobs from current date
 - Fixed Removed view logic to show records WITH service job IDs (not without)
 - Removed duplicate `handlers/createJob.js` file (was unused, actual handler is in `handlers/jobs.js`)
+- **Fixed Airtable automation same-day detection** - Changed date comparison from > to >= to properly detect same-day turnovers
 
 ## [2.2.2] - 2025-06-09
 
