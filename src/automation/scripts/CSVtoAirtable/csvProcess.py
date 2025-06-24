@@ -677,10 +677,20 @@ def fetch_all_reservations(table, feed_urls):
             feed_url = fields.get("ICS URL")
             
             if uid and feed_url:
+                # Store with the actual UID from Airtable (could be composite)
                 key = (uid, feed_url)
                 by_uid_feed[key].append(record)
+                
+                # ALSO store with base UID if this is a composite UID
+                # This allows lookup by either composite or base UID
+                if '_' in uid and uid.count('_') == 1:
+                    base_uid, prop_suffix = uid.rsplit('_', 1)
+                    if prop_suffix.startswith('rec'):  # Airtable record ID format
+                        base_key = (base_uid, feed_url)
+                        by_uid_feed[base_key].append(record)
+                        logging.debug(f"Also indexed composite UID {uid} under base UID {base_uid}")
         
-        logging.info(f"Fetched {len(records)} total records for {len(by_uid_feed)} unique reservations")
+        logging.info(f"Fetched {len(records)} total records indexed under {len(by_uid_feed)} keys (includes base UID lookups)")
         
     except Exception as e:
         # Log detailed error information
@@ -736,8 +746,28 @@ def has_changes(csv_record, airtable_record):
     # No important changes detected
     return False
 
-def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_type):
-    """Check if a record with the same property, dates, and type already exists."""
+def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_type, session_tracker=None):
+    """Check if a record with the same property, dates, and type already exists.
+    
+    Args:
+        table: Airtable table object
+        property_id: Property record ID
+        checkin_date: Check-in date string
+        checkout_date: Check-out date string  
+        entry_type: 'Reservation' or 'Block'
+        session_tracker: Dict tracking records created in current session
+    
+    Returns:
+        bool: True if duplicate exists (in session or Airtable), False otherwise
+    """
+    # First check session tracker for duplicates created in this run
+    if session_tracker is not None:
+        key = (property_id, checkin_date, checkout_date, entry_type)
+        if key in session_tracker:
+            logging.info(f"Found duplicate in session: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
+            return True
+    
+    # Then check Airtable for existing records
     try:
         # Build formula to find exact matches
         formula = (
@@ -754,19 +784,25 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
         records = table.all(formula=formula, max_records=1)
         
         if records:
-            logging.info(f"Found duplicate: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
+            logging.info(f"Found duplicate in Airtable: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
             return True
         return False
     except Exception as e:
         logging.warning(f"Error checking for duplicate: {e}")
         return False
 
-def sync_reservations(csv_reservations, all_reservation_records, table):
+def sync_reservations(csv_reservations, all_reservation_records, table, session_tracker=None):
     """Synchronize CSV data with Airtable following a simple logical approach:
     1. Pull all active records from iTrip/Evolve with checkin >= today
     2. Process CSV files to identify new/modified/removed reservations
     3. Apply the appropriate action for each category
     MODIFIED: Tracks duplicate detections and prevents false removals.
+    
+    Args:
+        csv_reservations: List of reservation dicts from CSV files
+        all_reservation_records: Dict of existing Airtable records
+        table: Airtable table object
+        session_tracker: Set tracking records created in current session
     """
     # Track property/date combinations that had duplicates
     duplicate_detected_dates = set()
@@ -878,7 +914,8 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                 res["property_id"], 
                 res["dtstart"], 
                 res["dtend"], 
-                res["entry_type"]
+                res["entry_type"],
+                session_tracker
             ):
                 logging.info(f"Ignoring duplicate: UID {uid} would create duplicate for property {res['property_id']}")
                 unchanged_count += 1
@@ -1006,7 +1043,8 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
                 res["property_id"], 
                 res["dtstart"], 
                 res["dtend"], 
-                res["entry_type"]
+                res["entry_type"],
+                session_tracker
             ):
                 logging.info(f"Ignoring duplicate event: {uid} for property {res['property_id']}")
                 # Track as unchanged since we're not creating it
@@ -1078,6 +1116,11 @@ def sync_reservations(csv_reservations, all_reservation_records, table):
             # Create the new record
             create_batch.add({"fields": new_fields})
             created_count += 1
+            
+            # Track in session to prevent duplicates in this run
+            if session_tracker is not None and res["property_id"]:
+                tracker_key = (res["property_id"], res["dtstart"], res["dtend"], res["entry_type"])
+                session_tracker.add(tracker_key)
             
             # Add to summary
             summary_key = (res["entry_source"], res["property_id"])
@@ -1380,7 +1423,7 @@ def build_guest_to_property_map(properties_table):
     logging.info(f"Created {len(guest_to_prop)} guest → property mappings")
     return guest_to_prop
 
-def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_records):
+def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_records, session_tracker=None):
     """
     Parse one "Tab 2" CSV.  
     • Only processes rows where guest names match entries in the Properties table
@@ -1389,6 +1432,13 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
     • Marks blocks as removed when cancelled
     • Returns True when everything finished cleanly  
     • Returns False (and leaves the file in PROCESS_DIR) on any error
+    
+    Args:
+        file_path: Path to the CSV file
+        reservations_table: Airtable table object
+        guest_to_prop: Dict mapping guest names to property records
+        existing_records: Dict of existing Airtable records
+        session_tracker: Set tracking records created in current session
     """
     feed_url = "csv_evolve_blocks"
     now_iso_str = datetime.now(arizona_tz).isoformat(sep=" ", timespec="seconds")
@@ -1513,7 +1563,8 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                             prop_id,
                             checkin_display,
                             checkout_display,
-                            "Block"
+                            "Block",
+                            session_tracker
                         ):
                             logging.info(f"Ignoring duplicate block: {composite_uid} for property {prop_id}")
                             stats["skipped_duplicates"] = stats.get("skipped_duplicates", 0) + 1
@@ -1536,6 +1587,11 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                         })
                         stats["new_blocks"] += 1
                         logging.debug(f"Creating new block for {composite_uid} at {prop_name}")
+                        
+                        # Track in session to prevent duplicates in this run
+                        if session_tracker is not None:
+                            tracker_key = (prop_id, checkin_display, checkout_display, "Block")
+                            session_tracker.add(tracker_key)
                     else:
                         # Check if anything changed in the existing block
                         latest = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
@@ -1624,6 +1680,10 @@ def main():
         reservations_table = api.table(base_id, Config.get_airtable_table_name('reservations'))
         properties_table = api.table(base_id, Config.get_airtable_table_name('properties'))
         
+        # Create session-wide duplicate tracker
+        session_tracker = set()
+        logging.info("Initialized session-wide duplicate tracker")
+        
         # Try to load guest overrides table (may not exist in all environments)
         guest_overrides = {}
         try:
@@ -1646,7 +1706,7 @@ def main():
             logging.info(f"Processing Evolve Tab2 CSV: {fname}")
 
             ok, tab2_stats = process_tab2_csv(
-                csv_file, reservations_table, guest_to_prop, existing_records
+                csv_file, reservations_table, guest_to_prop, existing_records, session_tracker
             )
 
             if ok:
@@ -1685,7 +1745,7 @@ def main():
         all_records = fetch_all_reservations(reservations_table, feed_urls)
         
         # 6. Sync reservations - properly marking ALL records as Old when creating Modified/Removed
-        results = sync_reservations(filtered_reservations, all_records, reservations_table)
+        results = sync_reservations(filtered_reservations, all_records, reservations_table, session_tracker)
         
         # 7. Generate report
         generate_report(results, id_to_name)
