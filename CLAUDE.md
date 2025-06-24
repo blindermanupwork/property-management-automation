@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.4** - CSV Duplicate Detection Fix & Cleanup Script
+**Current Version: 2.2.5** - HCP Job Reconciliation & Duplicate Cleanup
 
 ## 📁 Project Structure (as of June 11, 2025)
 
@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.4)
+### Current System State (v2.2.5)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)
@@ -96,6 +96,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Environment-specific webhook logs**: Separate logs for dev (webhook_development.log) and prod (webhook.log)
 - ✅ **CSV Duplicate Detection Fix**: Fixed composite UID vs base UID lookup mismatch (June 23, 2025)
 - ✅ **Duplicate Cleanup Script**: Script to mark old duplicates as "Old" status
+- ✅ **HCP Job Reconciliation**: Automatic matching of unlinked HCP jobs to Airtable reservations
 
 
 ## HCP Sync Script Locations
