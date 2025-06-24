@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2025-06-24
+
+### Added
+- **Duplicate Reservation Cleanup Script** (`cleanup-duplicate-reservations.py`)
+  - Identifies duplicate reservations by Property ID, Check-in/out dates, Entry Type, and UID
+  - Marks older duplicates as "Old" status while keeping newest record active
+  - Supports both dev and prod environments
+  - Includes dry-run mode for safe testing
+  - Automatically excludes records already marked as "Old"
+
+### Fixed
+- **CSV Processing Duplicate Detection** (commit 545ac4b - June 23, 2025)
+  - Fixed composite UID vs base UID lookup mismatch causing duplicates
+  - Now correctly indexes by both composite UIDs (e.g., `14516891_recL6AiK5pINSbcnu`) and base UIDs (e.g., `14516891`)
+  - Prevents creation of duplicate reservations from Evolve CSV processing
+  - Applied to both `process_csv_files()` and `process_tab2_csv()` functions
+
 ## [2.2.3] - 2025-06-12
 
 ### Added

@@ -2,6 +2,14 @@
 
 This document provides comprehensive context for the CSV processing system that converts reservation data from multiple sources into Airtable records.
 
+## Recent Fixes (June 23, 2025)
+
+### Duplicate Detection Fix (commit 545ac4b)
+Fixed a critical issue where composite UIDs were not being matched correctly during duplicate detection:
+- **Problem**: Airtable stores composite UIDs (e.g., `14516891_recL6AiK5pINSbcnu`) but lookups were only checking base UIDs (e.g., `14516891`)
+- **Solution**: Now indexes records by both composite and base UIDs for proper duplicate detection
+- **Impact**: Prevents creation of duplicate reservations from Evolve CSV processing
+
 ## Overview
 
 The CSV processing system handles reservation data from multiple vacation rental platforms (iTrip, Evolve) and converts them into standardized Airtable records. It supports both regular guest reservations and property owner blocks through different processing pipelines.

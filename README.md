@@ -26,13 +26,6 @@ python3 src/run_automation_prod.py            # Run for real
 python3 src/run_automation_prod.py --list
 ```
 
-### Universal Runner (Auto-detects Environment)
-```bash
-# Works from anywhere, auto-detects environment
-python3 src/run_anywhere.py --info           # Show system information
-python3 src/run_anywhere.py --test           # Run system tests
-python3 src/run_anywhere.py                  # Run automation
-```
 
 ## 🏗️ Architecture Overview
 
@@ -77,8 +70,7 @@ automation/                                 # Project root
 ├── 🐍 Python Package Structure
 │   └── src/
 │       ├── run_automation_dev.py           # ⭐ Development automation runner
-│       ├── run_automation_prod.py          # ⭐ Production automation runner  
-│       ├── run_anywhere.py                # ⭐ Universal runner
+│       ├── run_automation_prod.py          # ⭐ Production automation runner
 │       └── automation/                    # Main package source
 │           ├── config_base.py              # ⭐ Base configuration class
 │           ├── config_dev.py               # ⭐ Development configuration
@@ -135,7 +127,14 @@ pip3 install -r requirements.txt
 python3 test_setup.py
 ```
 
-### 2. **Configure Environments**
+### 2. **Cleanup Scripts**
+```bash
+# Clean up duplicate reservations
+python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --dry-run  # Test first
+python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --execute  # Run cleanup
+```
+
+### 3. **Configure Environments**
 ```bash
 # Development credentials (secure permissions automatically applied)
 nano config/environments/dev/.env
@@ -144,7 +143,7 @@ nano config/environments/dev/.env
 nano config/environments/prod/.env
 ```
 
-### 3. **Set Up Automation Schedules**
+### 4. **Set Up Automation Schedules**
 ```bash
 # Development (every 4 hours + 10 minutes after production)
 ./cron_setup_dev.sh
@@ -172,6 +171,10 @@ nano config/environments/prod/.env
 - Processes iTrip and Evolve CSV files to Airtable
 - Complete change tracking and history preservation
 - Environment-specific processing workflows
+- **Duplicate Detection Fix** (June 23, 2025):
+  - Fixed composite UID vs base UID lookup mismatch
+  - Now correctly indexes by both composite and base UIDs
+  - Prevents duplicate reservations from being created
 
 ### **4. ICS Calendar Sync**
 - Synchronizes calendar data from property management systems
