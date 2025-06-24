@@ -238,6 +238,24 @@ Reference scripts for Airtable automations located in `src/automation/scripts/ai
 - Uses pre-calculated `Next Guest Date` when available
 - Truncates custom instructions to 200 characters
 
+### **8. Job Reconciliation** (NEW v2.2.5)
+Automatically matches existing HCP jobs to Airtable reservations when jobs are created outside normal automation flow:
+
+#### **Standalone Script**
+```bash
+# Dry run - shows what would be matched
+python3 src/automation/scripts/hcp/reconcile-jobs-dev.py
+
+# Execute reconciliation
+python3 src/automation/scripts/hcp/reconcile-jobs-dev.py --execute
+```
+
+#### **Webhook Integration** (Automatic)
+- Triggers when webhooks arrive for unlinked jobs
+- Matches based on property, customer, and time (±1 hour)
+- Currently dev environment only (configurable)
+- Setup: `python3 src/automation/scripts/webhook/integrate_reconciliation.py`
+
 ## 🔧 Configuration System
 
 ### **Environment-Aware Configuration**

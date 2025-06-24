@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.5] - 2025-06-24
+
+### Added
+- **HCP Job Reconciliation System**
+  - Standalone script (`reconcile-jobs-dev.py`) for manual reconciliation
+  - Webhook integration module for automatic reconciliation
+  - Matches HCP jobs to Airtable reservations based on property, customer, and time
+  - Supports dry-run mode for safe testing
+  - Currently limited to dev environment (configurable)
+  - Comprehensive documentation in `docs/features/job-reconciliation.md`
+
 ## [2.2.4] - 2025-06-24
 
 ### Added
