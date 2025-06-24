@@ -3,6 +3,9 @@ src/automation/scripts/gmail/credentials.json
 src/automation/scripts/gmail/credentials.json.backup
 src/automation/scripts/gmail/token.pickle
 src/automation/scripts/gmail/processed_emails.txt
+sensitive-strings.txt
+trello-mcp-config.json
+tools/test-trello-mcp.cjs
 
 # Environment files with secrets
 .env
