@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.3** - Comprehensive Operational Documentation & Training Materials
+**Current Version: 2.2.4** - CSV Duplicate Detection Fix & Cleanup Script
 
 ## 📁 Project Structure (as of June 11, 2025)
 
@@ -19,7 +19,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── src/                         # Main source code
 │   ├── run_automation_dev.py    # Dev automation runner
 │   ├── run_automation_prod.py   # Prod automation runner
-│   ├── run_anywhere.py          # Universal runner
 │   └── automation/
 │       ├── config.py            # Base configuration
 │       ├── config_dev.py        # Dev configuration
@@ -83,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.3)
+### Current System State (v2.2.4)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)
@@ -95,6 +94,8 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Webhook forwarding system**: Dual authentication support implemented
 - ✅ **Real-time console output**: All automation processes show live progress
 - ✅ **Environment-specific webhook logs**: Separate logs for dev (webhook_development.log) and prod (webhook.log)
+- ✅ **CSV Duplicate Detection Fix**: Fixed composite UID vs base UID lookup mismatch (June 23, 2025)
+- ✅ **Duplicate Cleanup Script**: Script to mark old duplicates as "Old" status
 
 
 ## HCP Sync Script Locations
@@ -109,17 +110,11 @@ These scripts handle the creation and synchronization of HCP jobs from Airtable 
 
 ### Python Development
 ```bash
-# Environment-specific runners (PREFERRED)
+# Environment-specific runners
 python3 src/run_automation_dev.py --dry-run     # Test development automation
 python3 src/run_automation_dev.py              # Run development automation
 python3 src/run_automation_prod.py --dry-run   # Test production automation  
 python3 src/run_automation_prod.py             # Run production automation
-
-# Universal runner (auto-detects environment)
-python3 src/run_anywhere.py --info             # Show system information
-python3 src/run_anywhere.py --test             # Run system tests
-python3 src/run_anywhere.py --list             # List available automations
-python3 src/run_anywhere.py                    # Run automation
 
 # Setup and validation
 python3 test_setup.py                          # Validate setup
@@ -128,6 +123,10 @@ python3 test_setup.py                          # Validate setup
 cd testing/test-runners
 python3 comprehensive-e2e-test.py              # Run end-to-end tests
 python3 critical-business-logic-tests.py       # Run business logic tests
+
+# Cleanup scripts
+python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --dry-run  # Test cleanup
+python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --execute  # Run cleanup
 
 # Code quality
 black src/ tests/                              # Format code
@@ -187,8 +186,7 @@ crontab -l                                     # View current cron jobs
 
 ### Entry Points (after installation)
 - `run-automation-dev` - Development automation runner
-- `run-automation-prod` - Production automation runner  
-- `run-automation` - Universal automation runner
+- `run-automation-prod` - Production automation runner
 - `evolve-scraper` - Evolve property scraper  
 - `csv-processor` - CSV processing tool
 - `ics-sync` - Calendar synchronization
@@ -215,7 +213,7 @@ This is a comprehensive property management automation system that orchestrates 
    - **AI Agent**: OpenAI-powered interface for data queries (Node.js/Express)
 
 4. **Key Design Patterns**:
-   - Universal runner (`run_anywhere.py`) works without installation
+   - Environment-specific runners (`run_automation_dev.py`, `run_automation_prod.py`) for direct control
    - Cross-platform path handling using `pathlib`
    - Modular script organization by function
    - Dual-timezone strategy for accurate business operations
