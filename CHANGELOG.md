@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.7] - 2025-06-26
+
+### Fixed
+- **API Field Mapping Errors**
+  - Fixed "Unknown field name: 'Sync Details'" error in production environment
+  - Both dev and prod now use "Schedule Sync Details" and "Service Sync Details" field names
+  - Affects both job creation and schedule update endpoints
+  
+- **Next Guest Date Detection**
+  - Fixed job creation using "Next Guest Unknown" when Next Guest Date field was populated
+  - API now checks Airtable's "Next Guest Date" field first before searching for next reservation
+  - Results in correct service names like "Turnover STR Next Guest July 3" instead of "Unknown"
+
 ## [2.2.6] - 2025-06-25
 
 ### Fixed

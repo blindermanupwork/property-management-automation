@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.6** - Schedule Sync Details Timezone Fix
+**Current Version: 2.2.7** - API Field Mapping and Next Guest Date Fixes
 
 ## 📁 Project Structure (as of June 11, 2025)
 
