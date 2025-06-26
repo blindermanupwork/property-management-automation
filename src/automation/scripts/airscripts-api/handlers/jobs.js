@@ -190,15 +190,28 @@ async function createJob(req, res) {
     } else {
       const checkOutDate = reservation.get('Check-out Date');
       if (serviceType === 'Turnover' && checkOutDate) {
-        const nextReservation = await findNextReservation(base, propertyLinks[0], checkOutDate);
+        // First check if Next Guest Date is already populated in Airtable
+        const nextGuestDate = reservation.get('Next Guest Date');
         
-        if (nextReservation) {
-          const nextCheckIn = new Date(nextReservation.get('Check-in Date'));
+        if (nextGuestDate) {
+          // Use the pre-populated Next Guest Date from Airtable
+          const nextCheckIn = new Date(nextGuestDate);
           const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
           const day = nextCheckIn.getDate();
           serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
+          console.log(`Using Next Guest Date from Airtable: ${nextGuestDate}`);
         } else {
-          serviceName = `${serviceType} STR Next Guest Unknown`;
+          // Fall back to searching for next reservation
+          const nextReservation = await findNextReservation(base, propertyLinks[0], checkOutDate);
+          
+          if (nextReservation) {
+            const nextCheckIn = new Date(nextReservation.get('Check-in Date'));
+            const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
+            const day = nextCheckIn.getDate();
+            serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
+          } else {
+            serviceName = `${serviceType} STR Next Guest Unknown`;
+          }
         }
       } else {
         serviceName = `${serviceType} STR Next Guest Unknown`;
@@ -525,7 +538,7 @@ async function createJob(req, res) {
 
     // Final update to Airtable with complete sync info
     // Use environment-specific field names
-    const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+    const syncDetailsField = 'Schedule Sync Details'; // Same field name for both dev and prod
     
     const updateFields = {
       'Scheduled Service Time': schedLive.toISOString(),
@@ -610,7 +623,7 @@ async function cancelJob(req, res) {
       
       // Update Airtable to reflect that there was no schedule
       // Use environment-specific field names
-      const syncDetailsField = environment === 'development' ? 'Service Sync Details' : 'Sync Details';
+      const syncDetailsField = 'Service Sync Details'; // Same field name for both dev and prod
       
       const updateFields = {
         [syncDetailsField]: `Job has no schedule to delete. Already unscheduled. ${getArizonaTime()}`,

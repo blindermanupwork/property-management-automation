@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.6** - Schedule Sync Details Timezone Fix
+**Version 2.2.7** - API Field Mapping and Next Guest Date Fixes
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 

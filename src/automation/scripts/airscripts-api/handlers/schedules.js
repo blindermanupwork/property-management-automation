@@ -230,7 +230,7 @@ async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
     
     const updateFields = {
       'Sync Status': 'Not Created',
-      'Sync Details': syncDetails,
+      'Schedule Sync Details': syncDetails,
       'Sync Date and Time': getArizonaTime()
     };
     
@@ -328,7 +328,7 @@ async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
 
   // Update Airtable with sync status
   // Use environment-specific field names
-  const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+  const syncDetailsField = 'Schedule Sync Details'; // Same field name for both dev and prod
   
   const updateFields = {
     'Sync Status': syncStatus,  // Single select field - just the string value
@@ -599,7 +599,7 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
 
   // Update Airtable with final state
   // Use environment-specific field names
-  const syncDetailsField = environment === 'development' ? 'Schedule Sync Details' : 'Sync Details';
+  const syncDetailsField = 'Schedule Sync Details'; // Same field name for both dev and prod
   
   const updateFields = {
     'Sync Status': syncStatus,  // Single select field - just the string value
