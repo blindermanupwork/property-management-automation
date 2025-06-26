@@ -98,7 +98,9 @@ ignore_future_end = False       # Set to True if IGNORE_EVENTS_ENDING_MONTHS_AWA
 #   ❌ IGNORE:  Events with check-in after 2025-08-29 (too far ahead)
 #   ❌ IGNORE:  Events with check-out before 2025-05-29 (already ended)
 
-LOG_FILE = str(Config.get_logs_dir() / "ics_sync.log")
+# Use environment-specific log file
+environment_suffix = "_dev" if Config.environment == 'development' else "_prod"
+LOG_FILE = str(Config.get_logs_dir() / f"ics_sync{environment_suffix}.log")
 
 # Determine the correct field name based on environment
 sync_details_field = "Service Sync Details" if Config.environment == 'development' else "Sync Details"
@@ -1388,6 +1390,19 @@ async def main_async():
         if missing_config:
             logging.error(f"Missing required configuration: {missing_config}")
             return
+
+        # Log environment and base ID for debugging
+        environment = Config.environment
+        logging.info(f"Running ICS sync for {environment} environment")
+        logging.info(f"Using Airtable Base ID: {AIRTABLE_BASE_ID}")
+        
+        # Verify we're using the correct base for the environment
+        if environment == 'development' and 'app67yWFv0hKdl6jM' not in AIRTABLE_BASE_ID:
+            logging.error(f"CRITICAL: Dev environment but using wrong base ID: {AIRTABLE_BASE_ID}")
+            raise Exception("Environment mismatch: Dev environment but not using dev base ID!")
+        elif environment == 'production' and 'appZzebEIqCU5R9ER' not in AIRTABLE_BASE_ID:
+            logging.error(f"CRITICAL: Prod environment but using wrong base ID: {AIRTABLE_BASE_ID}")
+            raise Exception("Environment mismatch: Prod environment but not using prod base ID!")
 
         api = Api(AIRTABLE_API_KEY)
         reservations_table = api.table(AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME)

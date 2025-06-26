@@ -1,0 +1,2 @@
+Checkin,Checkout,"Date Booked","Tenant Name","Tenant Phone","Property Name","Property Address","Property Owner",BR/BA,Size,"Next Booking","Next Tenant Name","Next Tenant Phone","Same Day?","Contractor Info","Reservation ID"
+"2025-06-05 16:00:00","2025-06-07 10:00:00","2025-06-04 14:30:00","John Smith","(555) 123-4567","Boris Test House","123 Test Street, Phoenix, AZ, 85001","Boris Test Owner",3/2,1800,"2025-06-08 16:00:00","Jane Doe","(555) 234-5678",Yes,"Same-day precedence test - Turnover service","itrip_sameday_test_001"

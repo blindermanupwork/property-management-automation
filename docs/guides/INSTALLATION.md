@@ -26,15 +26,19 @@ This system can be installed in multiple ways depending on your needs:
 
 ## 🚀 Quick Installation Methods
 
-### Method 1: Universal Runner (Recommended for Testing)
+### Method 1: Direct Runners (Recommended)
 ```bash
 # Clone the repository
 git clone <your-repository-url>
 cd automation
 
-# Run without installation
-python run_anywhere.py --test    # Test setup
-python run_anywhere.py          # Run automations
+# Run development automation directly
+python3 src/run_automation_dev.py --test     # Test dev setup
+python3 src/run_automation_dev.py            # Run dev automations
+
+# Or run production automation directly
+python3 src/run_automation_prod.py --test    # Test prod setup
+python3 src/run_automation_prod.py           # Run prod automations
 ```
 
 ### Method 2: Package Installation (Recommended for Production)
@@ -91,8 +95,8 @@ conda activate automation
 
 #### Automatic Installation
 ```bash
-# Install with auto-dependency resolution
-python run_anywhere.py --auto-install
+# Install dependencies from requirements file
+pip install -r requirements.txt
 ```
 
 #### Manual Installation
@@ -310,7 +314,7 @@ run-automation --test
 #### Permission Denied
 ```bash
 # Linux/macOS - fix permissions
-chmod +x run_anywhere.py
+chmod +x src/run_automation_dev.py src/run_automation_prod.py
 sudo chown -R $USER:$USER automation/
 
 # Windows - run as administrator
@@ -327,7 +331,8 @@ python3 --version
 # Add Python installation directory to system PATH
 
 # Use full path if needed
-/usr/bin/python3 run_anywhere.py
+/usr/bin/python3 src/run_automation_dev.py  # for development
+/usr/bin/python3 src/run_automation_prod.py # for production
 ```
 
 #### Missing Dependencies
@@ -335,18 +340,12 @@ python3 --version
 # Upgrade pip first
 python -m pip install --upgrade pip
 
-# Install missing dependencies
-python run_anywhere.py --auto-install
-
-# Or install manually
+# Install missing dependencies manually
 pip install requests pyairtable python-dotenv
 ```
 
 #### Import Errors
 ```bash
-# Verify Python path
-python run_anywhere.py --info
-
 # Check installation
 python test_setup.py
 
@@ -371,9 +370,6 @@ HTTPS_PROXY=http://proxy:port
 
 ### Getting Help
 ```bash
-# System information
-python run_anywhere.py --info
-
 # Detailed test results
 python test_setup.py
 

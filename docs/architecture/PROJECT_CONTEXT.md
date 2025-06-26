@@ -38,10 +38,6 @@ python3 src/run_automation_dev.py            # Run for real
 python3 src/run_automation_prod.py --dry-run  # Test first
 python3 src/run_automation_prod.py            # Run for real
 
-# Universal Runner (Auto-detects Environment)
-python3 src/run_anywhere.py --info           # Show system information
-python3 src/run_anywhere.py --test           # Run system tests
-python3 src/run_anywhere.py                  # Run automation
 ```
 
 ### **Installation and Setup**
@@ -109,7 +105,7 @@ mypy src/                                    # Type checking
 
 2. **Manual Operations**:
    - Monitor logs: `tail -f src/automation/logs/automation_*.log`
-   - Check system status: `python3 src/run_anywhere.py --info`
+   - Check system status: `python3 src/run_automation_dev.py --list`
    - Test changes: Use `--dry-run` flag before real execution
 
 ### **Environment Separation**
@@ -119,8 +115,9 @@ mypy src/                                    # Type checking
 
 ### **Error Handling and Troubleshooting**
 ```bash
-# Check system health
-python3 src/run_anywhere.py --test
+# Check system health (using direct runners is preferred)
+python3 src/run_automation_dev.py --test    # for development
+python3 src/run_automation_prod.py --test   # for production
 
 # Validate configuration
 python3 -c "from src.automation.config_wrapper import Config; print(Config.validate_config())"

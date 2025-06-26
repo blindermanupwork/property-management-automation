@@ -665,7 +665,7 @@ def fetch_all_reservations(table, feed_urls):
             "Status", "Entry Type", "Service Type", "Entry Source",
             "Property ID", "Last Updated",
             "Overlapping Dates", "Same-day Turnover", "iTrip Report Info"
-        ] + HCP_FIELDS
+        ]  # Removed HCP_FIELDS to avoid API errors with non-existent fields
         
         # Fetch records with minimal filtering to see if we get any results
         records = table.all(fields=fields, formula=formula)
@@ -828,12 +828,24 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
     
     # STEP 3: Create maps for faster lookups
     # Map Airtable records by (uid, feed_url)
+    # IMPORTANT: Include ALL records, not just active ones, to prevent duplicate creation
     airtable_map = {}
     for key, records in all_reservation_records.items():
-        active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
-        if active_records:
-            latest = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
+        if records:
+            # Get the most recent record regardless of status
+            latest = max(records, key=lambda r: r["fields"].get("Last Updated", ""))
             airtable_map[key] = latest
+            
+            # IMPORTANT: Also map by base UID if this is a composite UID
+            # This ensures we find records regardless of how they're looked up
+            uid, feed_url = key
+            if '_' in uid and uid.count('_') == 1:
+                base_uid, prop_suffix = uid.rsplit('_', 1)
+                if prop_suffix.startswith('rec'):  # Airtable record ID format
+                    base_key = (base_uid, feed_url)
+                    if base_key not in airtable_map:  # Don't overwrite if base key already exists
+                        airtable_map[base_key] = latest
+                        logging.debug(f"Also mapped composite UID {uid} under base UID {base_uid}")
     
     # STEP 4: Calculate overlaps PROPERTY BY PROPERTY
     # (This ensures we consider all reservations for a property)
@@ -878,22 +890,39 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
         uid = res["uid"]
         feed_url = res["feed_url"]
         
-        # Try both composite and original UID for lookup
-        composite_key = (f"{uid}_{res['property_id']}", feed_url) if res.get('property_id') else (uid, feed_url)
+        # Try to find existing records - check base UID first to catch ANY existing record
         original_key = (uid, feed_url)
+        composite_key = (f"{uid}_{res['property_id']}", feed_url) if res.get('property_id') else None
         
-        # Use the key that finds records (composite takes precedence)
-        all_records = all_reservation_records.get(composite_key, [])
+        # IMPORTANT: Check base UID first to find ALL possible matches
+        all_records = all_reservation_records.get(original_key, [])
         if all_records:
+            # Found records with base UID - ANY existing record means this reservation exists
+            # Get the actual UID from the most recent record (regardless of status)
+            most_recent = max(all_records, key=lambda r: r["fields"].get("Last Updated", ""))
+            existing_uid = most_recent["fields"].get("Reservation UID", uid)
+            
+            if existing_uid != uid:
+                # The existing record has a composite UID
+                key = (existing_uid, feed_url)
+                logging.info(f"🔍 Found existing records for {uid} using base UID lookup, actual UID is {existing_uid}")
+            else:
+                key = original_key
+                logging.info(f"🔍 Found existing records for {uid} using base UID")
+                
+            # Update all_records to use the correct key
+            if key != original_key and key in all_reservation_records:
+                all_records = all_reservation_records[key]
+        elif composite_key and composite_key in all_reservation_records:
+            # No base UID match, but found composite match
+            all_records = all_reservation_records[composite_key]
             key = composite_key
             logging.info(f"🔍 Found existing records for {uid} using composite key")
         else:
-            all_records = all_reservation_records.get(original_key, [])
-            key = original_key
-            if all_records:
-                logging.info(f"🔍 Found existing records for {uid} using original key")
-            else:
-                logging.info(f"🔍 No existing records found for {uid} (tried both composite and original)")
+            # No existing records found
+            all_records = []
+            key = composite_key if composite_key else original_key
+            logging.info(f"🔍 No existing records found for {uid} (tried both base and composite)")
         
         processed_uids.add(key)
         

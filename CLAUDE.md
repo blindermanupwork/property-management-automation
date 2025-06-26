@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── CLAUDE.md                    # This file - AI instructions
 ├── CLAUDE.local.md              # Private AI instructions
 ├── TASK_TRACKER.md              # Active task tracking
-├── VERSION                      # Current version (2.2.6)
+├── VERSION                      # Current version (2.2.7)
 ├── .env                         # Environment variables
 ├── package.json                 # Node.js dependencies
 │
@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.6)
+### Current System State (v2.2.7)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)

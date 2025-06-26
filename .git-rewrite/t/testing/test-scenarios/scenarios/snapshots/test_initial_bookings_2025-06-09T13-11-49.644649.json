@@ -1,0 +1,62 @@
+{
+  "snapshot_name": "test_initial_bookings",
+  "timestamp": "2025-06-09T13:11:49.644649",
+  "data": {
+    "records": [
+      {
+        "id": "rec_itrip_001",
+        "fields": {
+          "Reservation UID": "itrip_sameday_test_001",
+          "Property Name": "Boris Test House",
+          "Guest Name": "John Smith",
+          "Check-in Date": "2025-06-05",
+          "Check-out Date": "2025-06-07",
+          "Status": "New",
+          "Entry Type": "Turnover",
+          "Same Day Turnover": true
+        },
+        "createdTime": "2025-06-09T10:30:00Z"
+      },
+      {
+        "id": "rec_evolve_001",
+        "fields": {
+          "Reservation UID": "evolve_overlap_test_001",
+          "Property Name": "Boris Test House",
+          "Guest Name": "Alice Wilson",
+          "Check-in Date": "2025-06-06",
+          "Check-out Date": "2025-06-08",
+          "Status": "New",
+          "Entry Type": "Turnover",
+          "Overlapping": true
+        },
+        "createdTime": "2025-06-09T10:31:00Z"
+      },
+      {
+        "id": "rec_tab2_001",
+        "fields": {
+          "Reservation UID": "123001",
+          "Property Name": "Boris Test Villa #202",
+          "Guest Name": "Mike Brown",
+          "Check-in Date": "2025-06-09",
+          "Check-out Date": "2025-06-11",
+          "Status": "New",
+          "Entry Type": "Turnover"
+        },
+        "createdTime": "2025-06-09T10:32:00Z"
+      },
+      {
+        "id": "rec_ics_001",
+        "fields": {
+          "Reservation UID": "boris_ics_block_test_001@test.com",
+          "Property Name": "Boris Test Condo",
+          "Guest Name": "Maintenance Block",
+          "Check-in Date": "2025-06-10",
+          "Check-out Date": "2025-06-12",
+          "Status": "New",
+          "Entry Type": "Block"
+        },
+        "createdTime": "2025-06-09T10:33:00Z"
+      }
+    ]
+  }
+}

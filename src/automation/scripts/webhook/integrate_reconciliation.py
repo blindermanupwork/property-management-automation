@@ -23,14 +23,14 @@ except ImportError:
 
 # Integration code to add after worker thread starts
 integration_setup = """
-# Enable job reconciliation (dev environment only for now)
-if RECONCILIATION_AVAILABLE and environment == 'development':
+# Enable job reconciliation for both dev and prod environments
+if RECONCILIATION_AVAILABLE:
     try:
         # Need to pass the module globals to access tables and functions
         import sys
         current_module = sys.modules[__name__]
         integrate_reconciliation(current_module)
-        logger.info("✅ Job reconciliation enabled for dev environment")
+        logger.info(f"✅ Job reconciliation enabled for {environment} environment")
     except Exception as e:
         logger.error(f"❌ Failed to enable job reconciliation: {e}")
 """

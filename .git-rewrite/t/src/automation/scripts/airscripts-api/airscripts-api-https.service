@@ -1,0 +1,25 @@
+[Unit]
+Description=AirScripts API HTTPS Server
+After=network.target
+
+[Service]
+Type=simple
+User=opc
+WorkingDirectory=/home/opc/automation/src/automation/scripts/airscripts-api
+Environment="NODE_ENV=production"
+Environment="HTTPS_PORT=443"
+ExecStart=/usr/bin/node server-https-simple.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/airscripts-api.log
+StandardError=append:/var/log/airscripts-api.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Allow binding to port 443
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

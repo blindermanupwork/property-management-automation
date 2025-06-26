@@ -110,10 +110,13 @@ except ImportError:
 try:
     reservations_table = Table(AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME)
     properties_table = Table(AIRTABLE_API_KEY, AIRTABLE_BASE_ID, AIRTABLE_PROPERTIES_TABLE)
+    customers_table = Table(AIRTABLE_API_KEY, AIRTABLE_BASE_ID, Config.get_airtable_table_name('customers'))
     logger.info("✅ Airtable connection initialized")
 except Exception as e:
     logger.error(f"❌ Failed to initialize Airtable: {e}")
     exit(1)
+
+# Job reconciliation will be initialized after all functions are defined
 
 # Arizona timezone
 ARIZONA_TZ = pytz.timezone('America/Phoenix')
@@ -227,8 +230,14 @@ def webhook_worker():
             # Get webhook data from queue (blocks until available)
             webhook_data = webhook_queue.get(timeout=60)  # 60 second timeout
             
-            # Process the webhook
-            process_webhook_async(webhook_data)
+            # Route to appropriate processor based on source
+            if webhook_data.get("_source") == "supabase":
+                # Remove the marker before processing
+                webhook_data.pop("_source", None)
+                process_supabase_webhook_async(webhook_data)
+            else:
+                # Regular HCP webhook
+                process_webhook_async(webhook_data)
             
             # Mark task as done
             webhook_queue.task_done()
@@ -359,13 +368,19 @@ def should_update_record(existing_record):
     return True
 
 def find_reservation_by_job_id(job_id):
-    """Find reservation record by HCP job ID"""
+    """Find reservation record by HCP job ID, excluding Old status"""
     try:
         # Rate limit is handled by the caller in async processing
+        # Only process records that are NOT Old status
         results = reservations_table.all(
-            formula=f"{{Service Job ID}} = '{job_id}'",
+            formula=f"AND({{Service Job ID}} = '{job_id}', {{Status}} != 'Old')",
             fields=["Reservation UID", "Service Job ID", "Status", "Job Status", "Entry Source"]
         )
+        if results:
+            # Log which record we're updating for debugging
+            record = results[0]
+            status = record.get('fields', {}).get('Status', '')
+            logger.info(f"Found record with Status='{status}' for job {job_id}")
         return results[0] if results else None
     except Exception as e:
         logger.error(f"Error finding reservation by job ID {job_id}: {e}")
@@ -1046,6 +1061,241 @@ def csv_email_webhook():
         logger.error(f"❌ CSV email webhook error: {e}", exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 200
 
+# --- Supabase webhook for images/data ---
+
+def save_image_from_webhook(job_reference, image_url=None, image_data=None, filename=None):
+    """Save image from Supabase webhook - either from URL or direct data"""
+    try:
+        import requests
+        from pathlib import Path
+        import uuid
+        
+        # Determine environment
+        env_suffix = '_development' if environment == 'development' else '_production'
+        
+        # Create image storage directory
+        image_dir = Path(f'/home/opc/automation/src/automation/images{env_suffix}')
+        image_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_id = str(uuid.uuid4())[:8]
+        
+        if filename:
+            # Sanitize provided filename
+            safe_filename = filename.replace(' ', '_').replace('/', '_')
+            final_filename = f"{timestamp}_{job_reference}_{unique_id}_{safe_filename}"
+        else:
+            # Default filename
+            final_filename = f"{timestamp}_{job_reference}_{unique_id}.jpg"
+        
+        file_path = image_dir / final_filename
+        
+        # Save image based on source
+        if image_url:
+            # Download from URL
+            logger.info(f"📥 Downloading image from URL: {image_url}")
+            response = requests.get(image_url, timeout=30)
+            response.raise_for_status()
+            
+            # Save binary content
+            with open(file_path, 'wb') as f:
+                f.write(response.content)
+                
+        elif image_data:
+            # Save direct base64 data
+            logger.info(f"💾 Saving image from base64 data")
+            import base64
+            
+            # Remove data URL prefix if present
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
+                
+            # Decode and save
+            image_bytes = base64.b64decode(image_data)
+            with open(file_path, 'wb') as f:
+                f.write(image_bytes)
+        else:
+            logger.error("❌ No image URL or data provided")
+            return None
+            
+        logger.info(f"✅ Saved image: {final_filename}")
+        return str(file_path)
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to save image: {e}")
+        return None
+
+def process_supabase_webhook_async(webhook_data):
+    """Process Supabase webhook data asynchronously"""
+    try:
+        # Extract key fields from webhook
+        event_type = webhook_data.get("type", "unknown")
+        record = webhook_data.get("record", {})
+        old_record = webhook_data.get("old_record", {})
+        
+        # Job reference could be in various fields - check common patterns
+        job_reference = (
+            record.get("job_id") or 
+            record.get("hcp_job_id") or 
+            record.get("service_job_id") or
+            record.get("reservation_uid") or
+            record.get("reference_id")
+        )
+        
+        if not job_reference:
+            logger.warning("⚠️ No job reference found in Supabase webhook")
+            return
+            
+        logger.info(f"🔍 Processing Supabase webhook - Event: {event_type}, Job Reference: {job_reference}")
+        
+        # Try to find reservation by various methods
+        existing_record = None
+        
+        # First try by Service Job ID
+        if job_reference.startswith("job_"):
+            airtable_rate_limiter.wait_if_needed()
+            existing_record = find_reservation_by_job_id(job_reference)
+        
+        # If not found, try by Reservation UID
+        if not existing_record:
+            airtable_rate_limiter.wait_if_needed()
+            try:
+                results = reservations_table.all(
+                    formula=f"AND({{Reservation UID}} = '{job_reference}', {{Status}} != 'Old')",
+                    fields=["Reservation UID", "Service Job ID", "Status", "Entry Source"]
+                )
+                existing_record = results[0] if results else None
+            except Exception as e:
+                logger.error(f"Error finding reservation by UID: {e}")
+        
+        if not existing_record:
+            logger.warning(f"⚠️ No matching reservation found for reference: {job_reference}")
+            return
+            
+        record_id = existing_record.get("id")
+        
+        # Process images if present
+        images = record.get("images", [])
+        image_urls = record.get("image_urls", [])
+        saved_images = []
+        
+        # Handle array of images
+        for idx, image in enumerate(images):
+            if isinstance(image, dict):
+                image_url = image.get("url")
+                image_data = image.get("data")
+                filename = image.get("filename", f"image_{idx}.jpg")
+            else:
+                # Assume it's direct image data
+                image_url = None
+                image_data = image
+                filename = f"image_{idx}.jpg"
+                
+            saved_path = save_image_from_webhook(job_reference, image_url, image_data, filename)
+            if saved_path:
+                saved_images.append(saved_path)
+        
+        # Handle image URLs
+        for idx, image_url in enumerate(image_urls):
+            saved_path = save_image_from_webhook(job_reference, image_url=image_url, filename=f"url_image_{idx}.jpg")
+            if saved_path:
+                saved_images.append(saved_path)
+        
+        # Update Airtable with image information
+        if saved_images:
+            airtable_rate_limiter.wait_if_needed()
+            
+            # Store image paths in sync details for now
+            # In production, you might want to add a dedicated field
+            image_info = f"Images received from Supabase: {len(saved_images)} files"
+            
+            # Update sync details
+            update_sync_info(record_id, f"Supabase webhook: {event_type}, {image_info}")
+            
+            # You could also update a dedicated field if it exists
+            # For example: reservations_table.update(record_id, {"Image Paths": "\n".join(saved_images)})
+            
+            logger.info(f"✅ Processed Supabase webhook for job {job_reference}: {len(saved_images)} images")
+        else:
+            # Still update sync info even without images
+            update_sync_info(record_id, f"Supabase webhook: {event_type}, no images")
+            logger.info(f"✅ Processed Supabase webhook for job {job_reference}: no images")
+            
+    except Exception as e:
+        logger.error(f"❌ Error in Supabase webhook processing: {str(e)}", exc_info=True)
+
+@app.route("/webhooks/supabase", methods=["POST"])
+def supabase_webhook():
+    """Handle incoming webhook from Supabase with images/data - ALWAYS returns 200"""
+    try:
+        client_ip = get_client_ip()
+        logger.info(f"📥 Supabase webhook received from {client_ip}")
+    except Exception as e:
+        client_ip = "unknown"
+        logger.error(f"Error getting client IP: {e}")
+    
+    try:
+        payload = request.get_data()
+        signature = request.headers.get("X-Supabase-Signature", "")
+        
+        # Get Supabase webhook secret from env
+        SUPABASE_WEBHOOK_SECRET = os.environ.get("SUPABASE_WEBHOOK_SECRET", "")
+        
+        # Parse JSON
+        try:
+            data = request.get_json(force=True)
+        except Exception as e:
+            logger.warning(f"Invalid JSON payload: {e}")
+            return jsonify({"error": "Invalid JSON"}), 200
+        
+        # Ping test
+        if data == {"foo": "bar"}:
+            logger.info("✅ Supabase ping test successful")
+            return jsonify({"status": "success", "message": "Ping received"}), 200
+        
+        # Check if this is a forwarded request from Servativ
+        is_forwarded = is_servativ_forwarded(request)
+        if is_forwarded:
+            logger.info(f"✅ Verified forwarded Supabase webhook from Servativ")
+        elif SUPABASE_WEBHOOK_SECRET:
+            # Verify Supabase signature if secret is configured
+            # Supabase uses HMAC-SHA256 with format: sha256=<hex_digest>
+            if signature.startswith("sha256="):
+                expected = "sha256=" + hmac.new(
+                    SUPABASE_WEBHOOK_SECRET.encode(),
+                    payload,
+                    hashlib.sha256
+                ).hexdigest()
+                
+                if not hmac.compare_digest(expected, signature):
+                    logger.warning(f"❌ Invalid Supabase webhook signature from {client_ip}")
+                    return jsonify({"status": "success", "message": "Webhook received"}), 200
+            else:
+                logger.warning(f"⚠️ Supabase signature format unexpected: {signature[:20]}...")
+        else:
+            logger.warning("⚠️ SUPABASE_WEBHOOK_SECRET not configured - accepting webhook anyway")
+        
+        event_type = data.get("type", "unknown")
+        logger.info(f"✅ Verified Supabase webhook - Event: {event_type}")
+        
+        # Add webhook to processing queue
+        try:
+            # Add a marker to distinguish Supabase webhooks
+            data["_source"] = "supabase"
+            webhook_queue.put_nowait(data)
+            logger.info(f"📤 Added Supabase webhook to queue - Event: {event_type}")
+        except queue.Full:
+            logger.error("❌ Webhook queue is full! Dropping webhook")
+            return jsonify({"status": "error", "message": "Queue full"}), 200
+        
+        # Return immediately to avoid timeout
+        return jsonify({"status": "success", "message": "Webhook queued"}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Supabase webhook error: {str(e)}", exc_info=True)
+        return jsonify({"status": "error", "message": "Processing failed"}), 200
+
 # --- Health check ---
 
 @app.route("/health", methods=["GET"])
@@ -1112,6 +1362,24 @@ def handle_exception(error):
     return jsonify({"error": "Server error", "status": "success", "message": "Exception handled"}), 200
 
 # --- Main entrypoint ---
+
+# Initialize job reconciliation now that all functions are defined
+try:
+    from webhook_reconciliation import integrate_reconciliation
+    # Pass the current module's globals for proper integration
+    current_module = type(sys)('webhook_module')
+    current_module.__dict__.update(globals())
+    current_module.reservations_table = reservations_table
+    current_module.properties_table = properties_table
+    current_module.customers_table = customers_table
+    current_module.process_webhook_async = process_webhook_async
+    current_module.find_reservation_by_job_id = find_reservation_by_job_id
+    current_module.update_sync_info = update_sync_info
+    current_module.environment = environment
+    integrate_reconciliation(current_module)
+    logger.info(f"✅ Job reconciliation enabled for {environment} environment")
+except Exception as e:
+    logger.warning(f"⚠️ Job reconciliation not available: {e}")
 
 if __name__ == "__main__":
     logger.info("🚀 Starting secure webhook server...")

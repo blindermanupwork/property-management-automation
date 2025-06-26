@@ -1,0 +1,11 @@
+📚 docs: Add Airtable automation reference scripts
+
+- Saved fixed find-next-guest-date.js and update-service-line-description.js scripts
+- Fixed date comparison bug (> to >=) for proper same-day turnover detection
+- Added comprehensive README documenting both scripts
+- Updated main README and CHANGELOG with new scripts
+- Scripts include long-term guest detection logic matching HCP sync
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>

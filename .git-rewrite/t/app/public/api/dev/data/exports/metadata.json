@@ -1,0 +1,9 @@
+{
+  "lastExport": "2025-06-09T15:33:04.977Z",
+  "totalRecords": 3121,
+  "dataSource": "airtable_dev_api_live",
+  "baseId": "app67yWFv0hKdl6jM",
+  "tableId": "tblaPnk0jxF47xWhL",
+  "environment": "development",
+  "exportMethod": "airtable_rest_api_batched"
+}
