@@ -15,11 +15,16 @@ const __dirname = path.dirname(__filename)
 
 class RealAirtableExporter {
   constructor() {
-    // REAL development configuration from .env file
-    this.apiKey = 'REDACTED_DEV_API_KEY'
-    this.baseId = 'app67yWFv0hKdl6jM' // Development base
+    // Use environment variables for security
+    this.apiKey = process.env.DEV_AIRTABLE_API_KEY || process.env.AIRTABLE_API_KEY
+    this.baseId = process.env.DEV_AIRTABLE_BASE_ID || process.env.AIRTABLE_BASE_ID_DEV || 'app67yWFv0hKdl6jM'
     this.reservationsTableId = 'tblaPnk0jxF47xWhL'
     this.exportDir = path.join(__dirname, '../app/public/api/dev/data/exports')
+    
+    // Validate configuration
+    if (!this.apiKey) {
+      throw new Error('DEV_AIRTABLE_API_KEY environment variable not set')
+    }
     
     // Airtable API endpoints
     this.baseUrl = `https://api.airtable.com/v0/${this.baseId}`

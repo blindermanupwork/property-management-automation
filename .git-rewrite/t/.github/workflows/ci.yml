@@ -1,0 +1,153 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]  # Simplified to just Ubuntu for now
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install only core dependencies for testing
+        pip install python-dotenv pathlib requests pytz pytest
+
+    - name: Install package in development mode
+      run: pip install -e .
+
+    - name: Test package import
+      run: |
+        # Test basic imports without requiring credentials
+        python -c "from src.automation.config import Config; print('Config import successful')"
+        python -c "print('Universal runner exists:', __import__('pathlib').Path('src/run_anywhere.py').exists())"
+
+    - name: Test universal runner info
+      run: python src/run_anywhere.py --info
+
+  test-structure:
+    name: Test Project Structure
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Test project structure
+      run: |
+        # Verify key files exist
+        test -f src/run_anywhere.py || exit 1
+        test -f src/automation/config.py || exit 1
+        test -f src/automation/controller.py || exit 1
+        test -f setup.py || exit 1
+        test -f pyproject.toml || exit 1
+        test -f README.md || exit 1
+        test -f CHANGELOG.md || exit 1
+        echo "✅ All required files exist"
+        
+    - name: Test from different directories
+      run: |
+        # Test from root
+        python -c "import sys; print('Python path:', sys.path)"
+        
+        # Test from subdirectory
+        cd src
+        python -c "import sys; print('From src/ - Python path:', sys.path)"
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [test, test-structure]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build wheel setuptools
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Check package contents
+      run: |
+        ls -la dist/
+        echo "✅ Package built successfully"
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: dist/
+        if-no-files-found: error
+
+  docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate README
+      run: |
+        # Check README has required sections
+        grep -q "## 🚀 Quick Start" README.md || exit 1
+        grep -q "## 🎯 Core Features" README.md || exit 1
+        grep -q "## 🕐 Timezone Management" README.md || exit 1
+        echo "✅ README structure validated"
+    
+    - name: Check CHANGELOG
+      run: |
+        # Check CHANGELOG has version info
+        grep -q "## \[1.2.0\]" CHANGELOG.md || exit 1
+        echo "✅ CHANGELOG structure validated"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [test, test-structure, build, docs]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: ${{ needs.test.result == 'success' && needs.build.result == 'success' }}
+      run: echo "✅ All tests passed! Package is ready for deployment."
+    
+    - name: Notify failure
+      if: ${{ needs.test.result == 'failure' || needs.build.result == 'failure' }}
+      run: echo "❌ Tests failed. Please check the logs above."

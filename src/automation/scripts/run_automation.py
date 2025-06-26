@@ -185,3 +185,79 @@ def run_hcp_automation(config):
         
     except Exception as e:
         return {"success": False, "message": f"HCP service job error: {str(e)}"}
+
+def run_job_reconciliation(config, execute=False):
+    """Run HCP job reconciliation to match unlinked jobs to reservations
+    
+    Args:
+        config: DevConfig or ProdConfig instance
+        execute: If True, perform the reconciliation. If False, run in dry-run mode
+    
+    Returns:
+        dict: Result with success status and message
+    """
+    try:
+        print("🔄 Running HCP job reconciliation...")
+        
+        reconcile_script = config.get_script_path("hcp", "reconcile-jobs.py")
+        if not reconcile_script.exists():
+            return {"success": False, "message": "Job reconciliation script not found"}
+        
+        # Determine environment name
+        environment = 'prod' if config.is_production else 'dev'
+        
+        # Build command
+        cmd = [
+            sys.executable, str(reconcile_script.absolute()),
+            "--env", environment,
+            "--json"  # Get JSON output
+        ]
+        
+        if execute:
+            cmd.append("--execute")
+            print("  Mode: Execute (will update Airtable)")
+        else:
+            print("  Mode: Dry-run (analysis only)")
+        
+        # Set environment variables
+        env = os.environ.copy()
+        env['ENVIRONMENT'] = 'development' if not config.is_production else 'production'
+        
+        # Run the reconciliation
+        result = subprocess.run(
+            cmd, 
+            cwd=str(reconcile_script.parent.absolute()),
+            env=env,
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            # Parse JSON output
+            import json
+            try:
+                output = json.loads(result.stdout)
+                if output.get('success'):
+                    results = output.get('results', {})
+                    matched = results.get('matched', 0)
+                    total = results.get('total', 0)
+                    mode = "executed" if execute else "analyzed"
+                    
+                    message = f"Reconciliation {mode}: {matched}/{total} jobs matched"
+                    if matched > 0:
+                        print(f"  ✅ {message}")
+                    else:
+                        print(f"  ℹ️  {message}")
+                    
+                    return {"success": True, "message": message, "results": results}
+                else:
+                    return {"success": False, "message": output.get('message', 'Reconciliation failed')}
+            except json.JSONDecodeError:
+                # Fallback to text output
+                return {"success": True, "message": f"Reconciliation completed (output: {result.stdout.strip()})"}
+        else:
+            error_msg = result.stderr.strip() if result.stderr else "Unknown error"
+            return {"success": False, "message": f"Reconciliation failed: {error_msg}"}
+            
+    except Exception as e:
+        return {"success": False, "message": f"Job reconciliation error: {str(e)}"}

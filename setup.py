@@ -67,8 +67,7 @@ setup(
             "ics-sync=automation.scripts.icsAirtableSync.icsProcess:main",
             "gmail-downloader=automation.scripts.gmail.gmail_downloader:main",
             
-            # Universal runner (detects environment) (FIXED path)
-            "run-automation=src.run_anywhere:main",
+            # Direct runners are preferred - removed confusing wrapper
         ],
     },
     

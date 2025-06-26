@@ -1,0 +1,13 @@
+tree 1a8ca9a72ecd0bf37c6da5fcbf02d75c49f1872f
+parent 88803cc42faae615e2ca00dd3b7f8c91bae34285
+author blindermanupwork <> 1749850584 -0700
+committer blindermanupwork <> 1749850584 -0700
+
+🔒 CRITICAL SECURITY FIX: Remove hardcoded API keys and credentials
+
+- Removed exposed Airtable API keys from shell scripts
+- Removed all hardcoded credentials from test files
+- Added .env.example file for secure configuration
+- Updated scripts to require environment variables
+
+All exposed credentials must be rotated immediately.

@@ -1,0 +1,1559 @@
+{
+  "page": 4,
+  "page_size": 40,
+  "total_pages": 10,
+  "total_items": 368,
+  "customers": [
+    {
+      "id": "cus_260339de2b214e9f9b67261b654077d0",
+      "first_name": "Emily",
+      "last_name": "Poyner",
+      "email": "teampong2019@gmail.com",
+      "mobile_number": "3607014912",
+      "home_number": null,
+      "work_number": null,
+      "company": "Emily Poyner",
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-06-21T20:48:55Z",
+      "updated_at": "2023-10-01T14:03:19Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_92378c8faf1342258af88b6764d908a7",
+          "type": "billing",
+          "street": "7039 E Virginia Ave",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_dbe3ad977fb347a7bea6ec41166e2953",
+      "first_name": "Jimmy",
+      "last_name": "Song2",
+      "email": "jsmisc25@gmail.com",
+      "mobile_number": "4802023912",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-06-10T21:33:33Z",
+      "updated_at": "2023-03-11T22:19:16Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_3758b54bd7924878bba7e73c9bb65f46",
+          "type": "billing",
+          "street": "6632 E Latham St",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_8db4dab518f546a1ad4b364de6b9ca52",
+      "first_name": "Amber Nicole",
+      "last_name": "Perez",
+      "email": "ambernicoleperez@hotmail.com",
+      "mobile_number": "5853053702",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-04-29T18:14:17Z",
+      "updated_at": "2022-05-03T22:44:18Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_f2a0727c94754e679b575bc207fb7222",
+          "type": "billing",
+          "street": "5204 W Geronimo St",
+          "street_line_2": null,
+          "city": "Chandler",
+          "state": "AZ",
+          "zip": "85226",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_5022fa5a5f504874b0ef8d563ebc9fca",
+      "first_name": "Berkey [Mevawala] Coolidge",
+      "last_name": "Berkey",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "4258776877",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-04-17T14:12:04Z",
+      "updated_at": "2025-04-07T00:39:45Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [
+        "PHOTOS"
+      ],
+      "addresses": [
+        {
+          "id": "adr_bc13c3e1bb114964991c3a122d2f4c72",
+          "type": "billing",
+          "street": "5020 N 86th Pl",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        },
+        {
+          "id": "adr_919b0c5a09f14a419500435c06d940de",
+          "type": "service",
+          "street": "8231 E Coolidge St",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85251",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_42b342e440cd4fcc9ac120ae5a86c063",
+      "first_name": "Walan",
+      "last_name": "Worachet",
+      "email": "w@lestatestays.com",
+      "mobile_number": "4802023912",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-04-17T13:58:45Z",
+      "updated_at": "2022-09-13T18:46:48Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_62f169c05d8f48ffa6d0940f5b419016",
+          "type": "billing",
+          "street": "711 W Northern Ave",
+          "street_line_2": null,
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85021",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_4d858ea1f91a4586bee07397cc580de8",
+      "first_name": "Andrew",
+      "last_name": "Pentis",
+      "email": "pentis.andrew@gmail.com",
+      "mobile_number": "3107226225",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-04-05T00:49:33Z",
+      "updated_at": "2022-11-15T00:55:53Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [
+        "PHOTOS"
+      ],
+      "addresses": [
+        {
+          "id": "adr_c6c65ce5410d4982bf0840c63222ca61",
+          "type": "billing",
+          "street": "8426 E Sheridan St",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "US"
+        },
+        {
+          "id": "adr_33f74b72a8a8455e970a7f912a80849e",
+          "type": "service",
+          "street": "2313 W Gregg Dr",
+          "street_line_2": null,
+          "city": "Chandler",
+          "state": "AZ",
+          "zip": "85224",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_e6c0d2672d2c49a6b31df6924809c985",
+      "first_name": "Evie",
+      "last_name": "Anderson",
+      "email": "encantovacay@gmail.com",
+      "mobile_number": "3034894050",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-03-30T23:28:02Z",
+      "updated_at": "2025-02-10T15:56:38Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_aa62f7964657402d8c4d97d98b1ae7a9",
+          "type": "billing",
+          "street": "1307 E Encanto St",
+          "street_line_2": null,
+          "city": "Mesa",
+          "state": "AZ",
+          "zip": "85203",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_588e0600be464e27a47ff595675049e2",
+      "first_name": "Thomas",
+      "last_name": "McDonough",
+      "email": "mcdonough.thomas01@gmail.com",
+      "mobile_number": null,
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-03-19T01:01:56Z",
+      "updated_at": "2022-04-01T20:12:07Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_e7d97997ad5b45b0ac6630af99873346",
+          "type": "billing",
+          "street": "7625 E Camelback Rd",
+          "street_line_2": "148B",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85251",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_27374a5b442b436e8b9e24b32f00287b",
+      "first_name": "Market Street",
+      "last_name": "Development Camelot",
+      "email": null,
+      "mobile_number": null,
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": false,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-03-07T21:16:41Z",
+      "updated_at": "2023-11-08T16:01:55Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_6cf4564426d848dba6bf07e6137fc5a3",
+          "type": "billing",
+          "street": "6607 N Scottsdale Rd",
+          "street_line_2": "H-100",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        },
+        {
+          "id": "adr_80cce3e81c2f407e8260ba9c69533194",
+          "type": "service",
+          "street": "37200 N Cave Creek Rd",
+          "street_line_2": "2125",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85262",
+          "country": "USA"
+        },
+        {
+          "id": "adr_441216a640f64eaf982304408274b2f0",
+          "type": "service",
+          "street": "37200 N Cave Creek Rd",
+          "street_line_2": "1120",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85262",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_3d82ecdb750340afb79e4f5cbca537ed",
+      "first_name": "Camelot",
+      "last_name": "Stonecrest",
+      "email": "derekg@camelothomes.com",
+      "mobile_number": "6026794363",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-03-03T17:47:40Z",
+      "updated_at": "2025-06-03T01:30:27Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_ada9cc8a5ae44331a971de364443a461",
+          "type": "billing",
+          "street": "5743 S Joshua Tree Ln",
+          "street_line_2": null,
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "US"
+        },
+        {
+          "id": "adr_750521cb726a42d6a9b5175a0cb8d5f5",
+          "type": "service",
+          "street": "3964 E Penedes Dr",
+          "street_line_2": "Lot 0005",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_17d1153f52c0400397da7285dd5eb9ca",
+          "type": "service",
+          "street": "3938 E Ironside Ln",
+          "street_line_2": "Lot 0018",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_947cd6bda1ce446da2b5213971ba5bd2",
+          "type": "service",
+          "street": "3945 E Ironside Ln",
+          "street_line_2": "Lot 0024",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_2425f53e922d456884ecaf8084704e7a",
+          "type": "service",
+          "street": "5755 S Joshua Tree Ln",
+          "street_line_2": "Lot 0027",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_8a8b0c2499a64574b1be6700072fc597",
+          "type": "service",
+          "street": "5769 S Joshua Tree Ln",
+          "street_line_2": "Lot 0026",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_bb88fe66c85a4407a6de4298d88f55fd",
+          "type": "service",
+          "street": "3953 E Penedes Dr",
+          "street_line_2": "Lot 0013",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_0cb9a805ad0846819976fa8cc867d98c",
+          "type": "service",
+          "street": "5695 S Loback Ln",
+          "street_line_2": "Lot 0015",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_db5b6acfa0b44350a4596ea517ad22c5",
+          "type": "service",
+          "street": "5688 S Loback Ln",
+          "street_line_2": "Lot 0011",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_b09ea5108f8c45baa52485e0eee4afb8",
+          "type": "service",
+          "street": "3939 E Penedes Dr",
+          "street_line_2": "Lot 0012",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_f4e74b2116b74a17b5dfd826b34fc13d",
+          "type": "service",
+          "street": "3927 E Ironside Ln",
+          "street_line_2": "Lot 0023",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_2a3c32d6fbed4fb19744eb6a3d413b6c",
+          "type": "service",
+          "street": "5671 S Joshua Tree Ln",
+          "street_line_2": "Lot 3",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_31fdb69418b74dbab0ff7287996f0050",
+          "type": "service",
+          "street": "5736 S Loback Ln",
+          "street_line_2": "Lot 20",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85296",
+          "country": "USA"
+        },
+        {
+          "id": "adr_0f7df5bbbe8b41f9a7099714bfeafffa",
+          "type": "service",
+          "street": "5770 S Loback Ln",
+          "street_line_2": "Lot 22",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_a56886375ddc451baad436dbd37f844e",
+          "type": "service",
+          "street": "5657 S Joshua Tree Ln",
+          "street_line_2": "Lot 4",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_fe506ff8483044efa44e99711b01b6cc",
+          "type": "service",
+          "street": "5731 S Joshua Tree Ln",
+          "street_line_2": "Lot 29",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_2e44174ddc9040a9b3edf25f29dadb00",
+          "type": "service",
+          "street": "5729 S Loback Ln",
+          "street_line_2": "Lot 16",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_bf557f4e2664421a95b6fab3668d499d",
+          "type": "service",
+          "street": "5752 S Loback Ln",
+          "street_line_2": "Lot 21",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_e651cb141ac8400f898c456edb912b0c",
+          "type": "service",
+          "street": "3963 E Ironside Ln",
+          "street_line_2": "Lot 25",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_20bb92b7641c4388b3acca65e1ddef08",
+          "type": "service",
+          "street": "3952 E Ironside Ln",
+          "street_line_2": "Lot 19",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_4af22175b2734090ba9cc7f69fa68e3b",
+          "type": "service",
+          "street": "5652 S Loback Ln",
+          "street_line_2": "Lot 9",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        },
+        {
+          "id": "adr_4cc0128ab6334ffea6183df0110ddb9c",
+          "type": "service",
+          "street": "5683 S Loback Ln",
+          "street_line_2": "Lot 14",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85298",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_b1385ec58ed94079af0c391f676e999d",
+      "first_name": "JayHolland",
+      "last_name": "RoseGarden",
+      "email": "jay@hollandteam.com",
+      "mobile_number": "3035969803",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-03-02T19:13:31Z",
+      "updated_at": "2022-03-02T19:14:12Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_378c1f22252541139a92e84962572fca",
+          "type": "billing",
+          "street": "7423 E Rose Garden Ln",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85255",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_cf11f1ff78e349ecb4e641da4eb73e62",
+      "first_name": "Mevawala",
+      "last_name": "Stoddard",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "7132488855",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-03-01T23:47:35Z",
+      "updated_at": "2022-03-03T21:41:20Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_505b0d32422a4f8dbb42f38385356c0d",
+          "type": "billing",
+          "street": "8158 E Berridge Ln",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_706b74517e9e428fa7fc846218f4068b",
+      "first_name": "Jimmy",
+      "last_name": "Song",
+      "email": "jsmisc25@gmail.com",
+      "mobile_number": "4802023912",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-02-27T15:46:14Z",
+      "updated_at": "2024-02-15T20:09:27Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_111c2c550c784bb0bbb93bfb61e0c1b7",
+          "type": "billing",
+          "street": "7914 E Hubbell St",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "US"
+        },
+        {
+          "id": "adr_f347bad30cd548088e92ce1f987648b4",
+          "type": "service",
+          "street": "5019 E Vaughn Dr",
+          "street_line_2": null,
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85044",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_f5c537dfddef48fa804d52806f331f4d",
+      "first_name": "John",
+      "last_name": "Birsner",
+      "email": "johnb@delreydevelopment.com",
+      "mobile_number": "4802046015",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-01-25T14:54:07Z",
+      "updated_at": "2022-01-26T21:49:01Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_5ac287ea3e334693b8099b35ca473d60",
+          "type": "billing",
+          "street": "20865 N 90th Pl",
+          "street_line_2": "105",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85255",
+          "country": "US"
+        },
+        {
+          "id": "adr_dff685899c664964b52b1b0820263d1b",
+          "type": "service",
+          "street": "7030 E Montgomery Rd",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85266",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_c8140ff51ade424ea5237d881c6f5edc",
+      "first_name": "Mevawala",
+      "last_name": "Singh",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "7132488855",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2022-01-18T16:40:50Z",
+      "updated_at": "2022-01-22T17:31:23Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_9beb441460444e0a819fb3b9594f85e1",
+          "type": "billing",
+          "street": "6001 E Marconi Ave",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85254",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_3c7e281acdd842269d5275aa0301b4d8",
+      "first_name": "Phulpreet",
+      "last_name": "Singh",
+      "email": "phul9112@gmail.com",
+      "mobile_number": "7024983982",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-12-29T15:07:11Z",
+      "updated_at": "2022-03-16T00:01:45Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_eeae6a4a2fa343979d8122408f9c5bbe",
+          "type": "billing",
+          "street": "1805 N 51st St",
+          "street_line_2": "301",
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85008",
+          "country": "US"
+        },
+        {
+          "id": "adr_11f9660162d046b2b7d45a943bdc51b2",
+          "type": "service",
+          "street": "1805 N 51st St",
+          "street_line_2": "302",
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85008",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_aa2ad97161234cada8cc34276fe0f375",
+      "first_name": "Anthony",
+      "last_name": "Guillory",
+      "email": "4241scottsdale@gmail.com",
+      "mobile_number": "7604864144",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-11-30T15:04:42Z",
+      "updated_at": "2022-05-27T20:48:04Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_f195e7e7e087407f90ffa535c81dc694",
+          "type": "billing",
+          "street": "4241 N 87th Pl",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85251",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_f53e9e2d38ff4eb787a007ea35ef455a",
+      "first_name": "Jacob",
+      "last_name": "Martin",
+      "email": "bjbdiamond@gmail.com",
+      "mobile_number": "5037063376",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-11-06T15:14:02Z",
+      "updated_at": "2022-04-28T17:17:01Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_d0528e8d32ba4626b0f1453a7a67d535",
+          "type": "billing",
+          "street": "6913 E Diamond St",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "US"
+        },
+        {
+          "id": "adr_ac751f1fe0834664a52e450a3aff5e32",
+          "type": "service",
+          "street": "7825 E Belleview St",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_8f3238b924de44e0a5330052963af887",
+      "first_name": "Holly",
+      "last_name": "Macarthur",
+      "email": "holly2219@gmail.com",
+      "mobile_number": "6036162537",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-11-02T20:11:12Z",
+      "updated_at": "2021-11-29T19:04:25Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_028fab12ed4e45f2b2daab7b63cbc3ea",
+          "type": "billing",
+          "street": "13609 Prospect Trail",
+          "street_line_2": null,
+          "city": "Fountain Hills",
+          "state": "AZ",
+          "zip": "85268",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_6b51e6fdd08242fe83b4327c6f95916a",
+      "first_name": "Lance",
+      "last_name": "Farwick",
+      "email": "lance@redwheelvacationrentals.com",
+      "mobile_number": "4809334000",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-10-29T20:57:35Z",
+      "updated_at": "2025-04-10T22:36:47Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_46e652b635ad4b909908d6ead85759c1",
+          "type": "billing",
+          "street": "8438 E Keim Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_4c2681b3c49c47ae8ae067730f1498d6",
+      "first_name": "Austin",
+      "last_name": "Clarence",
+      "email": "austin650@gmail.com",
+      "mobile_number": "6509062376",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-28T20:52:44Z",
+      "updated_at": "2023-05-10T18:45:45Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_f760ae6702fd4bd9b0f1c494becb6453",
+          "type": "billing",
+          "street": "7934 E Loma Land Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "US"
+        },
+        {
+          "id": "adr_4a47a8e2b3e24fefb5b04a77c1099921",
+          "type": "service",
+          "street": "7927 E Loma Land Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85257",
+          "country": "USA"
+        },
+        {
+          "id": "adr_d564cfa1dedc4eb3905810e02c79e1b5",
+          "type": "service",
+          "street": "2906 E Earll Dr",
+          "street_line_2": null,
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85016",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_618ad6eacd75446ab9de117578124a93",
+      "first_name": "Greg",
+      "last_name": "Tomita",
+      "email": "gregtomita@gmail.com",
+      "mobile_number": "6502246918",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-25T14:13:39Z",
+      "updated_at": "2021-10-03T23:17:38Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_31767174c5564424b0e4378625065941",
+          "type": "billing",
+          "street": "6920 E 4th St",
+          "street_line_2": "208",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85251",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_feb9e3a229a34c4880be393d7d74769b",
+      "first_name": "Jerry",
+      "last_name": "Mohr",
+      "email": "jm@mohrinvestmentgroup.com",
+      "mobile_number": "5599403092",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-23T16:52:46Z",
+      "updated_at": "2021-09-23T19:34:35Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_57b186c6d610442ca1a15acc5d8ddb1f",
+          "type": "billing",
+          "street": "9231 N 52nd Pl",
+          "street_line_2": null,
+          "city": "Paradise Valley",
+          "state": "AZ",
+          "zip": "85253",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_324c1f002cb641dcb1a983cd794b03f2",
+      "first_name": "Mevawala",
+      "last_name": "Rancho Vista",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "7132488855",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-17T17:52:07Z",
+      "updated_at": "2022-01-22T17:31:23Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_c7c2c856482f42e08d58e6f3db585296",
+          "type": "billing",
+          "street": "8725 E Rancho Vista Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85251",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_d03e6390468f4fb995e9d26a5a7fbb79",
+      "first_name": "Mevawala",
+      "last_name": "8401_E_Keim",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "7132488855",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": false,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-14T17:41:10Z",
+      "updated_at": "2022-01-22T17:31:23Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_4bda6dad3ae047aebc337280a387c9a7",
+          "type": "billing",
+          "street": "8401 E Keim Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_901826ff3d974941b0e7369785f95eb3",
+      "first_name": "Monique",
+      "last_name": "Keith",
+      "email": "monique.az.keith@gmail.com",
+      "mobile_number": "6024322766",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-13T16:29:45Z",
+      "updated_at": "2022-01-22T17:31:22Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_19f226f66a6344bd927833315302bd03",
+          "type": "billing",
+          "street": "2 W Erie Dr",
+          "street_line_2": null,
+          "city": "Tempe",
+          "state": "AZ",
+          "zip": "85282",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_efc265762a254e46ab6ef74959fb79c6",
+      "first_name": "Mike",
+      "last_name": "Gilkey",
+      "email": "cactusgreymanagement@gmail.com",
+      "mobile_number": "4072598670",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-09-08T22:39:31Z",
+      "updated_at": "2023-10-05T14:49:16Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_c6426ed71fe747d092c66cc0a9992f14",
+          "type": "billing",
+          "street": "9270 E Mission Ln",
+          "street_line_2": "205",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85258",
+          "country": "USA"
+        },
+        {
+          "id": "adr_3e9ac6d6e65a4de28f07e2d062c13153",
+          "type": "service",
+          "street": "6151 N Granite Reef Rd",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_6d80c817bddf4cefbff03168c0ede71d",
+      "first_name": "Michelle",
+      "last_name": "Harness",
+      "email": "mitch.n.jer@gmail.com",
+      "mobile_number": "8013610375",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-31T16:36:25Z",
+      "updated_at": "2021-09-09T21:45:29Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_466664a9323f4c3fbeba1390a3a4510f",
+          "type": "billing",
+          "street": "614 W Sierra Madre Ave",
+          "street_line_2": null,
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85233",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_06e3ca632ba040e7a666520184c995de",
+      "first_name": "Kathy",
+      "last_name": "Nelson",
+      "email": "knelson99@comcast.net",
+      "mobile_number": "7073370267",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-24T18:35:18Z",
+      "updated_at": "2021-08-24T23:49:22Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_de38a7fa756b4800b6aff7f9385b46f2",
+          "type": "billing",
+          "street": "2065 W 1st Pl",
+          "street_line_2": null,
+          "city": "Mesa",
+          "state": "AZ",
+          "zip": "85201",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_d5fd616ded934317b2586a6e22de2a03",
+      "first_name": "Matthew",
+      "last_name": "Guillory",
+      "email": "8549sage@gmail.com",
+      "mobile_number": "6193019396",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-16T19:21:06Z",
+      "updated_at": "2023-07-10T23:44:44Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_6e4b2b428e754127a4fa881c9970c88f",
+          "type": "billing",
+          "street": "8549 E Sage Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_8f6a239b8e924738a247da385bc950c1",
+      "first_name": "Becky",
+      "last_name": "Arkfeld",
+      "email": "arkfeld@gmail.com",
+      "mobile_number": "4806285302",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-12T19:18:41Z",
+      "updated_at": "2022-07-01T15:19:16Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [
+        "PHOTOS"
+      ],
+      "addresses": [
+        {
+          "id": "adr_4b5ac3fdc5df4e16aabd0890588a8cdf",
+          "type": "billing",
+          "street": "2305 S Alta Vista Cir",
+          "street_line_2": null,
+          "city": "Mesa",
+          "state": "AZ",
+          "zip": "85202",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_0154e5f98b81488da407691d2ccf3419",
+      "first_name": "Mevawala",
+      "last_name": "Vista Dr",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "7132488855",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-06T19:23:36Z",
+      "updated_at": "2023-12-22T17:29:59Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_bf9367db4011429e8f50a8bf386f3777",
+          "type": "billing",
+          "street": "8526 E Vista Dr",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85250",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_07fb5ec960a449b5bea693ea6909d0a3",
+      "first_name": "Brandon",
+      "last_name": "Passe",
+      "email": "bpasse@buildoracle.com",
+      "mobile_number": "3602202693",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-06T17:52:22Z",
+      "updated_at": "2021-08-10T02:01:13Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_5e9d030ed3d8415baafa50d37310ddd6",
+          "type": "billing",
+          "street": "15036 S 45th Pl",
+          "street_line_2": null,
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85044",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_441752f13e194de1a07677d5e69a8c1d",
+      "first_name": "Andy",
+      "last_name": "Woods",
+      "email": "andy@cheyennehomes.com",
+      "mobile_number": "3072871034",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-06T17:23:59Z",
+      "updated_at": "2023-04-10T19:03:51Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [
+        "PHOTOS",
+        "WARRANTYWORK"
+      ],
+      "addresses": [
+        {
+          "id": "adr_627c6770493546758c959a3c2613d2b8",
+          "type": "billing",
+          "street": "1946 E Bridgeport Pkwy",
+          "street_line_2": "103",
+          "city": "Gilbert",
+          "state": "AZ",
+          "zip": "85295",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_488f0c88c67e44499aade6ef194b17a9",
+      "first_name": "Emily",
+      "last_name": "Blazuk3",
+      "email": "emilyblazuk@gmail.com",
+      "mobile_number": "5072611420",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-08-04T16:49:29Z",
+      "updated_at": "2022-01-22T17:31:24Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_e8b69e0c6e284e8bb94ea8a07f9087b6",
+          "type": "service",
+          "street": "2430 E Huntington Dr",
+          "street_line_2": null,
+          "city": "Tempe",
+          "state": "AZ",
+          "zip": "85282",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_75a35dbee4a3473c8cbd79b21d8afaad",
+      "first_name": "Mevawala",
+      "last_name": "4419 N 87th Pl",
+      "email": "gmevawala@gmail.com",
+      "mobile_number": "7132488855",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-07-23T17:33:07Z",
+      "updated_at": "2022-01-22T17:31:23Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_e0e35d6ec84a4371bf1b3b850b9113b7",
+          "type": "billing",
+          "street": "4419 N 87th Pl",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85251",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_9b743d43e99b47a7bf2b5824257939ee",
+      "first_name": "Ashley",
+      "last_name": "Pritchett",
+      "email": "jacob@azweb.pro",
+      "mobile_number": "4803827142",
+      "home_number": "2293762022",
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-07-20T21:25:08Z",
+      "updated_at": "2022-08-22T22:08:29Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [
+        "PHOTOS"
+      ],
+      "addresses": [
+        {
+          "id": "adr_1f5042649a7147789c73e3931181517a",
+          "type": "billing",
+          "street": "825 W Monterey Pl",
+          "street_line_2": null,
+          "city": "Chandler",
+          "state": "AZ",
+          "zip": "85225",
+          "country": "US"
+        },
+        {
+          "id": "adr_45a85b81aa224a4391456f088d53fd43",
+          "type": "service",
+          "street": "1377 E Detroit St",
+          "street_line_2": null,
+          "city": "Chandler",
+          "state": "AZ",
+          "zip": "85225",
+          "country": "USA"
+        },
+        {
+          "id": "adr_7aeaa51dd8e0493ebc2d2369f1bd0625",
+          "type": "service",
+          "street": "1730 W Mulberry Dr",
+          "street_line_2": null,
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85015",
+          "country": "USA"
+        }
+      ]
+    },
+    {
+      "id": "cus_d14e81088ab744cb845d0124fa69fd3b",
+      "first_name": "Tim and Sharon",
+      "last_name": "Dyches",
+      "email": "warmazsun@gmail.com",
+      "mobile_number": "3603050884",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-06-23T16:50:26Z",
+      "updated_at": "2021-08-11T19:17:01Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_cc58de6e5c48441da93d7c4ce96304cb",
+          "type": "billing",
+          "street": "6049 E Betty Elyse Ln",
+          "street_line_2": null,
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85254",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_fa07dd24b5b94932b2559112e59b0cbf",
+      "first_name": "Joe",
+      "last_name": "Bernasconi",
+      "email": "joeb@windermere.com",
+      "mobile_number": "2537402119",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-05-25T20:10:05Z",
+      "updated_at": "2021-05-26T18:11:36Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_b5869c9f288542818374b8799d70f873",
+          "type": "billing",
+          "street": "4011 E Campus Dr",
+          "street_line_2": null,
+          "city": "Phoenix",
+          "state": "AZ",
+          "zip": "85018",
+          "country": "US"
+        }
+      ]
+    },
+    {
+      "id": "cus_8eda53cc29ae4baa8cc21efea7be98af",
+      "first_name": "Cathy",
+      "last_name": "Matthews",
+      "email": "cathy@ronnieandcathy.com",
+      "mobile_number": "7135984544",
+      "home_number": null,
+      "work_number": null,
+      "company": null,
+      "notifications_enabled": true,
+      "lead_source": null,
+      "notes": null,
+      "created_at": "2021-05-19T15:58:38Z",
+      "updated_at": "2022-03-02T01:44:58Z",
+      "company_name": "Kleenwerx Professional Cleaning Services",
+      "company_id": "2c83149d-779c-4e6f-8376-60e7d824d41f",
+      "tags": [],
+      "addresses": [
+        {
+          "id": "adr_06a94f47872242fd8b0049410e3de29c",
+          "type": "billing",
+          "street": "37200 N Cave Creek Rd",
+          "street_line_2": "Unit 59",
+          "city": "Scottsdale",
+          "state": "AZ",
+          "zip": "85262",
+          "country": "US"
+        }
+      ]
+    }
+  ]
+}

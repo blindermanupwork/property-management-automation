@@ -252,7 +252,7 @@ class AutomationController:
         
         # Import automation functions based on environment
         # These will be imported dynamically based on the config
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation
         
         # Define automation mappings
         automations = [
@@ -278,6 +278,25 @@ class AutomationController:
                 success = self.run_automation(name, func, self.config)
                 results.append((name, success))
         
+        # Run job reconciliation after all main automations complete
+        if not dry_run:
+            reconciliation_name = "Job Reconciliation"
+            if self.get_automation_status(reconciliation_name):
+                print(f"\n🔄 Running post-automation job reconciliation...")
+                # Always run in execute mode when triggered by automation
+                success = self.run_automation(reconciliation_name, run_job_reconciliation, self.config, execute=True)
+                results.append((reconciliation_name, success))
+            else:
+                print(f"\n⏭️  Skipping job reconciliation - not active")
+        else:
+            # In dry-run mode, check if reconciliation would run
+            reconciliation_name = "Job Reconciliation"
+            is_active = self.get_automation_status(reconciliation_name)
+            if is_active:
+                print(f"✅ Would run: {reconciliation_name} (after main automations)")
+            else:
+                print(f"❌ Would skip: {reconciliation_name} (inactive)")
+        
         # Summary
         end_time = datetime.now()
         duration = end_time - start_time
@@ -301,14 +320,15 @@ class AutomationController:
         print(f"⏱️  Total duration: {duration.total_seconds():.1f}s")
         print(f"🕐 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    def run_specific(self, automation_id):
+    def run_specific(self, automation_id, execute=False):
         """Run a specific automation by ID
         
         Args:
             automation_id: The name/ID of the automation to run
+            execute: For reconciliation, whether to execute or dry-run
         """
         # Import automation functions
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation
         
         # Map automation IDs to functions
         automation_map = {
@@ -317,6 +337,7 @@ class AutomationController:
             "CSV Files": run_csv_automation,
             "ICS Calendar": run_ics_automation,
             "Add/Sync Service Jobs": run_hcp_automation,
+            "Job Reconciliation": run_job_reconciliation,
         }
         
         if automation_id not in automation_map:
@@ -327,7 +348,12 @@ class AutomationController:
             return False
         
         func = automation_map[automation_id]
-        return self.run_automation(automation_id, func, self.config)
+        
+        # Handle special case for reconciliation
+        if automation_id == "Job Reconciliation":
+            return self.run_automation(automation_id, func, self.config, execute=execute)
+        else:
+            return self.run_automation(automation_id, func, self.config)
 
 def test_automation_controller():
     """Test the automation controller"""

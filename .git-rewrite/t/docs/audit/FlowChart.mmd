@@ -1,0 +1,197 @@
+graph TD
+    %% External Data Sources
+    A[iTrip Email/CSV] --> B[Gmail OAuth Download]
+    C[Evolve Portal] --> D[Selenium Scraping]
+    E[ICS Calendar Feeds] --> F[Calendar Parsing]
+    G[Manual Entry] --> H[Direct Airtable Input]
+    
+    %% Data Processing Layer
+    B --> I[CSV Processing Engine]
+    D --> I
+    F --> I
+    H --> J[Airtable Records]
+    
+    %% Central Data Store
+    I --> J[Airtable Reservations Table]
+    J --> K[Automation Settings Table]
+    J --> L[Property Directory Table]
+    
+    %% Business Logic Layer
+    J --> M[Status: New]
+    M --> N[Status: Processing]
+    N --> O{Create Job & Sync Status Button}
+    O --> P[HCP Customer Creation/Lookup]
+    P --> Q[HCP Job Creation]
+    Q --> R[HCP Line Item Creation]
+    R --> S[Status: Job Created]
+    
+    %% Scheduling Workflow
+    S --> T{Add/Update Schedule Button}
+    T --> U[Time Validation & Conversion]
+    U --> V[HCP Job Scheduling]
+    V --> W[Employee Assignment]
+    W --> X[Status: Scheduled]
+    
+    %% Service Execution
+    X --> Y[HCP Mobile App]
+    Y --> Z[Status: In Progress]
+    Z --> AA[Status: Completed]
+    
+    %% MCP Integration Layer
+    subgraph MCP_DEV[Development MCP Servers]
+        BB[airtable-dev MCP]
+        CC[hcp-mcp-dev MCP]
+    end
+    
+    subgraph MCP_PROD[Production MCP Servers]
+        DD[airtable-prod MCP]
+        EE[hcp-mcp-prod MCP]
+    end
+    
+    %% Environment Separation
+    J -.->|Dev Environment| BB
+    J -.->|Prod Environment| DD
+    P -.->|Dev Environment| CC
+    P -.->|Prod Environment| EE
+    Q -.->|Dev Environment| CC
+    Q -.->|Prod Environment| EE
+    
+    %% Real-time Sync
+    subgraph WEBHOOK[Webhook Processing]
+        FF[HCP Webhook Endpoint]
+        GG[HMAC Signature Validation]
+        HH[Dual Authentication Check]
+        II[Status Update Processing]
+    end
+    
+    Y --> FF
+    Z --> FF
+    AA --> FF
+    FF --> GG
+    GG --> HH
+    HH --> II
+    II --> J
+    
+    %% Automated Scheduling
+    subgraph CRON[Automated Scheduling]
+        JJ[Every 4 Hours - Dev :10]
+        KK[Every 4 Hours - Prod :00]
+        LL[Data Ingestion Process]
+        MM[System Health Checks]
+    end
+    
+    JJ --> LL
+    KK --> LL
+    LL --> B
+    LL --> D
+    LL --> F
+    LL --> MM
+    
+    %% Analysis and Reporting
+    subgraph ANALYSIS[Analysis Tools]
+        NN[analyze_laundry_jobs]
+        OO[analyze_service_items]
+        PP[analyze_customer_revenue]
+        QQ[analyze_towel_usage]
+        RR[analyze_job_statistics]
+    end
+    
+    CC --> NN
+    CC --> OO
+    CC --> PP
+    CC --> QQ
+    CC --> RR
+    EE --> NN
+    EE --> OO
+    EE --> PP
+    EE --> QQ
+    EE --> RR
+    
+    %% Enhanced Search
+    subgraph SEARCH[Enhanced Search Tools]
+        SS[search_addresses]
+        TT[get_jobs_by_address]
+        UU[search_hcp_cache]
+    end
+    
+    CC --> SS
+    CC --> TT
+    CC --> UU
+    EE --> SS
+    EE --> TT
+    EE --> UU
+    
+    %% Data Storage
+    subgraph STORAGE[Data Storage]
+        VV[CSV_process_development/]
+        WW[CSV_done_development/]
+        XX[CSV_process_production/]
+        YY[CSV_done_production/]
+        ZZ[Automation Logs]
+    end
+    
+    I --> VV
+    I --> XX
+    VV --> WW
+    XX --> YY
+    LL --> ZZ
+    
+    %% Service Line Instructions
+    subgraph INSTRUCTIONS[Service Line Instructions]
+        AAA[Service Line Custom Instructions]
+        BBB[Unicode Support]
+        CCC[200 Character Limit]
+        DDD[HCP Line Item Name]
+    end
+    
+    AAA --> BBB
+    BBB --> CCC
+    CCC --> DDD
+    R --> AAA
+    
+    %% Same Day Logic
+    subgraph SAMEDAY[Same-Day Turnover Logic]
+        EEE[Check-in/Check-out Detection]
+        FFF[Same Property Validation]
+        GGG[Priority Scheduling]
+        HHH[Time Buffer Addition]
+    end
+    
+    I --> EEE
+    EEE --> FFF
+    FFF --> GGG
+    GGG --> HHH
+    HHH --> U
+    
+    %% Error Handling
+    subgraph ERROR[Error Handling]
+        III[API Failure Recovery]
+        JJJ[Data Validation]
+        KKK[Network Issues]
+        LLL[Authentication Refresh]
+    end
+    
+    P --> III
+    Q --> III
+    V --> III
+    B --> JJJ
+    D --> JJJ
+    F --> JJJ
+    FF --> KKK
+    BB --> LLL
+    CC --> LLL
+    DD --> LLL
+    EE --> LLL
+    
+    %% Status Flow
+    classDef statusNode fill:#e1f5fe
+    classDef processNode fill:#f3e5f5
+    classDef dataNode fill:#e8f5e8
+    classDef mcpNode fill:#fff3e0
+    classDef webhookNode fill:#fce4ec
+    
+    class M,N,S,X,Z,AA statusNode
+    class O,T,I,LL processNode
+    class J,K,L,VV,WW,XX,YY dataNode
+    class BB,CC,DD,EE mcpNode
+    class FF,GG,HH,II webhookNode

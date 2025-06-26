@@ -11,7 +11,8 @@ const path = require('path')
 
 class AirtableDataExporter {
   constructor() {
-    this.baseId = 'app67yWFv0hKdl6jM' // Development base
+    // Use environment variables for configuration
+    this.baseId = process.env.DEV_AIRTABLE_BASE_ID || process.env.AIRTABLE_BASE_ID_DEV || 'app67yWFv0hKdl6jM'
     this.reservationsTableId = 'tblaPnk0jxF47xWhL'
     this.exportDir = path.join(__dirname, '../app/public/api/dev/data/exports')
   }

@@ -1,0 +1,6 @@
+refs/heads/backup-before-cleanup
+refs/heads/dev
+refs/heads/main
+refs/remotes/origin/dev
+refs/remotes/origin/main
+refs/tags/v1.1.0

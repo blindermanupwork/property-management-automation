@@ -1,0 +1,840 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airtable AI Assistant</title>
+  <link rel="icon" href="/home/opc/automation/scripts/airtable-agent/public/airtable.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/home/opc/automation/scripts/airtable-agent/public/airtable.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #00a3ff;
+      --secondary-color: #f0f9ff;
+      --border-color: #e0e0e0;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      --text-color: #333;
+      --light-text: #666;
+      --bg-color: #fff;
+      --light-bg: #f9fafb;
+      --dark-bg: #1f2937;
+      --dark-secondary: #374151;
+      --dark-border: #4b5563;
+      --dark-text: #e5e7eb;
+      --radius: 8px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --transition: all 0.2s ease-in-out;
+      --table-header-bg: #2d3748;
+      --table-border: #4a5568;
+      --table-odd-row: rgba(30, 41, 59, 0.5);
+      --table-even-row: rgba(36, 47, 65, 0.2);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary-color: #3b82f6;
+        --secondary-color: #1e3a8a;
+        --border-color: var(--dark-border);
+        --text-color: var(--dark-text);
+        --light-text: #9ca3af;
+        --bg-color: var(--dark-bg);
+        --light-bg: var(--dark-secondary);
+      }
+      
+      .bot-message table {
+        color: #e5e7eb;
+        border-color: var(--table-border);
+      }
+      
+      .bot-message th {
+        background-color: var(--table-header-bg);
+        border-color: var(--table-border);
+      }
+      
+      .bot-message td {
+        border-color: var(--table-border);
+      }
+      
+      .bot-message tbody tr:nth-child(odd) {
+        background-color: var(--table-odd-row);
+      }
+      
+      .bot-message tbody tr:nth-child(even) {
+        background-color: var(--table-even-row);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+      line-height: 1.6;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo img {
+      height: 32px;
+    }
+
+    .logo h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--light-text);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--warning-color);
+    }
+
+    .online .status-dot {
+      background-color: var(--success-color);
+    }
+
+    .offline .status-dot {
+      background-color: var(--error-color);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #message-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      background-color: var(--light-bg);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .message {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+      max-width: 85%;
+      box-shadow: var(--shadow);
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      margin-left: auto;
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      width: 90%;
+      max-width: 90%;
+    }
+
+    .error-message {
+      align-self: center;
+      background-color: var(--error-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+    }
+
+    .bot-message p {
+      margin: 1rem;
+    }
+
+    .bot-message p:last-child {
+      margin-bottom: 0;
+    }
+
+    .bot-message a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+
+    .bot-message a:hover {
+      text-decoration: underline;
+    }
+
+    /* Markdown table styles */
+    .bot-message table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+      table-layout: auto;
+    }
+
+    .bot-message th,
+    .bot-message td {
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 0.5rem;
+      text-align: left;
+      word-break: break-word;
+      min-width: 80px;
+    }
+
+    .bot-message th {
+      background-color: var(--light-bg);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .bot-message tbody tr:nth-child(odd) {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .bot-message tbody tr:nth-child(even) {
+      background-color: var(--bg-color);
+    }
+
+    /* Table container for horizontal scrolling */
+    .table-container {
+      overflow-x: auto;
+      margin: 1rem 0;
+      width: 100%;
+      display: block;
+    }
+    /* ---------- NEW  ----------- */
+    .bot-message:has(table) {
+      /* let messages that contain tables run the full width */
+      width: 100%;
+      max-width: 100%;
+      padding: 0;                /* removes double padding around big tables */
+    }
+
+    /* the wrapper we’ll add from JS */
+    .table-container {
+      overflow-x: auto;          /* horizontal scroll if needed */
+      width: 100%;
+    }
+
+    /* make sure the table itself can grow */
+    .table-container table {
+      min-width: 800px;          /* pick any baseline; it just needs to be > phone width */
+      margin: 1rem;
+    }
+    /* Status styling */
+    .status-synced {
+      color: var(--success-color);
+      font-weight: 500;
+    }
+
+    .status-new {
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+
+    .status-not-created {
+      color: var(--error-color);
+      font-weight: 500;
+    }
+
+    /* Code styling */
+    .bot-message pre {
+      background-color: var(--light-bg);
+      padding: 1rem;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    .bot-message code {
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .bot-message :not(pre) > code {
+      background-color: var(--light-bg);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    #message-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      resize: vertical;
+      min-height: 60px;
+      max-height: 200px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    #message-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 163, 255, 0.2);
+    }
+
+    #send-button {
+      padding: 0 1.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #send-button:hover {
+      background-color: #0091ea;
+    }
+
+    #send-button:disabled {
+      background-color: var(--border-color);
+      cursor: not-allowed;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0.5rem;
+      }
+
+      header {
+        padding: 0.5rem 0;
+      }
+
+      .logo h1 {
+        font-size: 1.2rem;
+      }
+
+      .message {
+        max-width: 90%;
+      }
+    }
+    /* List styling */
+    .bot-message ul, 
+    .bot-message ol {
+      padding-left: 2rem;
+      margin: 1rem 0;
+    }
+    
+    .bot-message li {
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    .bot-message li::marker {
+      color: var(--primary-color);
+    }
+    /* ─── Compact paragraphs & lists inside bot bubbles ─── */
+    .bot-message p            { margin: 0.25rem 0; }            /* was 1 rem */
+    .bot-message ul,
+    .bot-message ol           { margin: 0.25rem 0 0.25rem 1.5rem; }
+
+    .bot-message li           { margin-bottom: 0.25rem; }       /* was 0.5 rem */
+    .bot-message li::marker   { font-size: .8em; }              /* smaller bullet if you like */
+
+    /* Optional: overall line-height can come down a touch */
+    .bot-message, .bot-message * { line-height: 1.35; }         /* tweak to taste */
+/* ── Tighter text spacing ───────────────────────────── */
+.bot-message p                 { margin: .15rem 0; }
+.bot-message ul,
+.bot-message ol                { margin: .25rem 0; padding-left: 1.2rem; }
+.bot-message li                { margin: .10rem 0; }
+.bot-message, .bot-message *   { line-height: 1.25; }   /* was 1.6 */
+
+/* ── Table breathing room & higher-contrast colours ─── */
+.table-container               {               /* wrapper already added in JS */
+  margin:  .75rem 0;
+  padding: .25rem;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.03);            /* subtle highlight in dark mode */
+}
+
+.bot-message th,
+.bot-message td                { padding: .5rem .6rem; } /* slimmer cells */
+
+/* header row */
+.bot-message th                { background: var(--primary-color); color:#fff; }
+
+/* zebra rows (dark mode) */
+.bot-message tbody tr:nth-child(odd)  { background: rgba(0,0,0,.15); }
+.bot-message tbody tr:nth-child(even) { background: rgba(0,0,0,.07); }
+
+/* light-mode overrides */
+@media (prefers-color-scheme: light) {
+  .table-container             { background:#f8f9fb; }
+  .bot-message th              { background:#e4f3ff; color:#003b5c; }   /* navy text */
+  .bot-message tbody tr:nth-child(odd){ background:rgba(0,0,0,.04); }
+  .bot-message tbody tr:nth-child(even){ background:#fff; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <img src="airtable.png" alt="Airtable Icon">
+        <h1>Airtable AI Assistant</h1>
+      </div>
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span id="status">Connecting...</span>
+      </div>
+    </header>
+
+    <main>
+      <div id="message-container">
+        <!-- Messages will be added here -->
+      </div>
+
+      <form id="message-form">
+        <textarea id="message-input" placeholder="Ask a question about your Airtable data..." required></textarea>
+        <button id="send-button" type="submit">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.4/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Socket connection
+      const socket = io();
+      
+      // Elements
+      const messageContainer = document.getElementById('message-container');
+       /* ── NEW: render helper ─────────────────────────────── */
+       function renderTable(fields, records) {
+        const wrap  = document.createElement('div');
+        wrap.className = 'message bot-message';
+      
+        const table = document.createElement('table');
+      
+        /* header */
+        const thead = document.createElement('thead');
+        const hrow  = document.createElement('tr');
+        fields.forEach(f => {
+          const th = document.createElement('th');
+          th.textContent = f;
+          hrow.appendChild(th);
+        });
+        thead.appendChild(hrow);
+        table.appendChild(thead);
+      
+        /* body */
+        const tbody = document.createElement('tbody');
+      /* build every <tr> + <td> --------------------------------------------- */
+records.forEach(rec => {
+  const row = document.createElement('tr');
+
+  fields.forEach(f => {
+    const td  = document.createElement('td');
+    const raw = rec[f] ?? '';        // whatever comes from Airtable
+    let   val = raw;                 // we’ll normalise it below
+
+    // ── normalise non-string values so .trim() / regexes don’t crash ──
+    if (val == null)                val = '';                 // null / undefined
+    else if (Array.isArray(val))    val = val.join(', ');
+    else if (typeof val === 'object')
+      val = JSON.stringify(val);    // or pick a nicer representation
+
+    // ── convert markdown links or bare URLs into <a> anchors ──────────
+    if (typeof val === 'string' &&
+        /^\[.+?\]\(.+?\)$/.test(val.trim())) {                // [text](url)
+      const [, txt, url] = val.match(/^\[(.+?)\]\((.+?)\)$/);
+      td.innerHTML = `<a href="${url}" target="_blank" rel="noopener">${txt}</a>`;
+
+    } else if (typeof val === 'string' && /^https?:\/\//.test(val)) { // bare URL
+      td.innerHTML = `<a href="${val}" target="_blank" rel="noopener">${val}</a>`;
+
+    } else {                                                 // plain text
+      td.textContent = val;
+    }
+
+    row.appendChild(td);
+  });
+
+  tbody.appendChild(row);
+});
+table.appendChild(tbody);
+
+        /* scroll wrapper */
+        const scroller = document.createElement('div');
+        scroller.className = 'table-container';
+        scroller.appendChild(table);
+        wrap.appendChild(scroller);
+      
+        /** use the real container **/
+        messageContainer.appendChild(wrap);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
+      
+    /* ── NEW: consume the raw data coming from the server ─ */
+    socket.on('tableData', ({ fields, records }) => {
+      renderTable(fields, records);
+    });
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+      const statusElement = document.getElementById('status');
+      
+      // State variables
+      let currentBotMessage = null;
+      let messageBuffer = '';
+      let userScrolled = false;
+      
+      // Helper functions
+      function scrollToBottom() {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
+      
+      function createUserMessage(text) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message user-message';
+        messageElement.textContent = text;
+        messageContainer.appendChild(messageElement);
+        scrollToBottom();
+      }
+      
+      function createBotMessage() {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message bot-message';
+        currentBotMessage = messageElement;
+        messageBuffer = '';
+        messageContainer.appendChild(messageElement);
+        scrollToBottom();
+      }
+      
+      function createErrorMessage(text) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message error-message';
+        messageElement.textContent = text;
+        messageContainer.appendChild(messageElement);
+        scrollToBottom();
+      }
+      
+      function fixMarkdownTables(text) {
+        // Split the text into sections (tables and non-tables)
+        const sections = [];
+        let currentSection = '';
+        let inTable = false;
+        const lines = text.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          
+          // Check if this line starts a table
+          if (!inTable && line.startsWith('|') && line.endsWith('|') && line.split('|').length > 2) {
+            if (currentSection) {
+              sections.push({ type: 'text', content: currentSection });
+              currentSection = '';
+            }
+            inTable = true;
+            currentSection = line;
+          }
+          // If we're in a table and this line is still part of it
+          else if (inTable && line.startsWith('|')) {
+            currentSection += '\n' + line;
+          }
+          // If we were in a table but this line is not part of it
+          else if (inTable) {
+            // Check if we at least have one line after the header
+            const tableLines = currentSection.split('\n');
+            
+            // If we only have a header, add a separator row
+            if (tableLines.length === 1) {
+              const headerCells = tableLines[0].split('|').length - 2; // -2 for the empty cells at start/end
+              let separatorRow = '|';
+              for (let j = 0; j < headerCells; j++) {
+                separatorRow += ' --- |';
+              }
+              currentSection += '\n' + separatorRow;
+            }
+            
+            sections.push({ type: 'table', content: currentSection });
+            currentSection = line;
+            inTable = false;
+          }
+          // Regular text
+          else {
+            if (currentSection) {
+              currentSection += '\n' + line;
+            } else {
+              currentSection = line;
+            }
+          }
+        }
+        
+        // Add the last section
+        if (currentSection) {
+          sections.push({ 
+            type: inTable ? 'table' : 'text', 
+            content: currentSection 
+          });
+        }
+        
+        // Fix each table section
+        for (let i = 0; i < sections.length; i++) {
+          if (sections[i].type === 'table') {
+            const tableLines = sections[i].content.split('\n');
+            
+            // Make sure there's a separator row after the header
+            if (tableLines.length > 1) {
+              // Check if the second row is a proper separator
+              const secondRow = tableLines[1].trim();
+              const isSeparator = /^\|[\s-:]+(\|[\s-:]+)+\|$/.test(secondRow);
+              
+              if (!isSeparator) {
+                // Count cells in header row
+                const headerCells = tableLines[0].split('|').filter(Boolean).length;
+                
+                // Create a separator row
+                let separatorRow = '|';
+                for (let j = 0; j < headerCells; j++) {
+                  separatorRow += ' --- |';
+                }
+                
+                // Insert the separator after the header
+                tableLines.splice(1, 0, separatorRow);
+                sections[i].content = tableLines.join('\n');
+              }
+            }
+          }
+        }
+        
+        // Reassemble the text with fixed tables
+        return sections.map(section => section.content).join('\n\n');
+      }
+      
+      function shouldSkipToken(token) {
+        // Array of tokens to skip
+        const tokensToSkip = [
+          "Analyzing your question...",
+          "Gathering data...",
+          "Analyzing data...",
+          "."
+        ];
+        
+        // Skip tokens in the list
+        if (tokensToSkip.includes(token)) {
+          return true;
+        }
+        
+        // Skip tokens that start with certain patterns
+        const patternsToSkip = [
+          "Analyzing data..."
+        ];
+        
+        for (const pattern of patternsToSkip) {
+          if (token.startsWith(pattern)) {
+            return true;
+          }
+        }
+        
+        return false;
+      }
+      
+      // Socket event handlers
+      socket.on('connect', () => {
+        statusElement.textContent = 'Connected';
+        statusElement.parentElement.className = 'status-indicator online';
+        console.log('Connected to server');
+      });
+      
+      socket.on('disconnect', () => {
+        statusElement.textContent = 'Disconnected';
+        statusElement.parentElement.className = 'status-indicator offline';
+        console.log('Disconnected from server');
+      });
+      
+      socket.on('error', (data) => {
+        console.error('Socket error:', data);
+        createErrorMessage(data.message);
+      });
+      
+      socket.on('start', () => {
+        createBotMessage();
+      });
+      
+      socket.on('token', (data) => {
+        if (currentBotMessage) {
+          // Skip status messages
+          if (shouldSkipToken(data.token)) {
+            return;
+          }
+          
+          // Add token to buffer
+          messageBuffer += data.token;
+          
+          // Clean up problematic data
+          messageBuffer = messageBuffer.replace(/\[object Object\]/g, "")
+                              .replace(/undefined/g, "");
+          
+          // Find and fix any markdown tables in the buffer
+          const cleanedBuffer = fixMarkdownTables(messageBuffer);
+          
+          try {
+            // Parse the cleaned markdown to HTML
+            currentBotMessage.innerHTML = marked.parse(cleanedBuffer);
+            
+            // Apply syntax highlighting
+            Prism.highlightAllUnder(currentBotMessage);
+            // --------- NEW: wrap tables so they can scroll ---------
+            currentBotMessage
+            .querySelectorAll('table')
+            .forEach(table => {
+              if (!table.parentElement.classList.contains('table-container')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-container';
+                table.parentElement.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+              }
+            });
+
+            // Fix any empty table wrappers
+            const emptyWrappers = currentBotMessage.querySelectorAll('.table-wrapper:empty');
+            emptyWrappers.forEach(wrapper => {
+              wrapper.remove();
+            });
+            
+            // Fix any tables that have no content
+            const emptyTables = currentBotMessage.querySelectorAll('table:empty');
+            emptyTables.forEach(table => {
+              const wrapper = table.closest('.table-wrapper');
+              if (wrapper) {
+                wrapper.remove();
+              }
+            });
+          } catch (e) {
+            // If parsing fails, just set as text
+            console.error("Markdown parsing error:", e);
+            currentBotMessage.textContent = cleanedBuffer;
+          }
+          
+          if (!userScrolled) {
+            scrollToBottom();
+          }
+        }
+      });
+      
+      socket.on('complete', () => {
+        currentBotMessage = null;
+        messageBuffer = '';
+        
+        // Make sure code is highlighted
+        Prism.highlightAll();
+      });
+      
+      // Form submission
+      messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        createUserMessage(message);
+        socket.emit('message', { message });
+        
+        messageInput.value = '';
+        messageInput.focus();
+      });
+            /* ─── Ctrl/⌘ + Enter submits ─── */
+      messageInput.addEventListener('keydown', (e) => {
+        const isEnter     = e.key === 'Enter';
+        const wantsSubmit = e.ctrlKey || e.metaKey;   // Ctrl for Win/Linux, ⌘ for Mac
+        if (isEnter && wantsSubmit) {
+          e.preventDefault();             // stop inserting a newline
+          messageForm.requestSubmit();    // triggers the normal submit handler
+        }
+      });
+
+      // Scroll handling
+      messageContainer.addEventListener('scroll', () => {
+        const { scrollTop, scrollHeight, clientHeight } = messageContainer;
+        userScrolled = scrollTop + clientHeight < scrollHeight - 10;
+      });
+      
+      // Initial focus
+      messageInput.focus();
+      
+      // Welcome message
+      setTimeout(() => {
+        createBotMessage();
+        currentBotMessage.innerHTML = `<p>👋 Hi there! I'm your Airtable AI Assistant. I can help you query and analyze your Airtable data using natural language.</p>
+        <p>For example, you can ask me questions like:</p>
+        <ul>
+          <li>Show me the most recent reservations</li>
+          <li>Count how many entries have "Synced" status</li>
+          <li>Find reservations with check-in dates this month</li>
+          <li>Compare records from view X with a custom filter</li>
+        </ul>
+        <p>What would you like to know about your Airtable data?</p>`;
+        currentBotMessage = null;
+      }, 500);
+    });
+  </script>
+  
+  
+</body>
+</html>

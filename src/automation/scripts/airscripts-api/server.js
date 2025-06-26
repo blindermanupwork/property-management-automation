@@ -54,11 +54,18 @@ app.use('/api/', (req, res, next) => {
   next();
 });
 
+// Import reconciliation handler
+const { handleReconcileJobs } = require('./handlers/reconcile-jobs');
+
 // Routes - Environment-specific endpoints ONLY
 app.use('/api/dev/jobs', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, jobRoutes);
 app.use('/api/dev/schedules', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, scheduleRoutes);
 app.use('/api/prod/jobs', (req, res, next) => { req.forceEnvironment = 'production'; next(); }, jobRoutes);
 app.use('/api/prod/schedules', (req, res, next) => { req.forceEnvironment = 'production'; next(); }, scheduleRoutes);
+
+// Reconciliation endpoints
+app.post('/api/dev/reconcile-jobs', (req, res, next) => { req.body.environment = 'dev'; next(); }, handleReconcileJobs);
+app.post('/api/prod/reconcile-jobs', (req, res, next) => { req.body.environment = 'prod'; next(); }, handleReconcileJobs);
 
 // Catch-all for legacy routes - return error
 app.use('/api/jobs', (req, res) => {

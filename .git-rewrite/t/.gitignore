@@ -1,0 +1,74 @@
+# Sensitive credential files
+src/automation/scripts/gmail/credentials.json
+src/automation/scripts/gmail/credentials.json.backup
+src/automation/scripts/gmail/token.pickle
+src/automation/scripts/gmail/processed_emails.txt
+
+# Environment files with secrets
+.env
+config/environments/dev/.env
+config/environments/prod/.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*\.class
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Data directories (local only)
+src/automation/scripts/CSV_done/
+src/automation/scripts/CSV_process/
+backups/
+archive/
+
+# Node.js dependencies
+node_modules/
+src/automation/scripts/airtable-agent/node_modules/
+
+# Internal task tracking (local only)
+TASK_TRACKER.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backups
+*.bak
+*.backup
+*.old
+*.orig
+
+# Archives
+archive/
+
+# Reports (internal use only)
+reports/

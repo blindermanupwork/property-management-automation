@@ -183,6 +183,20 @@ class JobReconciler:
                 assignee = self._format_employee_names(employees)
                 update_data['Assignee'] = assignee
             
+            # Include work timestamps if available
+            work_timestamps = job_data.get('work_timestamps', {})
+            if work_timestamps:
+                on_my_way_at = work_timestamps.get('on_my_way_at')
+                started_at = work_timestamps.get('started_at')
+                completed_at = work_timestamps.get('completed_at')
+                
+                if on_my_way_at:
+                    update_data['On My Way Time'] = on_my_way_at
+                if started_at:
+                    update_data['Job Started Time'] = started_at
+                if completed_at:
+                    update_data['Job Completed Time'] = completed_at
+            
             # Update the record
             self.reservations_table.update(record_id, update_data)
             
@@ -267,22 +281,20 @@ def integrate_reconciliation(webhook_handler_module):
                         if not existing_record:
                             logger.info(f"🔍 No reservation linked to job {job_id}, attempting reconciliation...")
                             
-                            # Only reconcile in dev environment for now
+                            # Reconcile in both dev and prod environments
                             environment = webhook_handler_module.environment
-                            if environment == 'development':
-                                reconciled = reconciler.reconcile_job(
-                                    job_data, 
-                                    webhook_handler_module.update_sync_info
-                                )
-                                
-                                if reconciled:
-                                    # Re-fetch the record now that it's linked
-                                    existing_record = webhook_handler_module.find_reservation_by_job_id(job_id)
-                                    if existing_record:
-                                        # Update webhook_data to continue normal processing
-                                        webhook_data['_reconciled'] = True
-                            else:
-                                logger.info(f"ℹ️ Reconciliation is currently only enabled in dev environment")
+                            reconciled = reconciler.reconcile_job(
+                                job_data, 
+                                webhook_handler_module.update_sync_info
+                            )
+                            
+                            if reconciled:
+                                # Re-fetch the record now that it's linked
+                                existing_record = webhook_handler_module.find_reservation_by_job_id(job_id)
+                                if existing_record:
+                                    # Update webhook_data to continue normal processing
+                                    webhook_data['_reconciled'] = True
+                                    logger.info(f"✅ Job {job_id} reconciled in {environment} environment")
         
         except Exception as e:
             logger.error(f"Error in reconciliation enhancement: {e}", exc_info=True)
