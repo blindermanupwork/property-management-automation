@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.3** - Comprehensive Operational Documentation & Training Materials
+**Version 2.2.6** - Schedule Sync Details Timezone Fix
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
