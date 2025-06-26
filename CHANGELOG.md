@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API Field Mapping Errors**
   - Fixed "Unknown field name: 'Sync Details'" error in production environment
   - Both dev and prod now use "Schedule Sync Details" and "Service Sync Details" field names
-  - Affects both job creation and schedule update endpoints
+  - Affects job creation, schedule update endpoints, and webhook handlers
+  - Fixed webhook handler field mapping in webhook.py
   
 - **Next Guest Date Detection**
   - Fixed job creation using "Next Guest Unknown" when Next Guest Date field was populated

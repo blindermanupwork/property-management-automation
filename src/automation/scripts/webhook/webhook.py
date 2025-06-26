@@ -398,7 +398,7 @@ def update_sync_info(record_id, details):
         # Get current UTC time for Airtable (it expects UTC)
         now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
         # Use environment-specific field names
-        field_name = "Service Sync Details" if environment == 'development' else "Sync Details"
+        field_name = "Service Sync Details" if environment == 'development' else "Schedule Sync Details"
         return reservations_table.update(record_id, {
             "Sync Date and Time": now,
             field_name: details
@@ -1179,6 +1179,7 @@ def process_supabase_webhook_async(webhook_data):
         images = record.get("images", [])
         image_urls = record.get("image_urls", [])
         saved_images = []
+        direct_urls = []  # URLs that can be sent directly to Airtable
         
         # Handle array of images
         for idx, image in enumerate(images):
@@ -1186,37 +1187,64 @@ def process_supabase_webhook_async(webhook_data):
                 image_url = image.get("url")
                 image_data = image.get("data")
                 filename = image.get("filename", f"image_{idx}.jpg")
+                
+                # If we have a URL, add it to direct URLs for Airtable
+                if image_url and image_url.startswith(('http://', 'https://')):
+                    direct_urls.append(image_url)
+                elif image_data:
+                    # Save base64 data locally
+                    saved_path = save_image_from_webhook(job_reference, None, image_data, filename)
+                    if saved_path:
+                        saved_images.append(saved_path)
             else:
                 # Assume it's direct image data
-                image_url = None
-                image_data = image
-                filename = f"image_{idx}.jpg"
-                
-            saved_path = save_image_from_webhook(job_reference, image_url, image_data, filename)
-            if saved_path:
-                saved_images.append(saved_path)
+                saved_path = save_image_from_webhook(job_reference, None, image, f"image_{idx}.jpg")
+                if saved_path:
+                    saved_images.append(saved_path)
         
-        # Handle image URLs
-        for idx, image_url in enumerate(image_urls):
-            saved_path = save_image_from_webhook(job_reference, image_url=image_url, filename=f"url_image_{idx}.jpg")
-            if saved_path:
-                saved_images.append(saved_path)
+        # Handle separate image URLs array
+        for image_url in image_urls:
+            if image_url and image_url.startswith(('http://', 'https://')):
+                direct_urls.append(image_url)
         
         # Update Airtable with image information
-        if saved_images:
+        if saved_images or direct_urls:
             airtable_rate_limiter.wait_if_needed()
             
-            # Store image paths in sync details for now
-            # In production, you might want to add a dedicated field
-            image_info = f"Images received from Supabase: {len(saved_images)} files"
+            # Prepare attachments for Airtable
+            # Airtable accepts URLs directly for attachment fields
+            attachments = []
             
-            # Update sync details
+            # Add direct URLs from webhook (these will be downloaded by Airtable)
+            for url in direct_urls:
+                attachments.append({"url": url})
+            
+            # For locally saved images, we need to serve them or upload elsewhere
+            # For now, we'll just track them in sync details
+            # In production, you'd want to upload to S3/CDN and provide URLs
+            
+            # Update the attachment field if we have URLs
+            if attachments:
+                try:
+                    reservations_table.update(record_id, {
+                        "Service Job Images": attachments
+                    })
+                    logger.info(f"✅ Updated Service Job Images field with {len(attachments)} attachments")
+                except Exception as e:
+                    logger.error(f"Failed to update attachment field: {e}")
+            
+            # Update sync details with all image info
+            local_count = len(saved_images)
+            url_count = len(attachments)
+            total_images = local_count + url_count
+            
+            if local_count > 0:
+                image_info = f"Images: {url_count} uploaded to Airtable, {local_count} saved locally"
+            else:
+                image_info = f"Images: {url_count} uploaded to Airtable"
+                
             update_sync_info(record_id, f"Supabase webhook: {event_type}, {image_info}")
-            
-            # You could also update a dedicated field if it exists
-            # For example: reservations_table.update(record_id, {"Image Paths": "\n".join(saved_images)})
-            
-            logger.info(f"✅ Processed Supabase webhook for job {job_reference}: {len(saved_images)} images")
+            logger.info(f"✅ Processed Supabase webhook for job {job_reference}: {total_images} total images")
         else:
             # Still update sync info even without images
             update_sync_info(record_id, f"Supabase webhook: {event_type}, no images")
