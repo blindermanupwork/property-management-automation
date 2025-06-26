@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.6] - 2025-06-25
+
+### Fixed
+- **Schedule Sync Details Timezone Display**
+  - Fixed timezone display in reconciliation script showing UTC times instead of Arizona timezone
+  - Changed confusing message format from "Job scheduled for X but expected X" to "Airtable shows X but HCP shows Y"
+  - Added `--force` flag to reconcile-jobs.py to allow updating records with existing job IDs but "Wrong Time" status
+  - Updated 32 production records with corrected time display format
+
 ## [2.2.5] - 2025-06-24
 
 ### Added
