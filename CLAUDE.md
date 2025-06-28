@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.7** - API Field Mapping and Next Guest Date Fixes
+**Current Version: 2.2.8** - Enhanced Service Line Updates with Owner Detection
 
 ## 📁 Project Structure (as of June 11, 2025)
 
@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.7)
+### Current System State (v2.2.8)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)
@@ -91,6 +91,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Enhanced search capabilities**: Address search, job filtering, revenue analysis
 - ✅ **Service line custom instructions**: Unicode support with 200-char truncation
 - ✅ **Long-term guest detection**: Auto-adds "LONG TERM GUEST DEPARTING" for 14+ day stays
+- ✅ **Owner arrival detection**: Auto-detects blocks and adds "OWNER ARRIVING" to service lines
 - ✅ **Webhook forwarding system**: Dual authentication support implemented
 - ✅ **Real-time console output**: All automation processes show live progress
 - ✅ **Environment-specific webhook logs**: Separate logs for dev (webhook_development.log) and prod (webhook.log)
@@ -388,7 +389,21 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 ```
 
 
-## Key System Features (v2.2.1)
+## Key System Features (v2.2.8)
+
+### **Enhanced Service Line Updates with Owner Detection**
+- **Feature**: Automatically detect when property owners are arriving
+- **Detection Logic**: Identifies Block entries checking in same/next day after reservation checkout
+- **Implementation**: Python-based detection in `update-service-lines-enhanced.py`
+- **Updates**:
+  - Sets "Owner Arriving" field in Airtable automatically
+  - Adds "OWNER ARRIVING" to service line descriptions
+- **Service Line Hierarchy**:
+  1. Custom Instructions (max 200 chars)
+  2. OWNER ARRIVING (if owner is arriving)
+  3. LONG TERM GUEST DEPARTING (if 14+ day stay)
+  4. Base service name (e.g., "Turnover STR Next Guest July 3")
+- **Example**: `Custom text - OWNER ARRIVING - LONG TERM GUEST DEPARTING - Turnover STR Next Guest July 3`
 
 ### **Service Line Custom Instructions Support**
 - **Feature**: Add custom instructions to HousecallPro job service names
