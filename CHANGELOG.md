@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.8] - 2025-06-27
+
+### Added
+- **Enhanced Service Line Updates with Owner Detection**
+  - New `update-service-lines-enhanced.py` script that detects owner arrivals automatically
+  - Detects when a Block (owner) checks in same day or next day after reservation checkout
+  - Automatically sets "Owner Arriving" field in Airtable without requiring Airtable automations
+  - Adds "OWNER ARRIVING" to service line descriptions in correct hierarchy
+  - Service line format: `[Custom Instructions] - OWNER ARRIVING - [LONG TERM GUEST] - [Base Service Name]`
+  - Processes all reservations with active HCP jobs every 4 hours
+  - No longer depends on Airtable automation scripts for owner detection
+
+### Changed
+- Updated `run_automation.py` to use enhanced service line update script
+- Service line updates now handle owner detection internally in Python
+
 ## [2.2.7] - 2025-06-26
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.7** - API Field Mapping and Next Guest Date Fixes
+**Version 2.2.8** - Enhanced Service Line Updates with Owner Detection
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -196,7 +196,27 @@ nano config/environments/prod/.env
   - Works with all job creation methods (dev/prod sync, API)
   - Format: `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`
 
-### **6. HCP MCP Server Integration** (Enhanced v2.2.1)
+### **6. Service Line Updates with Owner Detection** (NEW v2.2.8)
+Enhanced service line update script that automatically detects owner arrivals:
+
+#### **Owner Detection Logic**:
+- Detects when a property owner is arriving (Block entry type)
+- Checks if block checks in same day or next day after reservation checkout
+- Automatically sets "Owner Arriving" field in Airtable
+- Adds "OWNER ARRIVING" to service line description
+
+#### **Service Line Description Hierarchy**:
+1. Custom Instructions (max 200 chars)
+2. **OWNER ARRIVING** (if owner is arriving)
+3. LONG TERM GUEST DEPARTING (if 14+ day stay)
+4. Base service name (e.g., "Turnover STR Next Guest July 3")
+
+#### **Example Output**:
+- Regular: `Turnover STR Next Guest July 3`
+- With owner: `OWNER ARRIVING - Turnover STR Next Guest July 3`
+- Full: `Custom instructions - OWNER ARRIVING - LONG TERM GUEST DEPARTING - Turnover STR Next Guest July 3`
+
+### **7. HCP MCP Server Integration** (Enhanced v2.2.1)
 Claude AI can interact with HousecallPro data through enhanced MCP servers:
 
 #### **New Search Tools**:
@@ -222,7 +242,7 @@ Claude AI can interact with HousecallPro data through enhanced MCP servers:
 - Enhanced cache search with JSONPath-like queries
 - Better handling of nested JSON structures
 
-### **7. Airtable Automation Scripts** (NEW)
+### **8. Airtable Automation Scripts** (NEW)
 Reference scripts for Airtable automations located in `src/automation/scripts/airtable-automations/`:
 
 #### **find-next-guest-date.js**
@@ -238,7 +258,7 @@ Reference scripts for Airtable automations located in `src/automation/scripts/ai
 - Uses pre-calculated `Next Guest Date` when available
 - Truncates custom instructions to 200 characters
 
-### **8. Job Reconciliation** (NEW v2.2.5)
+### **9. Job Reconciliation** (NEW v2.2.5)
 Automatically matches existing HCP jobs to Airtable reservations when jobs are created outside normal automation flow:
 
 #### **Standalone Script**
