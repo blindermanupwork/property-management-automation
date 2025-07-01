@@ -183,6 +183,7 @@ async function createJob(req, res) {
 
     // Determine service name based on next reservation
     const sameDay = reservation.get('Same-day Turnover');
+    const isNextEntryBlock = reservation.get('Next Entry Is Block');
     let serviceName;
     
     if (sameDay) {
@@ -200,6 +201,9 @@ async function createJob(req, res) {
           const day = nextCheckIn.getDate();
           serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
           console.log(`Using Next Guest Date from Airtable: ${nextGuestDate}`);
+          if (isNextEntryBlock) {
+            console.log(`Next entry is a BLOCK (owner arriving)`);
+          }
         } else {
           // Fall back to searching for next reservation
           const nextReservation = await findNextReservation(base, propertyLinks[0], checkOutDate);
@@ -237,38 +241,57 @@ async function createJob(req, res) {
       }
     }
     
-    // Add Custom Service Line Instructions if present
+    // Build service line description with new hierarchy:
+    // 1. Custom Instructions
+    // 2. OWNER ARRIVING (if next entry is block)
+    // 3. LONG TERM GUEST DEPARTING (if stay >= 14 days)
+    // 4. Base service name
+    
     const serviceLineCustomInstructions = reservation.get('Custom Service Line Instructions');
     console.log(`DEBUG: Custom Service Line Instructions: "${serviceLineCustomInstructions}"`);
-    console.log(`DEBUG: All reservation fields:`, Object.keys(reservation.fields || {}));
-    console.log(`DEBUG: Looking for field containing 'Custom':`, Object.keys(reservation.fields || {}).filter(k => k.includes('Custom')));
+    console.log(`DEBUG: Is Next Entry Block: ${isNextEntryBlock}`);
+    console.log(`DEBUG: Is Long Term Guest: ${isLongTermGuest}`);
     
+    let parts = [];
+    
+    // Add custom instructions if present
     if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
       // Limit custom instructions length to prevent issues
       let customInstructions = serviceLineCustomInstructions.trim();
-      const maxCustomLength = 200; // Leave room for base service name and long-term prefix
+      const maxCustomLength = 200;
       
       if (customInstructions.length > maxCustomLength) {
         customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
         console.log(`DEBUG: Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
       }
       
-      if (isLongTermGuest) {
-        serviceName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
-        console.log(`Added long-term guest prefix with custom instructions -- Final service name: ${serviceName}`);
-      } else {
-        serviceName = `${customInstructions} - ${baseSvcName}`;
-        console.log(`Added custom instructions -- Final service name: ${serviceName}`);
-      }
-      console.log(`DEBUG: Final service name length: ${serviceName.length} characters`);
-    } else {
-      if (isLongTermGuest) {
-        serviceName = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
-        console.log(`Added long-term guest prefix (no custom instructions) -- Final service name: ${serviceName}`);
-      } else {
-        console.log(`DEBUG: Final service name (no custom instructions): "${serviceName}"`);
-      }
+      parts.push(customInstructions);
+      console.log(`Added custom instructions: "${customInstructions}"`);
     }
+    
+    // Add OWNER ARRIVING if next entry is a block
+    if (isNextEntryBlock) {
+      parts.push("OWNER ARRIVING");
+      console.log(`Added OWNER ARRIVING flag`);
+    }
+    
+    // Add LONG TERM GUEST DEPARTING if applicable
+    if (isLongTermGuest) {
+      parts.push("LONG TERM GUEST DEPARTING");
+      console.log(`Added long-term guest flag`);
+    }
+    
+    // Add base service name
+    parts.push(baseSvcName);
+    
+    // Join all parts
+    if (parts.length > 1) {
+      serviceName = parts.join(" - ");
+    } else {
+      serviceName = parts[0];
+    }
+    
+    console.log(`DEBUG: Final service name: "${serviceName}" (${serviceName.length} characters)`);
 
     // Check if job already exists
     let jobId = reservation.get('Service Job ID');
@@ -538,7 +561,7 @@ async function createJob(req, res) {
 
     // Final update to Airtable with complete sync info
     // Use environment-specific field names
-    const syncDetailsField = 'Schedule Sync Details'; // Same field name for both dev and prod
+    const syncDetailsField = 'Service Sync Details'; // Same field name for both dev and prod
     
     const updateFields = {
       'Scheduled Service Time': schedLive.toISOString(),

@@ -14,11 +14,23 @@ console.log("Processing record:", recordId);
 // Get the table
 let table = base.getTable("Reservations");
 
-// Get the trigger record with all needed fields
-let triggerRecord = await table.selectRecordAsync(recordId, {
-    fields: ["Property ID", "Check-out Date", "Check-in Date", "Entry Type", "Status",
-             "Service Type", "Same-day Turnover", "Custom Service Line Instructions", "Next Guest Date"]
+// In Airtable automations, we need to query all records and find the one we want
+// Query with the fields we need
+let query = await table.selectRecordsAsync({
+    fields: ["Service Type", "Same-day Turnover", "Next Entry Is Block", "Custom Service Line Instructions", 
+             "Check-in Date", "Check-out Date", "Next Guest Date", "Property ID", "Entry Type", "Status", "Reservation UID"]
 });
+
+// Find our trigger record
+let triggerRecord = query.records.find(record => record.id === recordId);
+
+// Check if record was found
+if (!triggerRecord) {
+    console.log("Error: Record not found with ID:", recordId);
+    output.set('success', false);
+    output.set('error', 'Record not found');
+    throw new Error("Record not found");
+}
 
 // Get service type - use whatever is in the field, default to "Turnover" only if empty
 let serviceTypeField = triggerRecord.getCellValue("Service Type");
@@ -26,6 +38,22 @@ let serviceType = serviceTypeField?.name || "Turnover";
 
 // Check if it's same-day turnover
 let sameDayTurnover = triggerRecord.getCellValue("Same-day Turnover");
+
+// Check if owner is arriving (from checkbox)
+// Try both the checkbox and the text field for backward compatibility
+let isOwnerArriving = false;
+try {
+    // First try the new checkbox field
+    isOwnerArriving = triggerRecord.getCellValue("Owner Arriving") || false;
+} catch (e) {
+    console.log("Owner Arriving checkbox not found, trying Next Entry Is Block field");
+    try {
+        // Fall back to the text field
+        isOwnerArriving = triggerRecord.getCellValue("Next Entry Is Block") || false;
+    } catch (e2) {
+        console.log("Next Entry Is Block field not found, defaulting to false");
+    }
+}
 
 // Get custom instructions
 let customInstructions = triggerRecord.getCellValue("Custom Service Line Instructions");
@@ -135,20 +163,43 @@ if (customInstructions && customInstructions.trim()) {
     }
 }
 
-// Apply the same logic as the sync scripts
-if (customInstructions && isLongTermGuest) {
-    serviceLineDescription = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
-} else if (customInstructions && !isLongTermGuest) {
-    serviceLineDescription = `${customInstructions} - ${baseSvcName}`;
-} else if (!customInstructions && isLongTermGuest) {
-    serviceLineDescription = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
+// Build service line description with new hierarchy:
+// 1. Custom Instructions
+// 2. OWNER ARRIVING (if next entry is block)
+// 3. LONG TERM GUEST DEPARTING (if stay >= 14 days)
+// 4. Base service name
+
+let parts = [];
+
+// Add custom instructions if present
+if (customInstructions) {
+    parts.push(customInstructions);
+}
+
+// Add OWNER ARRIVING if owner is arriving
+if (isOwnerArriving) {
+    parts.push("OWNER ARRIVING");
+}
+
+// Add LONG TERM GUEST DEPARTING if applicable
+if (isLongTermGuest) {
+    parts.push("LONG TERM GUEST DEPARTING");
+}
+
+// Add base service name
+parts.push(baseSvcName);
+
+// Join all parts with " - " if there are multiple parts, otherwise just use the single part
+if (parts.length > 1) {
+    serviceLineDescription = parts.join(" - ");
 } else {
-    serviceLineDescription = baseSvcName;
+    serviceLineDescription = parts[0];
 }
 
 console.log("Service Type:", serviceType);
 console.log("Base Service Name:", baseSvcName);
 console.log("Is Long-term Guest:", isLongTermGuest);
+console.log("Is Owner Arriving:", isOwnerArriving);
 console.log("Custom Instructions:", customInstructions);
 console.log("Final Service Line Description:", serviceLineDescription);
 

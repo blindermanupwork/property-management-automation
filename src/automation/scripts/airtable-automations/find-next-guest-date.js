@@ -13,8 +13,20 @@ console.log("Starting script for record:", recordId);
 // Get the table
 let table = base.getTable("Reservations");
 
-// Get the trigger record
-let triggerRecord = await table.selectRecordAsync(recordId);
+// In Airtable automations, we need to query all records and find the one we want
+// This is the standard pattern for automation scripts
+let query = await table.selectRecordsAsync({
+    fields: ["Check-out Date", "Check-in Date", "Property ID", "Entry Type", "Status", "Reservation UID", "Same-day Turnover", "Next Guest Date", "Next Entry Is Block"]
+});
+
+// Find our trigger record
+let triggerRecord = query.records.find(record => record.id === recordId);
+
+if (!triggerRecord) {
+    console.log("Error: Record not found with ID:", recordId);
+    output.set('success', false);
+    throw new Error("Record not found");
+}
 
 // Get dates
 let checkOutDate = triggerRecord.getCellValue("Check-out Date");
@@ -68,12 +80,12 @@ let propertyRecords = query.records.filter(record => {
 
 console.log("Records for this property:", propertyRecords.length);
 
-// Filter for next reservations - FIXED to use >= instead of >
-let nextReservations = propertyRecords.filter(record => {
+// Filter for next reservations AND blocks
+let nextEntries = propertyRecords.filter(record => {
     if (record.id === recordId) return false;
     
     let recEntryType = record.getCellValue("Entry Type");
-    if (!recEntryType || recEntryType.name !== "Reservation") return false;
+    if (!recEntryType || (recEntryType.name !== "Reservation" && recEntryType.name !== "Block")) return false;
     
     let recStatus = record.getCellValue("Status");
     if (recStatus && recStatus.name === "Old") return false;
@@ -85,10 +97,10 @@ let nextReservations = propertyRecords.filter(record => {
     return new Date(recCheckIn) >= new Date(checkOutDate);
 });
 
-console.log("Found next reservations:", nextReservations.length);
+console.log("Found next entries (reservations + blocks):", nextEntries.length);
 
 // Sort by check-in date
-nextReservations.sort((a, b) => {
+nextEntries.sort((a, b) => {
     let dateA = new Date(a.getCellValue("Check-in Date"));
     let dateB = new Date(b.getCellValue("Check-in Date"));
     return dateA - dateB;
@@ -97,12 +109,12 @@ nextReservations.sort((a, b) => {
 // Get the next guest info
 let nextGuestDate = null;
 let isSameDayTurnover = false;
+let isNextEntryBlock = false;
 
-if (nextReservations.length > 0) {
-    nextGuestDate = nextReservations[0].getCellValue("Check-in Date");
-    let nextUID = nextReservations[0].getCellValue("Reservation UID");
-    console.log("Next guest check-in:", nextGuestDate);
-    console.log("Next guest UID:", nextUID);
+if (nextEntries.length > 0) {
+    nextGuestDate = nextEntries[0].getCellValue("Check-in Date");
+    let nextEntryType = nextEntries[0].getCellValue("Entry Type");
+    let isBlock = nextEntryType && nextEntryType.name === "Block";
     
     // Check same-day
     const checkOutDateObj = new Date(checkOutDate);
@@ -112,17 +124,46 @@ if (nextReservations.length > 0) {
     nextCheckInDateObj.setHours(0, 0, 0, 0);
     
     isSameDayTurnover = checkOutDateObj.getTime() === nextCheckInDateObj.getTime();
+    
+    // Calculate days between checkout and next checkin
+    const daysBetween = Math.floor((nextCheckInDateObj - checkOutDateObj) / (1000 * 60 * 60 * 24));
+    
+    // Only set isNextEntryBlock if it's a block AND checking in same day or next day
+    if (isBlock && daysBetween <= 1) {
+        isNextEntryBlock = true;
+        console.log("Next entry is a BLOCK checking in within 1 day (owner arriving)");
+    } else if (isBlock) {
+        console.log(`Next entry is a BLOCK but checking in ${daysBetween} days later (not owner arriving)`);
+    } else {
+        let nextUID = nextEntries[0].getCellValue("Reservation UID");
+        console.log("Next guest UID:", nextUID);
+    }
+    
+    console.log("Next entry check-in:", nextGuestDate);
     console.log("Same-day turnover:", isSameDayTurnover);
 }
 
 // Update the record
-await table.updateRecordAsync(recordId, {
-    "Next Guest Date": nextGuestDate,
-    "Same-day Turnover": isSameDayTurnover
-});
+try {
+    // Try to update with all fields including Next Entry Is Block and Owner Arriving
+    await table.updateRecordAsync(recordId, {
+        "Next Guest Date": nextGuestDate,
+        "Same-day Turnover": isSameDayTurnover,
+        "Next Entry Is Block": isNextEntryBlock,
+        "Owner Arriving": isNextEntryBlock  // Set checkbox based on block detection
+    });
+} catch (e) {
+    // If that fails, try without new fields
+    console.log("Failed to update with new fields, trying without:", e.message);
+    await table.updateRecordAsync(recordId, {
+        "Next Guest Date": nextGuestDate,
+        "Same-day Turnover": isSameDayTurnover
+    });
+}
 
 output.set('success', true);
 output.set('nextGuestDate', nextGuestDate);
 output.set('isLongTermGuest', isLongTermGuest);
 output.set('stayDurationDays', stayDurationDays);
 output.set('isSameDayTurnover', isSameDayTurnover);
+output.set('isNextEntryBlock', isNextEntryBlock);
