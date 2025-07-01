@@ -161,12 +161,12 @@ class HCPJobReconciler:
             if force:
                 # Force mode - get all reservations with jobs that have Wrong Time status
                 logger.info("FORCE MODE: Fetching reservations with Wrong Time status...")
-                formula = "AND({Service Job ID}, {Sync Status} = 'Wrong Time', NOT({Status} = 'Old'))"
+                formula = "AND({Service Job ID}, {Sync Status} = 'Wrong Time', NOT({Status} = 'Old'), {Entry Type} = 'Reservation')"
             else:
                 # Normal flow - get all without jobs
                 logger.info("Fetching reservations without Service Job IDs...")
                 # Get reservations with no job ID and a final service time
-                formula = "AND(NOT({Service Job ID}), {Final Service Time}, NOT({Status} = 'Old'))"
+                formula = "AND(NOT({Service Job ID}), {Final Service Time}, NOT({Status} = 'Old'), {Entry Type} = 'Reservation')"
             
             # Fetch all matching records first
             all_reservations = self.reservations_table.all(formula=formula)

@@ -16,7 +16,7 @@ async function handleReconcileJobs(req, res) {
         console.log(`[Reconcile Jobs] Starting reconciliation - Environment: ${environment}, Mode: ${mode}`);
 
         // Build command arguments
-        const scriptPath = path.join(__dirname, '../../../hcp/reconcile-jobs.py');
+        const scriptPath = path.join(__dirname, '../../../hcp/reconcile-jobs-optimized.py');
         const args = ['python3', scriptPath, '--env', environment, '--json'];
         
         if (mode === 'execute') {

@@ -198,112 +198,174 @@ def make_driver(headless: bool) -> webdriver.Chrome:
 
 
 # New function for the second browser flow (simpler, no filtering needed)
-def second_tab_export(headless: bool):
+def second_tab_export(headless: bool, max_retries: int = 3):
     """
     Open a second browser instance, login to Evolve, navigate to the second tab,
     export those bookings, and filter the CSV based on check-in dates.
+    
+    Args:
+        headless: Run browser in headless mode
+        max_retries: Maximum number of retry attempts (default: 3)
+        
+    Returns:
+        bool: True if successful, False otherwise
     """
-    driver = None
-    try:
-        log.info("Starting second browser for Tab 2 export...")
-        driver = make_driver(headless)
-        
-        # 1) Go straight to Tab 2
-        driver.get(URL_TAB2)
+    for attempt in range(max_retries):
+        driver = None
         try:
-            form = WebDriverWait(driver, WAIT).until(
-                EC.presence_of_element_located((By.TAG_NAME, "form"))
+            log.info(f"Tab 2 export attempt {attempt + 1}/{max_retries}")
+            log.info("Starting second browser for Tab 2 export...")
+            driver = make_driver(headless)
+            
+            # 1) Go straight to Tab 2
+            driver.get(URL_TAB2)
+            try:
+                form = WebDriverWait(driver, WAIT).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "form"))
+                )
+                log.info("Tab 2: Login page detected, submitting credentials...")
+                inputs = form.find_elements(By.TAG_NAME, "input")[:2]
+                inputs[0].send_keys(USER)
+                inputs[1].send_keys(PWD)
+                form.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+            except TimeoutException:
+                log.info("Tab 2: Already logged in, skipping.")
+            
+            # 2) Wait for the bookings page
+            WebDriverWait(driver, WAIT).until(
+                EC.url_contains("/s/booking/Booking__c/Recent")
             )
-            log.info("Tab 2: Login page detected, submitting credentials...")
-            inputs = form.find_elements(By.TAG_NAME, "input")[:2]
-            inputs[0].send_keys(USER)
-            inputs[1].send_keys(PWD)
-            form.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
-        except TimeoutException:
-            log.info("Tab 2: Already logged in, skipping.")
-        
-        # 2) Wait for the bookings page
-        WebDriverWait(driver, WAIT).until(
-            EC.url_contains("/s/booking/Booking__c/Recent")
-        )
-        time.sleep(2)
-        log.info("Tab 2: Bookings page loaded ✔")
-        
-        # 3) Debug logging - what's on the page?
-        log.info(f"Tab 2: Current URL: {driver.current_url}")
-        log.info(f"Tab 2: Page title: {driver.title}")
-        
-        # 3) Find all "Export" buttons in the small-screen panel and click the last one
-        log.info("Tab 2: Locating all Export buttons…")
-        export_btns = driver.find_elements(
-            By.CSS_SELECTOR,
-            "div.slds-text-align_right.slds-show_small button.slds-button_neutral"
-        )
-        # filter by exact visible text
-        export_btns = [b for b in export_btns if b.text.strip().lower() == "export"]
-        
-        if not export_btns:
-            log.warning("Tab 2: No Export buttons found; aborting.")
-            return
-        
-        btn = export_btns[-1]   # pick the bottom-of-table one
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
-        btn.click()
-        log.info("Tab 2: Bottom-table Export clicked ⬇️")
-        
-        # 4) Wait for the CSV, filter it, and rename it
-        log.info(f"Tab 2: Waiting for CSV download in {DOWNLOAD_DIR}")
-        before = set(DOWNLOAD_DIR.glob("*.csv"))
-        log.info(f"Tab 2: Existing CSV files: {[f.name for f in before]}")
-        
-        deadline = time.time() + 60
-        while time.time() < deadline:
-            now = set(DOWNLOAD_DIR.glob("*.csv"))
-            new = now - before
-            if new:
-                orig = new.pop()
-                log.info(f"Tab 2: Found new CSV: {orig.name}, size: {orig.stat().st_size} bytes")
+            time.sleep(2)
+            log.info("Tab 2: Bookings page loaded ✔")
+            
+            # 3) Debug logging - what's on the page?
+            log.info(f"Tab 2: Current URL: {driver.current_url}")
+            log.info(f"Tab 2: Page title: {driver.title}")
+            
+            # 3) Find all "Export" buttons in the small-screen panel and click the last one
+            log.info("Tab 2: Locating all Export buttons…")
+            export_btns = driver.find_elements(
+                By.CSS_SELECTOR,
+                "div.slds-text-align_right.slds-show_small button.slds-button_neutral"
+            )
+            # filter by exact visible text
+            export_btns = [b for b in export_btns if b.text.strip().lower() == "export"]
+            
+            if not export_btns:
+                log.warning("Tab 2: No Export buttons found; aborting.")
+                if attempt < max_retries - 1:
+                    wait_time = 30 * (attempt + 1)
+                    log.info(f"Waiting {wait_time}s before retry...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    return False
+            
+            btn = export_btns[-1]   # pick the bottom-of-table one
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
+            btn.click()
+            log.info("Tab 2: Bottom-table Export clicked ⬇️")
+            
+            # 4) Wait for the CSV, filter it, and rename it
+            log.info(f"Tab 2: Waiting for CSV download in {DOWNLOAD_DIR}")
+            before = set(DOWNLOAD_DIR.glob("*.csv"))
+            log.info(f"Tab 2: Existing CSV files: {[f.name for f in before]}")
+            
+            deadline = time.time() + 60
+            csv_found = False
+            while time.time() < deadline:
+                now = set(DOWNLOAD_DIR.glob("*.csv"))
+                new = now - before
+                if new:
+                    orig = new.pop()
+                    log.info(f"Tab 2: Found new CSV: {orig.name}, size: {orig.stat().st_size} bytes")
+                    
+                    # Apply filtering before renaming
+                    if TAB2_FILTER_ENABLED:
+                        filtered_path = filter_tab2_csv(orig)
+                        orig = filtered_path
+                    
+                    # Generate timestamp in MST and rename
+                    mst = pytz.timezone('America/Phoenix')
+                    ts = datetime.now(mst).strftime("%m-%d-%Y--%H-%M-%S") 
+                    new_name = DOWNLOAD_DIR / f"{ts}_tab2.csv"
+                    orig.rename(new_name)
+                    log.info(f"Tab 2: Processing complete → {new_name.name}")
+                    log.info(f"✅ Tab 2 export successful on attempt {attempt + 1}")
+                    return True
+                time.sleep(1)
                 
-                # Apply filtering before renaming
-                if TAB2_FILTER_ENABLED:
-                    filtered_path = filter_tab2_csv(orig)
-                    orig = filtered_path
+            if not csv_found:
+                log.warning(f"Tab 2: CSV did not appear within 60 seconds on attempt {attempt + 1}")
+            
+        except Exception as e:
+            log.error(f"Tab 2 export error on attempt {attempt + 1}: {e}")
+        finally:
+            if driver:
+                driver.quit()
                 
-                # Generate timestamp in MST and rename
-                mst = pytz.timezone('America/Phoenix')
-                ts = datetime.now(mst).strftime("%m-%d-%Y--%H-%M-%S") 
-                new_name = DOWNLOAD_DIR / f"{ts}_tab2.csv"
-                orig.rename(new_name)
-                log.info(f"Tab 2: Processing complete → {new_name.name}")
-                return
-            time.sleep(1)
-        log.warning("Tab 2: CSV did not appear within 60 seconds.")
-        
-    except Exception as e:
-        log.error(f"Tab 2 export error: {e}")
-    finally:
-        if driver:
-            driver.quit()
+        # Wait before retry (except on last attempt)
+        if attempt < max_retries - 1:
+            wait_time = 30 * (attempt + 1)  # Progressive delay: 30s, 60s
+            log.info(f"Waiting {wait_time}s before retry...")
+            time.sleep(wait_time)
+    
+    log.error(f"❌ Tab 2 export failed after {max_retries} attempts")
+    return False
 
 
-def main_tab1(headless: bool):
-    """Run the original flow for tab 1 (with filtering)"""
-    driver = None
-    try:
-        # Create and configure the WebDriver
-        driver = make_driver(headless)
-        # Perform login sequence
-        login(driver)
-        # Apply booking filters
-        apply_filter(driver)
-        # Export the filtered CSV
-        click_export(driver)
-    except Exception as e:
-        log.error(f"Tab 1 export error: {e}")
-    finally:
-        # Ensure browser closes even on error
-        if driver:
-            driver.quit()
+def main_tab1(headless: bool, max_retries: int = 3):
+    """Run the original flow for tab 1 (with filtering)
+    
+    Args:
+        headless: Run browser in headless mode
+        max_retries: Maximum number of retry attempts (default: 3)
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    for attempt in range(max_retries):
+        driver = None
+        try:
+            log.info(f"Tab 1 export attempt {attempt + 1}/{max_retries}")
+            # Create and configure the WebDriver
+            driver = make_driver(headless)
+            # Perform login sequence
+            login(driver)
+            # Apply booking filters
+            apply_filter(driver)
+            # Export the filtered CSV
+            click_export(driver)
+            
+            # Check if CSV was successfully downloaded
+            # Look for CSV files created in the last 2 minutes
+            import glob
+            recent_csvs = []
+            for csv_file in DOWNLOAD_DIR.glob("*.csv"):
+                if csv_file.stat().st_mtime > time.time() - 120:  # Created in last 2 minutes
+                    recent_csvs.append(csv_file)
+            
+            if recent_csvs:
+                log.info(f"✅ Tab 1 export successful on attempt {attempt + 1}")
+                return True
+            else:
+                log.warning(f"No CSV found after attempt {attempt + 1}")
+                
+        except Exception as e:
+            log.error(f"Tab 1 export error on attempt {attempt + 1}: {e}")
+        finally:
+            # Ensure browser closes even on error
+            if driver:
+                driver.quit()
+        
+        # Wait before retry (except on last attempt)
+        if attempt < max_retries - 1:
+            wait_time = 30 * (attempt + 1)  # Progressive delay: 30s, 60s
+            log.info(f"Waiting {wait_time}s before retry...")
+            time.sleep(wait_time)
+    
+    log.error(f"❌ Tab 1 export failed after {max_retries} attempts")
+    return False
 
 
 # ──────────────────────────── Helper Functions ───────────────────────────
@@ -518,6 +580,38 @@ def cleanup_old_evolve_csvs():
     else:
         log.info("No old Evolve CSV files found to clean up")
 
+def write_evolve_status(tab1_success: bool, tab2_success: bool):
+    """Write Evolve scraping status to a JSON file for CSV processor to read
+    
+    Args:
+        tab1_success: Whether tab 1 export succeeded
+        tab2_success: Whether tab 2 export succeeded
+    """
+    status_file = DOWNLOAD_DIR / "evolve_status.json"
+    status = {
+        "timestamp": datetime.now(pytz.timezone('America/Phoenix')).isoformat(),
+        "tab1_success": tab1_success,
+        "tab2_success": tab2_success,
+        "overall_success": tab1_success or tab2_success,  # At least one tab succeeded
+        "message": ""
+    }
+    
+    if not tab1_success and not tab2_success:
+        status["message"] = "Both tab exports failed after 3 attempts each"
+    elif not tab1_success:
+        status["message"] = "Tab 1 export failed, but Tab 2 succeeded"
+    elif not tab2_success:
+        status["message"] = "Tab 2 export failed, but Tab 1 succeeded" 
+    else:
+        status["message"] = "Both tabs exported successfully"
+    
+    import json
+    with open(status_file, 'w') as f:
+        json.dump(status, f, indent=2)
+    
+    log.info(f"Wrote Evolve status to {status_file.name}: {status['message']}")
+
+
 def main():
     """
     Parse CLI arguments, initialize the WebDriver, and execute the
@@ -539,15 +633,18 @@ def main():
     # Clean up old Evolve CSV files before generating new ones
     cleanup_old_evolve_csvs()
 
+    tab1_success = False
+    tab2_success = False
+
     if args.sequential:
         # Run sequentially
         log.info("Running exports sequentially...")
         try:
-            main_tab1(args.headless)
-            log.info("Tab 1 export complete")
+            tab1_success = main_tab1(args.headless)
+            log.info(f"Tab 1 export {'succeeded' if tab1_success else 'failed'}")
             time.sleep(2)  # Small delay between runs
-            second_tab_export(args.headless)
-            log.info("Tab 2 export complete")
+            tab2_success = second_tab_export(args.headless)
+            log.info(f"Tab 2 export {'succeeded' if tab2_success else 'failed'}")
         except Exception as e:
             log.error(f"Error in sequential export: {e}")
     else:
@@ -561,12 +658,27 @@ def main():
             # Wait for both to complete
             concurrent.futures.wait([tab1_future, tab2_future])
             
-            # Check for any exceptions
-            for future in [tab1_future, tab2_future]:
-                try:
-                    future.result()
-                except Exception as e:
-                    log.error(f"Error in one of the browser processes: {e}")
+            # Check for any exceptions and get results
+            try:
+                tab1_success = tab1_future.result()
+            except Exception as e:
+                log.error(f"Error in Tab 1 export: {e}")
+                tab1_success = False
+                
+            try:
+                tab2_success = tab2_future.result()
+            except Exception as e:
+                log.error(f"Error in Tab 2 export: {e}")
+                tab2_success = False
+    
+    # Write status file for CSV processor to check
+    write_evolve_status(tab1_success, tab2_success)
+    
+    # Exit with appropriate code
+    if tab1_success or tab2_success:
+        sys.exit(0)  # At least one succeeded
+    else:
+        sys.exit(1)  # Both failed
 
 
 if __name__ == "__main__":

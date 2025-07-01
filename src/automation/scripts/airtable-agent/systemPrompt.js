@@ -31,7 +31,7 @@ Display tables with these fields in this order:
 - Final Cleaning Time (as "Time")
 - Cleaning Job Link
 - Sync Status
-- Sync Details
+- Service Sync Details
 - Job Status
 - On My Way Time (as "OMW")
 - Job Started Time (as "Started")

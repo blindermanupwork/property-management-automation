@@ -95,15 +95,20 @@ async function hcp(path, method = 'GET', body = null) {
   }
 }
 
-// Find next reservation helper
-function findNextReservation(propertyId, checkOutDate, allRecords) {
-  return allRecords.find(r => {
-    if (!r.fields['Property ID'] || r.fields['Property ID'][0] !== propertyId) return false;
-    if (r.fields['Entry Type'] !== 'Reservation') return false;
-    if (r.fields['Status'] === 'Old') return false;
-    const checkIn = r.fields['Check-in Date'];
-    return checkIn && new Date(checkIn) > new Date(checkOutDate);
-  });
+// Find next entry (reservation or block) helper
+function findNextEntry(propertyId, checkOutDate, allRecords) {
+  const nextEntries = allRecords
+    .filter(r => {
+      if (!r.fields['Property ID'] || r.fields['Property ID'][0] !== propertyId) return false;
+      const entryType = r.fields['Entry Type'];
+      if (entryType !== 'Reservation' && entryType !== 'Block') return false;
+      if (r.fields['Status'] === 'Old') return false;
+      const checkIn = r.fields['Check-in Date'];
+      return checkIn && new Date(checkIn) >= new Date(checkOutDate);
+    })
+    .sort((a, b) => new Date(a.fields['Check-in Date']) - new Date(b.fields['Check-in Date']));
+  
+  return nextEntries.length > 0 ? nextEntries[0] : null;
 }
 
 // Main sync function
@@ -200,7 +205,7 @@ async function syncMultipleJobs() {
         // Update Airtable with verification results
         await base('Reservations').update(rec.id, {
           'Sync Status': syncStatus,
-          'Schedule Sync Details': syncDetails,
+          'Service Sync Details': syncDetails,
           'Sync Date and Time': new Date().toISOString(),
           'Scheduled Service Time': schedLive.toISOString()
         });
@@ -250,25 +255,39 @@ async function syncMultipleJobs() {
           
           // Only do next guest lookup for Turnover services like API handler
           if (serviceType === 'Turnover' && checkOutDate) {
-            console.log(`Finding next reservation for ${propertyName}`);
-            const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+            console.log(`Finding next entry for ${propertyName}`);
+            const nextEntry = findNextEntry(propId, checkOutDate, allRecords);
             
-            if (nextReservation) {
-              const nextCheckInDate = nextReservation.fields['Check-in Date'];
-              const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
+            if (nextEntry) {
+              const nextCheckInDate = nextEntry.fields['Check-in Date'];
+              const nextEntryType = nextEntry.fields['Entry Type'];
+              const isBlock = nextEntryType === 'Block';
+              
+              if (isBlock) {
+                console.log(`Next entry is a BLOCK (owner arriving) on ${nextCheckInDate}`);
+              } else {
+                const nextResUID = nextEntry.fields['Reservation UID'] || nextEntry.id;
+                console.log(`Next entry is reservation ${nextResUID} on ${nextCheckInDate}`);
+              }
+              
               const nextCheckIn = new Date(nextCheckInDate);
               const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
               const day = nextCheckIn.getDate();
               baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
-              console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting base service name to: ${baseSvcName}`);
+              console.log(`Setting base service name to: ${baseSvcName}`);
+              
+              // Store block status for later use
+              rec.isNextEntryBlock = isBlock;
             } else {
               baseSvcName = `${serviceType} STR Next Guest Unknown`;
-              console.log(`No Res UID found -- Setting base service name to: ${baseSvcName}`);
+              console.log(`No next entry found -- Setting base service name to: ${baseSvcName}`);
+              rec.isNextEntryBlock = false;
             }
           } else {
             // For non-Turnover services or when no checkout date, use fallback
             baseSvcName = `${serviceType} STR Next Guest Unknown`;
             console.log(`Non-turnover service or no checkout date -- Setting base service name to: ${baseSvcName}`);
+            rec.isNextEntryBlock = false;
           }
         }
         
@@ -294,35 +313,52 @@ async function syncMultipleJobs() {
           }
         }
         
+        // Build service line description with new hierarchy:
+        // 1. Custom Instructions
+        // 2. OWNER ARRIVING (if next entry is block)
+        // 3. LONG TERM GUEST DEPARTING (if stay >= 14 days)
+        // 4. Base service name
+        
+        let parts = [];
+        
+        // Add custom instructions if present
         if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
           // Limit custom instructions length to prevent issues
           let customInstructions = serviceLineCustomInstructions.trim();
-          const maxCustomLength = 200; // Leave room for base service name and long-term prefix
+          const maxCustomLength = 200;
           
           if (customInstructions.length > maxCustomLength) {
             customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
             console.log(`Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
           }
           
-          console.log(`DEBUG: customInstructions = "${customInstructions}"`);
-          
-          if (isLongTermGuest) {
-            svcName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
-            console.log(`Added long-term guest prefix with custom instructions -- Final service name: ${svcName}`);
-          } else {
-            svcName = `${customInstructions} - ${baseSvcName}`;
-            console.log(`Added custom instructions -- Final service name: ${svcName}`);
-          }
-          console.log(`Final service name length: ${svcName.length} characters`);
-        } else {
-          if (isLongTermGuest) {
-            svcName = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
-            console.log(`Added long-term guest prefix (no custom instructions) -- Final service name: ${svcName}`);
-          } else {
-            svcName = baseSvcName;
-            console.log(`No custom instructions -- Final service name: ${svcName}`);
-          }
+          parts.push(customInstructions);
+          console.log(`Added custom instructions: "${customInstructions}"`);
         }
+        
+        // Add OWNER ARRIVING if next entry is a block
+        if (rec.isNextEntryBlock) {
+          parts.push("OWNER ARRIVING");
+          console.log(`Added OWNER ARRIVING flag`);
+        }
+        
+        // Add LONG TERM GUEST DEPARTING if applicable
+        if (isLongTermGuest) {
+          parts.push("LONG TERM GUEST DEPARTING");
+          console.log(`Added long-term guest flag`);
+        }
+        
+        // Add base service name
+        parts.push(baseSvcName);
+        
+        // Join all parts
+        if (parts.length > 1) {
+          svcName = parts.join(" - ");
+        } else {
+          svcName = parts[0];
+        }
+        
+        console.log(`Final service name: ${svcName} (${svcName.length} characters)`);
         console.log(`DEBUG: FINAL svcName = "${svcName}"`);
         
         // Enhanced HCP ID retrieval - matches API handler logic
@@ -546,7 +582,7 @@ async function syncMultipleJobs() {
           'Job Status': 'Scheduled',
           'Sync Status': syncStatus,
           'Sync Date and Time': new Date().toISOString(),
-          'Schedule Sync Details': syncDetails,  // Use the new field name for dev
+          'Service Sync Details': syncDetails,  // Use the new field name for dev
           'Scheduled Service Time': schedLive.toISOString()
         };
         

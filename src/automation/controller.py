@@ -252,7 +252,7 @@ class AutomationController:
         
         # Import automation functions based on environment
         # These will be imported dynamically based on the config
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation, run_service_line_updates
         
         # Define automation mappings
         automations = [
@@ -261,6 +261,7 @@ class AutomationController:
             ("CSV Files", run_csv_automation),
             ("ICS Calendar", run_ics_automation),
             ("Add/Sync Service Jobs", run_hcp_automation),
+            ("Update Service Lines", run_service_line_updates),
         ]
         
         results = []
@@ -328,7 +329,7 @@ class AutomationController:
             execute: For reconciliation, whether to execute or dry-run
         """
         # Import automation functions
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation, run_service_line_updates
         
         # Map automation IDs to functions
         automation_map = {
@@ -338,6 +339,7 @@ class AutomationController:
             "ICS Calendar": run_ics_automation,
             "Add/Sync Service Jobs": run_hcp_automation,
             "Job Reconciliation": run_job_reconciliation,
+            "Update Service Lines": run_service_line_updates,
         }
         
         if automation_id not in automation_map:

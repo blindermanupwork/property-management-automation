@@ -92,6 +92,7 @@ class JobReconciler:
             formula = f"""AND(
                 NOT({{Service Job ID}}),
                 NOT({{Status}} = 'Old'),
+                {{Entry Type}} = 'Reservation',
                 {{Final Service Time}},
                 DATETIME_PARSE({{Final Service Time}}) >= DATETIME_PARSE('{search_start}'),
                 DATETIME_PARSE({{Final Service Time}}) <= DATETIME_PARSE('{search_end}')

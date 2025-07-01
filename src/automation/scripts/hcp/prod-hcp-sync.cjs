@@ -98,14 +98,14 @@ async function hcp(path, method = 'GET', body = null) {
   }
 }
 
-// Find next reservation helper
-function findNextReservation(propertyId, checkOutDate, allRecords) {
+// Find next entry (reservation or block) helper
+function findNextEntry(propertyId, checkOutDate, allRecords) {
   return allRecords.find(r => {
     if (!r.fields['Property ID'] || r.fields['Property ID'][0] !== propertyId) return false;
-    if (r.fields['Entry Type'] !== 'Reservation') return false;
+    if (!['Reservation', 'Block'].includes(r.fields['Entry Type'])) return false;
     if (r.fields['Status'] === 'Old') return false;
     const checkIn = r.fields['Check-in Date'];
-    return checkIn && new Date(checkIn) > new Date(checkOutDate);
+    return checkIn && new Date(checkIn) >= new Date(checkOutDate);
   });
 }
 
@@ -203,7 +203,7 @@ async function syncMultipleJobs() {
         // Update Airtable with verification results
         await base('Reservations').update(rec.id, {
           'Sync Status': syncStatus,
-          'Schedule Sync Details': syncDetails,
+          'Service Sync Details': syncDetails,
           'Sync Date and Time': new Date().toISOString(),
           'Scheduled Service Time': schedLive.toISOString()
         });
@@ -253,25 +253,36 @@ async function syncMultipleJobs() {
           
           // Only do next guest lookup for Turnover services like API handler
           if (serviceType === 'Turnover' && checkOutDate) {
-            console.log(`Finding next reservation for ${propertyName}`);
-            const nextReservation = findNextReservation(propId, checkOutDate, allRecords);
+            console.log(`Finding next entry for ${propertyName}`);
+            const nextEntry = findNextEntry(propId, checkOutDate, allRecords);
             
-            if (nextReservation) {
-              const nextCheckInDate = nextReservation.fields['Check-in Date'];
-              const nextResUID = nextReservation.fields['Reservation UID'] || nextReservation.id;
+            if (nextEntry) {
+              const nextCheckInDate = nextEntry.fields['Check-in Date'];
+              const entryType = nextEntry.fields['Entry Type'];
+              const nextUID = nextEntry.fields['Reservation UID'] || nextEntry.id;
               const nextCheckIn = new Date(nextCheckInDate);
               const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
               const day = nextCheckIn.getDate();
-              baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
-              console.log(`Res UID: ${nextResUID} with Check-in: ${nextCheckInDate} Found -- Setting base service name to: ${baseSvcName}`);
+              
+              if (entryType === 'Block') {
+                baseSvcName = `${serviceType} STR OWNER ARRIVING ${month} ${day}`;
+                console.log(`Block UID: ${nextUID} with Check-in: ${nextCheckInDate} Found -- Setting base service name to: ${baseSvcName}`);
+                rec.isNextEntryBlock = true;
+              } else {
+                baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+                console.log(`Res UID: ${nextUID} with Check-in: ${nextCheckInDate} Found -- Setting base service name to: ${baseSvcName}`);
+                rec.isNextEntryBlock = false;
+              }
             } else {
               baseSvcName = `${serviceType} STR Next Guest Unknown`;
-              console.log(`No Res UID found -- Setting base service name to: ${baseSvcName}`);
+              console.log(`No next entry found -- Setting base service name to: ${baseSvcName}`);
+              rec.isNextEntryBlock = false;
             }
           } else {
             // For non-Turnover services or when no checkout date, use fallback
             baseSvcName = `${serviceType} STR Next Guest Unknown`;
             console.log(`Non-turnover service or no checkout date -- Setting base service name to: ${baseSvcName}`);
+            rec.isNextEntryBlock = false;
           }
         }
         
@@ -297,35 +308,45 @@ async function syncMultipleJobs() {
           }
         }
         
+        // Build service name with new hierarchy:
+        // 1. Custom Instructions (if present)
+        // 2. OWNER ARRIVING (if next entry is a block)
+        // 3. LONG TERM GUEST DEPARTING (if 14+ day stay)
+        // 4. Base service name
+        
+        let nameComponents = [];
+        
+        // Add custom instructions first if present
         if (serviceLineCustomInstructions && serviceLineCustomInstructions.trim()) {
-          // Limit custom instructions length to prevent issues
           let customInstructions = serviceLineCustomInstructions.trim();
-          const maxCustomLength = 200; // Leave room for base service name and long-term prefix
+          const maxCustomLength = 200; // Leave room for other components
           
           if (customInstructions.length > maxCustomLength) {
             customInstructions = customInstructions.substring(0, maxCustomLength - 3) + '...';
             console.log(`Truncated custom instructions from ${serviceLineCustomInstructions.length} to ${customInstructions.length} characters`);
           }
           
-          console.log(`DEBUG: customInstructions = "${customInstructions}"`);
-          
-          if (isLongTermGuest) {
-            svcName = `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`;
-            console.log(`Added long-term guest prefix with custom instructions -- Final service name: ${svcName}`);
-          } else {
-            svcName = `${customInstructions} - ${baseSvcName}`;
-            console.log(`Added custom instructions -- Final service name: ${svcName}`);
-          }
-          console.log(`Final service name length: ${svcName.length} characters`);
-        } else {
-          if (isLongTermGuest) {
-            svcName = `LONG TERM GUEST DEPARTING ${baseSvcName}`;
-            console.log(`Added long-term guest prefix (no custom instructions) -- Final service name: ${svcName}`);
-          } else {
-            svcName = baseSvcName;
-            console.log(`No custom instructions -- Final service name: ${svcName}`);
-          }
+          nameComponents.push(customInstructions);
+          console.log(`DEBUG: Added custom instructions: "${customInstructions}"`);
         }
+        
+        // Add OWNER ARRIVING if next entry is a block (takes precedence over long-term)
+        if (rec.isNextEntryBlock) {
+          nameComponents.push('OWNER ARRIVING');
+          console.log(`DEBUG: Added OWNER ARRIVING (next entry is a block)`);
+        } else if (isLongTermGuest) {
+          // Only add LONG TERM if NOT owner arriving
+          nameComponents.push('LONG TERM GUEST DEPARTING');
+          console.log(`DEBUG: Added LONG TERM GUEST DEPARTING`);
+        }
+        
+        // Always add the base service name
+        nameComponents.push(baseSvcName);
+        
+        // Join all components with " - "
+        svcName = nameComponents.join(' - ');
+        console.log(`Final service name: ${svcName}`);
+        console.log(`Final service name length: ${svcName.length} characters`);
         console.log(`DEBUG: FINAL svcName = "${svcName}"`);
         
         // Enhanced HCP ID retrieval - matches API handler logic
@@ -549,7 +570,7 @@ async function syncMultipleJobs() {
           'Job Status': 'Scheduled',
           'Sync Status': syncStatus,
           'Sync Date and Time': new Date().toISOString(),
-          'Schedule Sync Details': syncDetails,  // Use the new field name for prod
+          'Service Sync Details': syncDetails,  // Use the new field name for prod
           'Scheduled Service Time': schedLive.toISOString()
         };
         

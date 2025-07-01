@@ -33,6 +33,58 @@ sys.path.insert(0, str(project_root))
 from src.automation.config_wrapper import Config
 
 # ---------------------------------------------------------------------------
+# ROBUST DATE EXTRACTION
+# ---------------------------------------------------------------------------
+def extract_date_only(date_value):
+    """
+    Extract just the date portion (YYYY-MM-DD) from any datetime string or object.
+    Handles multiple formats reliably:
+    - datetime objects
+    - ISO format with timezone: "2025-07-01T15:00:00+00:00"
+    - ISO format without timezone: "2025-07-01T15:00:00"
+    - Date only: "2025-07-01"
+    - Various other datetime string formats
+    """
+    if date_value is None:
+        return None
+        
+    # If it's already a string
+    if isinstance(date_value, str):
+        # Quick check if it's already in YYYY-MM-DD format
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', date_value):
+            return date_value
+            
+        # Try to extract date part if it contains 'T' (ISO format)
+        if 'T' in date_value:
+            return date_value.split('T')[0]
+            
+        # Try to parse with dateutil for other formats
+        try:
+            parsed = parse(date_value)
+            return parsed.date().isoformat()
+        except:
+            # If all else fails, try regex to extract YYYY-MM-DD pattern
+            match = re.search(r'(\d{4})-(\d{2})-(\d{2})', date_value)
+            if match:
+                return match.group(0)
+            # Last resort - return as is and let Airtable handle it
+            logging.warning(f"Could not parse date from string: {date_value}")
+            return date_value
+            
+    # If it's a datetime object
+    elif hasattr(date_value, 'date'):
+        return date_value.date().isoformat()
+        
+    # If it's a date object
+    elif hasattr(date_value, 'isoformat'):
+        return date_value.isoformat()
+        
+    # Unknown type
+    else:
+        logging.warning(f"Unknown date type: {type(date_value)} - {date_value}")
+        return str(date_value)
+
+# ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------
 # Use Config class for environment variables and paths
@@ -103,7 +155,7 @@ environment_suffix = "_dev" if Config.environment == 'development' else "_prod"
 LOG_FILE = str(Config.get_logs_dir() / f"ics_sync{environment_suffix}.log")
 
 # Determine the correct field name based on environment
-sync_details_field = "Service Sync Details" if Config.environment == 'development' else "Sync Details"
+sync_details_field = "Service Sync Details"  # Use same field for both dev and prod
 
 # Fields to skip when cloning records (records Airtable won't let us write back)
 WRITE_BLACKLIST = {
@@ -116,7 +168,12 @@ WRITE_BLACKLIST = {
 HCP_FIELDS = [
     "Service Job ID", "Job Creation Time", "Sync Status",
     "Scheduled Service Time", "Sync Date and Time", sync_details_field,
-    "Job Status", "Custom Service Time", "Entry Source"
+    "Job Status", "Custom Service Time", "Entry Source",
+    "Service Appointment ID", "Assignee", "On My Way Time",
+    "Job Started Time", "Job Completed Time", "Next Entry Is Block",
+    "Owner Arriving", "Custom Service Line Instructions",
+    "Service Line Description", "HCP Service Line Description",
+    "Schedule Sync Details"
 ]
 
 # --- LOGGING -----------------------------------------------------------
@@ -743,8 +800,8 @@ def parse_ics(ics_text: str, feed_url: str):
             # 9) collect
             processed_events.append({
                 "uid": uid,
-                "dtstart": dtstart.isoformat(),
-                "dtend": dtend.isoformat(),
+                "dtstart": extract_date_only(dtstart),
+                "dtend": extract_date_only(dtend),
                 "ics_url": feed_url,
                 "summary_raw": summary,
                 "description_raw": description,
@@ -870,16 +927,29 @@ def calculate_flags(events, url_to_prop):
                 a["overlapping"] = True
                 b["overlapping"] = True
         
-        # Find same-day turnovers - ONLY for Reservation entries (no change needed here)
+        # Find same-day turnovers - ONLY for Reservation entries
+        # IMPORTANT: Only consider RESERVATIONS for same-day turnover, not blocks
+        # Per user feedback: "same day is ONLY for reservations not blocks and reservations"
         checkin_dates = {parse(res["dtstart"]).date() for res in reservation_events}
         
-        for res in reservation_events:
-            checkout_date = parse(res["dtend"]).date()
-            checkin_date = parse(res["dtstart"]).date()
+        # Process ALL events to ensure blocks are explicitly set to False
+        for event in property_events:
+            if event["entry_type"] != "Reservation":
+                # Blocks should NEVER have same-day turnover
+                event["same_day_turnover"] = False
+                continue
+                
+            # For reservations, check same-day turnover
+            checkout_date = parse(event["dtend"]).date()
+            checkin_date = parse(event["dtstart"]).date()
             
-            # If checkout date equals another reservation's check-in date (and not its own)
+            # If checkout date equals another RESERVATION's check-in date (and not its own)
             if checkout_date in checkin_dates and checkout_date != checkin_date:
-                res["same_day_turnover"] = True
+                event["same_day_turnover"] = True
+                logging.info(f"🔍 Same-day turnover detected for {event.get('uid', 'unknown')} - checkout {checkout_date} matches a reservation check-in")
+            else:
+                # Explicitly set to False when not same-day
+                event["same_day_turnover"] = False
     
     return events
 
@@ -980,10 +1050,11 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
         
     return False
 
-def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, update_batch):
+def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, update_batch, session_tracker=None):
     """
     Synchronize a single ICS event with Airtable.
     MODIFIED: Uses composite UID and checks for duplicates.
+    Now includes session_tracker to prevent race condition duplicates.
     """
     original_uid = event["uid"]
     feed_url = event["ics_url"]
@@ -1022,8 +1093,8 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                 if has_changes(event, latest_active):
                     # Create new fields to change
                     new_fields = {
-                        "Check-in Date": event["dtstart"],
-                        "Check-out Date": event["dtend"],
+                        "Check-in Date": extract_date_only(event["dtstart"]),
+                        "Check-out Date": extract_date_only(event["dtend"]),
                         "Entry Type": event["entry_type"],
                         "Service Type": event["service_type"],
                         "Entry Source": event["entry_source"],
@@ -1089,13 +1160,21 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             # No changes - don't update Airtable at all
             return "Unchanged"
     else:
+        # Check session tracker to prevent race condition duplicates
+        if session_tracker is not None and property_id:
+            tracker_key = (property_id, event["dtstart"], event["dtend"], event["entry_type"])
+            if tracker_key in session_tracker:
+                logging.info(f"Session tracker prevented duplicate: {original_uid} for property {property_id}")
+                return "Duplicate_Ignored"
+            # Add to session tracker to prevent other feeds from creating duplicates
+            session_tracker.add(tracker_key)
         
         # Create new record with composite UID
         new_fields = {
             "Reservation UID": composite_uid,  # Use composite UID
             "ICS URL": feed_url,
-            "Check-in Date": event["dtstart"],
-            "Check-out Date": event["dtend"],
+            "Check-in Date": extract_date_only(event["dtstart"]),
+            "Check-out Date": extract_date_only(event["dtend"]),
             "Status": "New",
             "Entry Type": event["entry_type"],
             "Service Type": event["service_type"],
@@ -1103,6 +1182,7 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             "Last Updated": now_iso,
             "Overlapping Dates": event["overlapping"],
             "Same-day Turnover": event["same_day_turnover"],
+            "Sync Status": "Not Created",  # Set default explicitly for API
         }
         
         # Add Block Type if it exists
@@ -1126,10 +1206,11 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
         
         return "New"
 
-def process_ics_feed(url, events, existing_records, url_to_prop, table, create_batch, update_batch):
+def process_ics_feed(url, events, existing_records, url_to_prop, table, create_batch, update_batch, session_tracker=None):
     """
     Process all events from a single ICS feed.
     MODIFIED: Tracks duplicate_ignored status and prevents false removals.
+    Now includes session_tracker to prevent race condition duplicates.
     """
     if not events:
         logging.info(f"Feed {url} has 0 events within the date filter range. Skipping.")
@@ -1161,7 +1242,8 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             url_to_prop, 
             table,
             create_batch, 
-            update_batch
+            update_batch,
+            session_tracker
         )
         
         # If this was a duplicate, track the property/date combination
@@ -1498,7 +1580,11 @@ async def main_async():
         except Exception as e:
             logging.warning(f"Could not load property names for reporting: {e}")
         
-        # 3. Fetch all feeds concurrently
+        # 3. Initialize session tracker to prevent race condition duplicates
+        session_tracker = set()  # Will track (property_id, checkin, checkout, entry_type) tuples
+        logging.info("Initialized session-wide duplicate tracker to prevent race conditions")
+        
+        # 4. Fetch all feeds concurrently
         urls_to_process = list(url_to_prop_map.keys())
         logging.info(f"Fetching {len(urls_to_process)} ICS feeds concurrently...")
         
@@ -1606,7 +1692,8 @@ async def main_async():
                     url_to_prop=url_to_prop_map,
                     table=reservations_table, 
                     create_batch=create_collector,
-                    update_batch=update_collector
+                    update_batch=update_collector,
+                    session_tracker=session_tracker
                 )
                 # Add property ID for reporting
                 stats["property_id"] = result["property_id"]
@@ -1632,15 +1719,33 @@ async def main_async():
         logging.info(f"ICS Sync complete * created {total_new} * modified {total_modified} * "
                     f"unchanged {total_unchanged} * removed {total_removed}")
         
+        # Print summary for automation capture
+        total_feeds = len(feed_results)
+        success_feeds = sum(1 for r in feed_results.values() if r["success"])
+        failed_feeds = total_feeds - success_feeds
+        
+        print(f"ICS_SUMMARY: Feeds={total_feeds}, Success={success_feeds}, "
+              f"Failed={failed_feeds}, New={total_new}, Modified={total_modified}, "
+              f"Removed={total_removed}, Errors={failed_feeds}")
+        
     except Exception as e:
         logging.critical(f"Unhandled exception: {e}", exc_info=True)
+        # Print error summary for automation capture
+        print(f"ICS_SUMMARY: Feeds=0, Success=0, Failed=1, New=0, Modified=0, Removed=0, Errors=1")
+        # Exit with error code
+        sys.exit(1)
 
 def main():
     # Run the async main
-    asyncio.run(main_async())
+    try:
+        asyncio.run(main_async())
+    except Exception as e:
+        logging.critical(f"Unhandled exception in asyncio.run: {e}", exc_info=True)
+        sys.exit(1)
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         logging.critical(f"Unhandled exception in main execution: {e}", exc_info=True)
+        sys.exit(1)

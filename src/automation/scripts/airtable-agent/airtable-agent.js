@@ -812,7 +812,7 @@ async function getFormattedRecords(tableName, options = {}) {
     const fieldOrder = [
       "Airtable Link", "UID", "Address", "Entry Type", "Service Type", 
       "Entry Source", "Check-in Date", "Check-out Date", "Same-day", "Time", 
-      "Service Job Link", "Sync Status", "Sync Details", "Job Status", 
+      "Service Job Link", "Sync Status", "Service Sync Details", "Job Status", 
       "OMW", "Started", "Completed", "Assignee", "Status"
     ];
     
