@@ -34,7 +34,7 @@ from src.automation.config_wrapper import Config
 # Use Config class for path resolution
 PROCESS_DIR = str(Config.get_csv_process_dir())
 DONE_DIR = str(Config.get_csv_done_dir())
-LOG_FILE = str(Config.get_logs_dir() / "csv_sync.log")
+LOG_FILE = str(Config.get_logs_dir() / f"csv_sync_{Config.environment_name}.log")
 
 # Date filter settings from environment
 MONTHS_LOOKBACK = Config.get_fetch_months_before()
@@ -310,6 +310,19 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
     # Apply the changes and status
     clone.update(Status=status, **field_to_change, **{"Last Updated": now_iso})
     
+    # CRITICAL FIX: Ensure boolean fields are never None in cloned records
+    # If Same-day Turnover is present in field_to_change, it will use that value
+    # Otherwise, if the clone has None for boolean fields, convert to False
+    boolean_fields = ["Same-day Turnover", "Overlapping Dates"]
+    for field in boolean_fields:
+        if field not in field_to_change and field in clone and clone[field] is None:
+            clone[field] = False
+            logging.info(f"🔧 FIX: Converted {field} from None to False in cloned record")
+    
+    # DEBUG: Log exactly what we're creating
+    if "Same-day Turnover" in clone:
+        logging.info(f"🔍 DEBUG: Creating clone with Same-day Turnover = {clone['Same-day Turnover']} (type: {type(clone['Same-day Turnover'])})")
+    
     # Write new row
     return table.create(clone)
 
@@ -578,7 +591,7 @@ def process_csv_files(property_lookup, guest_overrides=None):
 # ---------------------------------------------------------------------------
 # Calculate Flags Locally
 # ---------------------------------------------------------------------------
-def calculate_flags(reservations):
+def calculate_flags(reservations, property_id_to_name=None):
     """Calculate overlapping dates and same-day turnover flags locally"""
     # Group by property_id
     by_property = defaultdict(list)
@@ -609,11 +622,20 @@ def calculate_flags(reservations):
             if res.get("entry_type") == "Reservation"
         }
         
-        logging.info(f"🔍 Property {property_id} has {len(property_reservations)} entries, {len(reservation_checkin_dates)} reservation check-in dates: {sorted(reservation_checkin_dates)}")
+        # Get property name for better logging
+        if property_id_to_name:
+            prop_name = property_id_to_name.get(property_id, property_id)
+            logging.info(f"🔍 Property \"{prop_name}\" ({property_id}) has {len(property_reservations)} entries, {len(reservation_checkin_dates)} reservation check-in dates: {sorted(reservation_checkin_dates)}")
+        else:
+            logging.info(f"🔍 Property {property_id} has {len(property_reservations)} entries, {len(reservation_checkin_dates)} reservation check-in dates: {sorted(reservation_checkin_dates)}")
         
         # DEBUG: Log all entries for problematic property
         if property_id == "recdzm6UM2MQIm5F4":
-            logging.info(f"🔍 DEBUG: All entries for property {property_id}:")
+            if property_id_to_name:
+                prop_name = property_id_to_name.get(property_id, property_id)
+                logging.info(f"🔍 DEBUG: All entries for property \"{prop_name}\" ({property_id}):")
+            else:
+                logging.info(f"🔍 DEBUG: All entries for property {property_id}:")
             for res in property_reservations:
                 logging.info(f"    - UID: {res.get('uid')}, Type: {res.get('entry_type')}, Check-in: {res.get('dtstart_iso')}, Check-out: {res.get('dtend_iso')}")
         
@@ -816,7 +838,7 @@ def has_changes(csv_record, airtable_record):
     # No important changes detected
     return False
 
-def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_type, session_tracker=None):
+def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_type, session_tracker=None, property_id_to_name=None):
     """Check if a record with the same property, dates, and type already exists.
     
     Args:
@@ -826,6 +848,7 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
         checkout_date: Check-out date string  
         entry_type: 'Reservation' or 'Block'
         session_tracker: Dict tracking records created in current session
+        property_id_to_name: Dict mapping property IDs to names for logging
     
     Returns:
         bool: True if duplicate exists (in session or Airtable), False otherwise
@@ -834,34 +857,48 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
     if session_tracker is not None:
         key = (property_id, checkin_date, checkout_date, entry_type)
         if key in session_tracker:
-            logging.info(f"Found duplicate in session: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
+            prop_name = property_id_to_name.get(property_id, property_id) if property_id_to_name else property_id
+            logging.info(f"Found duplicate in session: Property \"{prop_name}\" ({property_id}), {checkin_date} to {checkout_date}, Type: {entry_type}")
             return True
     
     # Then check Airtable for existing records
     try:
         # Build formula to find exact matches
-        formula = (
-            f"AND("
-            f"{{Property ID}} = '{property_id}', "
-            f"{{Check-in Date}} = '{checkin_date}', "
-            f"{{Check-out Date}} = '{checkout_date}', "
-            f"{{Entry Type}} = '{entry_type}', "
-            f"OR({{Status}} = 'New', {{Status}} = 'Modified')"
-            f")"
-        )
+        # For Blocks, check for ANY existing record to prevent duplicates
+        # For Reservations, only check New/Modified to allow reactivation
+        if entry_type == "Block":
+            formula = (
+                f"AND("
+                f"{{Property ID}} = '{property_id}', "
+                f"{{Check-in Date}} = '{checkin_date}', "
+                f"{{Check-out Date}} = '{checkout_date}', "
+                f"{{Entry Type}} = '{entry_type}'"
+                f")"
+            )
+        else:
+            formula = (
+                f"AND("
+                f"{{Property ID}} = '{property_id}', "
+                f"{{Check-in Date}} = '{checkin_date}', "
+                f"{{Check-out Date}} = '{checkout_date}', "
+                f"{{Entry Type}} = '{entry_type}', "
+                f"OR({{Status}} = 'New', {{Status}} = 'Modified')"
+                f")"
+            )
         
         # Check if any matching records exist
         records = table.all(formula=formula, max_records=1)
         
         if records:
-            logging.info(f"Found duplicate in Airtable: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
+            prop_name = property_id_to_name.get(property_id, property_id) if property_id_to_name else property_id
+            logging.info(f"Found duplicate in Airtable: Property \"{prop_name}\" ({property_id}), {checkin_date} to {checkout_date}, Type: {entry_type}")
             return True
         return False
     except Exception as e:
         logging.warning(f"Error checking for duplicate: {e}")
         return False
 
-def sync_reservations(csv_reservations, all_reservation_records, table, session_tracker=None, evolve_csv_failed=False):
+def sync_reservations(csv_reservations, all_reservation_records, table, session_tracker=None, evolve_csv_failed=False, property_id_to_name=None):
     """Synchronize CSV data with Airtable following a simple logical approach:
     1. Pull all active records from iTrip/Evolve with checkin >= today
     2. Process CSV files to identify new/modified/removed reservations
@@ -962,12 +999,22 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 res["same_day_turnover"] = False
                 continue
                 
-            checkout_date = parse(res["dtend_iso"]).date()
-            checkin_date = parse(res["dtstart_iso"]).date()
-            
-            # If checkout date equals another RESERVATION's check-in date (and not its own)
-            if checkout_date in reservation_checkin_dates and checkout_date != checkin_date:
-                res["same_day_turnover"] = True
+            # Check if iTrip has already flagged this as same-day turnover
+            if res.get("itrip_same_day") is not None:
+                # Use iTrip's determination - it takes precedence
+                res["same_day_turnover"] = res["itrip_same_day"]
+                logging.info(f"🔍 Using iTrip same-day flag for {res.get('uid', 'unknown')}: {res['itrip_same_day']}")
+            else:
+                # Calculate same-day turnover locally for non-iTrip or when not specified
+                checkout_date = parse(res["dtend_iso"]).date()
+                checkin_date = parse(res["dtstart_iso"]).date()
+                
+                # If checkout date equals another RESERVATION's check-in date (and not its own)
+                if checkout_date in reservation_checkin_dates and checkout_date != checkin_date:
+                    res["same_day_turnover"] = True
+                else:
+                    # Explicitly set to False when not same-day
+                    res["same_day_turnover"] = False
     
     # STEP 5: Process each reservation
     create_batch = BatchCollector(table, op="create")
@@ -1104,9 +1151,11 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 res["dtstart"], 
                 res["dtend"], 
                 res["entry_type"],
-                session_tracker
+                session_tracker,
+                property_id_to_name
             ):
-                logging.info(f"Ignoring duplicate: UID {uid} would create duplicate for property {res['property_id']}")
+                prop_name = property_id_to_name.get(res['property_id'], res['property_id'])
+                logging.info(f"Ignoring duplicate: UID {uid} would create duplicate for property \"{prop_name}\" ({res['property_id']})")
                 unchanged_count += 1
                 
                 # Track this duplicate detection
@@ -1145,6 +1194,22 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
             property_changed = (at_property_id != res["property_id"])
             flags_changed = (at_overlap != res["overlapping"] or at_sameday != res["same_day_turnover"])
             entry_type_changed = (at_entry_type != res["entry_type"])
+            
+            # Service Type preservation logic
+            # If the existing Service Type is not a default value (Turnover, Needs Review, Owner Arrival)
+            # and the CSV wants to set it to a default value, preserve the existing one
+            default_service_types = ["Turnover", "Needs Review", "Owner Arrival"]
+            preserve_service_type = (
+                at_service_type not in default_service_types and 
+                res["service_type"] in default_service_types and
+                at_service_type != ""
+            )
+            
+            if preserve_service_type:
+                # Keep the existing Service Type instead of the CSV default
+                res["service_type"] = at_service_type
+                logging.info(f"🛡️ Preserving existing Service Type '{at_service_type}' for {uid} (not overwriting with '{res['service_type']}')")
+            
             service_type_changed = (at_service_type != res["service_type"])
             # REMOVED: itrip_info_changed - don't track contractor info changes
             
@@ -1154,7 +1219,8 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 logging.info(f"    CSV same_day_turnover: {res['same_day_turnover']}")
                 logging.info(f"    Airtable Same-day Turnover: {at_sameday}")
                 logging.info(f"    Raw Airtable value: {at_fields.get('Same-day Turnover')}")
-                logging.info(f"    Property ID: {res['property_id']}")
+                prop_name = property_id_to_name.get(res['property_id'], res['property_id'])
+                logging.info(f"    Property: \"{prop_name}\" ({res['property_id']})")
             
             if dates_changed or property_changed or flags_changed or entry_type_changed or service_type_changed:
                 # Something changed - create modified record
@@ -1179,8 +1245,10 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                                 f"Check-in: '{at_checkin}' vs '{res['dtstart']}', "
                                 f"Check-out: '{at_checkout}' vs '{res['dtend']}'")
                 if property_changed:
+                    at_prop_name = property_id_to_name.get(at_property_id, at_property_id)
+                    new_prop_name = property_id_to_name.get(res['property_id'], res['property_id'])
                     logging.info(f"🔍 PROPERTY CHANGED for {uid}: "
-                                f"'{at_property_id}' vs '{res['property_id']}'")
+                                f'"{at_prop_name}" ({at_property_id}) vs "{new_prop_name}" ({res["property_id"]})')
                 if flags_changed:
                     logging.info(f"🔍 FLAGS CHANGED for {uid}: "
                                 f"Overlap: {at_overlap} ({type(at_overlap)}) vs {res['overlapping']} ({type(res['overlapping'])}), "
@@ -1192,6 +1260,10 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                     logging.info(f"🔍 SERVICE TYPE CHANGED for {uid}: "
                                 f"'{at_service_type}' vs '{res['service_type']}'")
                 # REMOVED: itrip_info_changed logging since we no longer track it
+                
+                # DEBUG: Log what we're sending for same-day reservations
+                if new_fields.get("Same-day Turnover") == True:
+                    logging.info(f"🔍 DEBUG: Sending new_fields for {uid} with Same-day = {new_fields.get('Same-day Turnover')}")
                 
                 # Mark as old and create new record
                 mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
@@ -1233,7 +1305,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
         else:
             # NEW reservation - but first check if it's a duplicate with different UID
             # This prevents creating duplicates when CSV contains same reservation with different UIDs
-            logging.info(f"🔍 Processing NEW reservation {uid} for property {res.get('property_id', 'None')}")
+            prop_id = res.get('property_id', 'None')
+            prop_name = property_id_to_name.get(prop_id, prop_id) if prop_id != 'None' else 'None'
+            logging.info(f"🔍 Processing NEW reservation {uid} for property \"{prop_name}\" ({prop_id})")
             
             if res["property_id"] and check_for_duplicate(
                 table, 
@@ -1241,9 +1315,11 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 res["dtstart"], 
                 res["dtend"], 
                 res["entry_type"],
-                session_tracker
+                session_tracker,
+                property_id_to_name
             ):
-                logging.info(f"Ignoring duplicate event: {uid} for property {res['property_id']}")
+                prop_name = property_id_to_name.get(res['property_id'], res['property_id'])
+                logging.info(f"Ignoring duplicate event: {uid} for property \"{prop_name}\" ({res['property_id']})")
                 # Track as unchanged since we're not creating it
                 unchanged_count += 1
                 
@@ -1284,8 +1360,8 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 "Service Type": res["service_type"],
                 "Entry Source": res["entry_source"],
                 "Last Updated": now_iso,
-                "Overlapping Dates": res["overlapping"],
-                "Same-day Turnover": res["same_day_turnover"],
+                "Overlapping Dates": bool(res["overlapping"]),  # Ensure boolean, not None
+                "Same-day Turnover": bool(res["same_day_turnover"]),  # Ensure boolean, not None
                 "Sync Status": "Not Created",  # Set default explicitly for API
             }
             # Add iTrip Report Info if from iTrip and has contractor info
@@ -1354,15 +1430,15 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 latest = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
                 fields = latest["fields"]
                 
-                # Get check-in date
-                checkin = fields.get("Check-in Date", "")
-                checkin_iso = normalize_date_for_comparison(checkin)
+                # Get check-out date (match ICS processor logic)
+                checkout = fields.get("Check-out Date", "")
+                checkout_iso = normalize_date_for_comparison(checkout)
                 
                 try:
-                    checkin_date = parse(checkin_iso).date().isoformat()
+                    checkout_date = parse(checkout_iso).date().isoformat()
                     
-                    # Only remove future reservations (checkin >= today)
-                    if checkin_date >= today:
+                    # Only remove reservations where checkout >= today (stay not fully completed)
+                    if checkout_date >= today:
                         # NEW: Check if this record matches a duplicate that was detected
                         # If so, don't mark it as removed - it's the same reservation with a different UID
                         property_links = fields.get("Property ID", [])
@@ -1376,6 +1452,28 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                             if duplicate_key in duplicate_detected_dates:
                                 logging.info(f"Skipping removal of {uid} - same reservation detected with different UID")
                                 continue
+                            
+                            # ENHANCED: Even if not detected in this run, check if another active record exists
+                            # with the same property/dates/type (handles UID changes between runs)
+                            try:
+                                duplicate_formula = (
+                                    f"AND("
+                                    f"{{Property ID}} = '{record_property_id}', "
+                                    f"{{Check-in Date}} = '{record_checkin}', "
+                                    f"{{Check-out Date}} = '{record_checkout}', "
+                                    f"{{Entry Type}} = '{record_entry_type}', "
+                                    f"OR({{Status}} = 'New', {{Status}} = 'Modified'), "
+                                    f"{{Reservation UID}} != '{uid}'"  # Different UID
+                                    f")"
+                                )
+                                
+                                other_active_records = table.all(formula=duplicate_formula, max_records=1)
+                                if other_active_records:
+                                    prop_name = property_id_to_name.get(record_property_id, record_property_id) if property_id_to_name else record_property_id
+                                    logging.info(f"Skipping removal of {uid} for Property \"{prop_name}\" ({record_property_id}) - found active record with same property/dates but different UID: {other_active_records[0]['fields'].get('Reservation UID')}")
+                                    continue
+                            except Exception as e:
+                                logging.error(f"Error checking for duplicate records: {e}")
                         
                         # Skip removal for Evolve reservations if CSV download failed
                         entry_source = fields.get("Entry Source", "Unknown")
@@ -1405,7 +1503,7 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                                 "modified": True
                             })
                 except Exception:
-                    logging.warning(f"Couldn't parse dates for removal check on record {uid}")
+                    logging.warning(f"Couldn't parse checkout date for removal check on record {uid}")
     
     # Finalize batch operations
     update_batch.flush()
@@ -1627,7 +1725,7 @@ def build_guest_to_property_map(properties_table):
     logging.info(f"Created {len(guest_to_prop)} guest → property mappings")
     return guest_to_prop
 
-def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_records, session_tracker=None):
+def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_records, session_tracker=None, property_id_to_name=None):
     """
     Parse one "Tab 2" CSV.  
     • Only processes rows where guest names match entries in the Properties table
@@ -1646,6 +1744,14 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
     """
     feed_url = "csv_evolve_blocks"
     now_iso_str = datetime.now(arizona_tz).isoformat(sep=" ", timespec="seconds")
+    
+    # Build property ID to name mapping for better logging if not provided
+    if property_id_to_name is None:
+        property_id_to_name = {}
+        for guest_name, prop_info in guest_to_prop.items():
+            prop_id = prop_info['id']
+            prop_name = prop_info['name']
+            property_id_to_name[prop_id] = prop_name
 
     create_batch = BatchCollector(reservations_table, op="create")
     update_batch = BatchCollector(reservations_table, op="update")
@@ -1768,9 +1874,11 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                             checkin_display,
                             checkout_display,
                             "Block",
-                            session_tracker
+                            session_tracker,
+                            property_id_to_name
                         ):
-                            logging.info(f"Ignoring duplicate block: {composite_uid} for property {prop_id}")
+                            prop_name = property_id_to_name.get(prop_id, prop_id)
+                            logging.info(f"Ignoring duplicate block: {composite_uid} for property \"{prop_name}\" ({prop_id})")
                             stats["skipped_duplicates"] = stats.get("skipped_duplicates", 0) + 1
                             continue
                         
@@ -1788,6 +1896,8 @@ def process_tab2_csv(file_path, reservations_table, guest_to_prop, existing_reco
                                 "Property ID": [prop_id],
                                 "Last Updated": now_iso_str,
                                 "Sync Status": "Not Created",  # Set default explicitly for API
+                                "Same-day Turnover": False,  # Blocks never have same-day turnover
+                                "Overlapping Dates": False,  # Default to False for new blocks
                             }
                         })
                         stats["new_blocks"] += 1
@@ -1889,6 +1999,22 @@ def main():
         session_tracker = set()
         logging.info("Initialized session-wide duplicate tracker")
         
+        # Build comprehensive property ID to name mapping for better logging
+        property_id_to_name = {}
+        try:
+            # Try to get both fields if they exist
+            all_properties = properties_table.all(fields=["Property Name"])
+            for prop in all_properties:
+                prop_id = prop["id"]
+                prop_name = prop["fields"].get("Property Name", "")
+                # Use property name if available
+                display_name = prop_name if prop_name else f"Property {prop_id}"
+                property_id_to_name[prop_id] = display_name
+            logging.info(f"Loaded {len(property_id_to_name)} property mappings")
+        except Exception as e:
+            logging.warning(f"Could not load property mappings: {e}")
+            property_id_to_name = {}
+        
         # Try to load guest overrides table (may not exist in all environments)
         guest_overrides = {}
         try:
@@ -1911,7 +2037,7 @@ def main():
             logging.info(f"Processing Evolve Tab2 CSV: {fname}")
 
             ok, tab2_stats = process_tab2_csv(
-                csv_file, reservations_table, guest_to_prop, existing_records, session_tracker
+                csv_file, reservations_table, guest_to_prop, existing_records, session_tracker, property_id_to_name
             )
 
             if ok:
@@ -1953,7 +2079,7 @@ def main():
                             record_id = evolve_records[0]['id']
                             arizona_tz = pytz.timezone('America/Phoenix')
                             update_data = {
-                                'Service Sync Details': f"❌ CSV download failed: {evolve_status.get('message', 'Unknown error')}",
+                                'Sync Details': f"❌ CSV download failed: {evolve_status.get('message', 'Unknown error')}",
                                 'Last Ran Time': datetime.now(arizona_tz).isoformat()
                             }
                             automation_control_table.update(record_id, update_data)
@@ -1985,14 +2111,14 @@ def main():
             return
         
         # 4. Calculate overlap and same-day turnovers locally
-        calculate_flags(filtered_reservations)
+        calculate_flags(filtered_reservations, property_id_to_name)
         
         # 5. Fetch ALL existing Airtable records (including Old)
         feed_urls = {res["feed_url"] for res in filtered_reservations}
         all_records = fetch_all_reservations(reservations_table, feed_urls)
         
         # 6. Sync reservations - properly marking ALL records as Old when creating Modified/Removed
-        results = sync_reservations(filtered_reservations, all_records, reservations_table, session_tracker, evolve_csv_failed)
+        results = sync_reservations(filtered_reservations, all_records, reservations_table, session_tracker, evolve_csv_failed, property_id_to_name)
         
         # 7. Generate report
         generate_report(results, id_to_name)
