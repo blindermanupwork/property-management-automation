@@ -37,7 +37,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def find_property_date_duplicates(table, status_filter=None):
+def find_property_date_duplicates(table, status_filter=None, check_specific_event=None):
     """Find all duplicate reservations based on property and dates only (ignoring UID)."""
     logger.info("Fetching all reservations from Airtable...")
     
@@ -45,6 +45,9 @@ def find_property_date_duplicates(table, status_filter=None):
     formula_parts = ["NOT({Status} = 'Old')"]
     if status_filter:
         formula_parts.append(f"{{Status}} = '{status_filter}'")
+    if check_specific_event:
+        # Check for the specific problematic event ID
+        formula_parts.append(f"SEARCH('{check_specific_event}', {{Reservation UID}})")
     
     formula = f"AND({', '.join(formula_parts)})"
     
@@ -153,6 +156,7 @@ def main():
                         help='Show what would be updated without making changes (default: True)')
     parser.add_argument('--execute', action='store_true',
                         help='Actually perform the updates (overrides --dry-run)')
+    parser.add_argument('--check-event', help='Check for specific Airbnb event ID')
     
     args = parser.parse_args()
     
@@ -173,13 +177,15 @@ def main():
     logger.info(f"Mode: {'DRY RUN' if dry_run else 'EXECUTE'}")
     if args.status:
         logger.info(f"Status filter: {args.status}")
+    if args.check_event:
+        logger.info(f"Checking for specific event: {args.check_event}")
     
     # Connect to Airtable
     api = Api(api_key)
     table = api.table(base_id, table_name)
     
     # Find duplicates
-    duplicates = find_property_date_duplicates(table, args.status)
+    duplicates = find_property_date_duplicates(table, args.status, args.check_event)
     
     if not duplicates:
         logger.info("No property/date duplicates with different UIDs found!")

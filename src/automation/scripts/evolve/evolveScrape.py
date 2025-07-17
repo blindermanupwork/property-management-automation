@@ -153,10 +153,25 @@ def make_driver(headless: bool) -> webdriver.Chrome:
     Initialize and return a Chrome WebDriver with desired options,
     including setting the download directory and headless mode.
     """
+    import uuid
+    import os
     opts = Options()
     
-    # Remove user data directory to avoid conflicts
-    # opts.add_argument(f"--user-data-dir={user_data_dir}")
+    # Use unique user data directory to avoid conflicts
+    unique_dir = f"/tmp/chrome-profile-{uuid.uuid4().hex[:8]}"
+    
+    # Ensure we can create the directory
+    try:
+        os.makedirs(unique_dir, exist_ok=True)
+        os.chmod(unique_dir, 0o755)
+    except Exception as e:
+        logger.error(f"Failed to create Chrome profile directory: {e}")
+        # Try alternative location
+        unique_dir = f"/home/opc/tmp/chrome-profile-{uuid.uuid4().hex[:8]}"
+        os.makedirs(unique_dir, exist_ok=True)
+        os.chmod(unique_dir, 0o755)
+    
+    opts.add_argument(f"--user-data-dir={unique_dir}")
     
     # If --headless flag passed, run without GUI
     if headless:

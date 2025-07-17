@@ -306,14 +306,110 @@ def run_ics_automation(config):
     except Exception as e:
         return {"success": False, "message": f"❌ ICS sync error: {str(e)}"}
     
-def run_hcp_automation(config):
-    """Run HCP service job creation/sync
+def run_add_jobs_automation(config):
+    """Run HCP service job creation only
     
     Args:
         config: DevConfig or ProdConfig instance
     """
     try:
-        print("🔧 Running HCP service job sync...")
+        print("🔧 Running HCP service job creation...")
+        
+        # Run the environment-specific HCP sync script in add-only mode
+        script_name = "dev-hcp-sync.cjs" if not config.is_production else "prod-hcp-sync.cjs"
+        hcp_script = config.get_script_path("hcp", script_name)
+        if not hcp_script.exists():
+            return {"success": False, "message": f"HCP sync script not found: {script_name}"}
+        
+        # Set environment variables for the script
+        env = os.environ.copy()
+        env['ENVIRONMENT'] = 'development' if not config.is_production else 'production'
+        
+        # Pass Airtable credentials
+        if config.is_production:
+            env['PROD_AIRTABLE_API_KEY'] = config.get_airtable_api_key()
+            env['PROD_AIRTABLE_BASE_ID'] = config.get_airtable_base_id()
+        else:
+            env['DEV_AIRTABLE_API_KEY'] = config.get_airtable_api_key()
+            env['DEV_AIRTABLE_BASE_ID'] = config.get_airtable_base_id()
+        
+        # Pass HCP token - use environment-specific token
+        if config.is_production:
+            hcp_token = config.get('PROD_HCP_TOKEN')
+        else:
+            hcp_token = config.get('DEV_HCP_TOKEN')
+        
+        if hcp_token:
+            env['HCP_TOKEN'] = hcp_token
+        
+        result = subprocess.run([
+            "node", str(hcp_script.absolute()), "--add-only"
+        ], cwd=str(hcp_script.parent.absolute()), env=env)
+        
+        if result.returncode == 0:
+            return {"success": True, "message": "HCP service job creation completed successfully"}
+        else:
+            return {"success": False, "message": "HCP service job creation failed"}
+        
+    except Exception as e:
+        return {"success": False, "message": f"HCP service job creation error: {str(e)}"}
+
+def run_sync_jobs_automation(config):
+    """Run HCP service job sync verification only
+    
+    Args:
+        config: DevConfig or ProdConfig instance
+    """
+    try:
+        print("🔍 Running HCP service job sync verification...")
+        
+        # Run the environment-specific HCP sync script in sync-only mode
+        script_name = "dev-hcp-sync.cjs" if not config.is_production else "prod-hcp-sync.cjs"
+        hcp_script = config.get_script_path("hcp", script_name)
+        if not hcp_script.exists():
+            return {"success": False, "message": f"HCP sync script not found: {script_name}"}
+        
+        # Set environment variables for the script
+        env = os.environ.copy()
+        env['ENVIRONMENT'] = 'development' if not config.is_production else 'production'
+        
+        # Pass Airtable credentials
+        if config.is_production:
+            env['PROD_AIRTABLE_API_KEY'] = config.get_airtable_api_key()
+            env['PROD_AIRTABLE_BASE_ID'] = config.get_airtable_base_id()
+        else:
+            env['DEV_AIRTABLE_API_KEY'] = config.get_airtable_api_key()
+            env['DEV_AIRTABLE_BASE_ID'] = config.get_airtable_base_id()
+        
+        # Pass HCP token - use environment-specific token
+        if config.is_production:
+            hcp_token = config.get('PROD_HCP_TOKEN')
+        else:
+            hcp_token = config.get('DEV_HCP_TOKEN')
+        
+        if hcp_token:
+            env['HCP_TOKEN'] = hcp_token
+        
+        result = subprocess.run([
+            "node", str(hcp_script.absolute()), "--sync-only"
+        ], cwd=str(hcp_script.parent.absolute()), env=env)
+        
+        if result.returncode == 0:
+            return {"success": True, "message": "HCP service job sync verification completed successfully"}
+        else:
+            return {"success": False, "message": "HCP service job sync verification failed"}
+        
+    except Exception as e:
+        return {"success": False, "message": f"HCP service job sync verification error: {str(e)}"}
+
+def run_hcp_automation(config):
+    """Legacy function - Run HCP service job creation/sync (deprecated, use separated functions)
+    
+    Args:
+        config: DevConfig or ProdConfig instance
+    """
+    try:
+        print("🔧 Running HCP service job sync (legacy mode)...")
         
         # Run the environment-specific HCP sync script
         script_name = "dev-hcp-sync.cjs" if not config.is_production else "prod-hcp-sync.cjs"

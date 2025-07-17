@@ -83,14 +83,16 @@ async function createJob(req, res) {
     // Determine environment from request
     const environment = req.forceEnvironment || (req.path.includes('/dev/') ? 'development' : 'production');
     
-    // Load sync message builder for dev environment
-    if (environment === 'development' && !buildSyncMessage) {
+    // Load sync message builder and timestamp function
+    let getArizonaTimestamp = null;
+    if (!buildSyncMessage) {
       try {
         const syncMessageBuilder = require('../../shared/syncMessageBuilder');
         buildSyncMessage = syncMessageBuilder.buildSyncMessage;
-        console.log('✅ Loaded sync message builder for dev environment');
+        getArizonaTimestamp = syncMessageBuilder.getArizonaTimestamp;
+        console.log('✅ Loaded sync message builder');
       } catch (e) {
-        console.error('❌ Could not load sync message builder for dev environment:', e.message);
+        console.error('❌ Could not load sync message builder:', e.message);
         console.error('Full error:', e);
       }
     }
@@ -150,26 +152,31 @@ async function createJob(req, res) {
       throw new Error('Property missing HCP Address ID');
     }
 
-    // Get service type and normalize it
+    // Get service type - preserve whatever is set in Airtable
     const serviceTypeObj = reservation.get('Service Type');
-    const rawServiceType = serviceTypeObj ? serviceTypeObj.name : '';
+    const serviceType = (serviceTypeObj && serviceTypeObj.name) ? serviceTypeObj.name : 'Turnover';
     
-    let serviceType;
-    if (rawServiceType === 'Return Laundry') {
-      serviceType = 'Return Laundry';
-    } else if (rawServiceType === 'Inspection') {
-      serviceType = 'Inspection';
+    console.log(`Service Type from Airtable: "${serviceType}"`);
+    
+    // Determine which template/job type to use based on service type
+    // We normalize for template selection but preserve the actual service type for display
+    let templateServiceType;
+    if (serviceType === 'Return Laundry') {
+      templateServiceType = 'Return Laundry';
+    } else if (serviceType === 'Inspection') {
+      templateServiceType = 'Inspection';
     } else {
-      serviceType = 'Turnover';
+      // Everything else uses Turnover template (including Initial Service, Deep Clean, etc.)
+      templateServiceType = 'Turnover';
     }
 
-    // Get template ID and job type ID based on service type
+    // Get template ID and job type ID based on template service type
     let templateId, jobTypeId;
     
-    if (serviceType === 'Return Laundry') {
+    if (templateServiceType === 'Return Laundry') {
       templateId = property.get('Return Laundry Job Template ID');
       jobTypeId = hcpConfig.jobTypes.returnLaundry;
-    } else if (serviceType === 'Inspection') {
+    } else if (templateServiceType === 'Inspection') {
       templateId = property.get('Inspection Job Template ID');  
       jobTypeId = hcpConfig.jobTypes.inspection;
     } else {
@@ -187,7 +194,7 @@ async function createJob(req, res) {
     let serviceName;
     
     if (sameDay) {
-      serviceName = `${serviceType} STR SAME DAY`;
+      serviceName = `SAME DAY ${serviceType} STR`;
     } else {
       const checkOutDate = reservation.get('Check-out Date');
       if (serviceType === 'Turnover' && checkOutDate) {
@@ -196,22 +203,26 @@ async function createJob(req, res) {
         
         if (nextGuestDate) {
           // Use the pre-populated Next Guest Date from Airtable
-          const nextCheckIn = new Date(nextGuestDate);
-          const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
-          const day = nextCheckIn.getDate();
-          serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
-          console.log(`Using Next Guest Date from Airtable: ${nextGuestDate}`);
+          const nextCheckIn = new Date(nextGuestDate + 'T12:00:00-07:00'); // Force Arizona time at noon
+          const month = nextCheckIn.toLocaleString('en-US', { month: 'long', timeZone: 'America/Phoenix' });
+          const day = parseInt(nextCheckIn.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/Phoenix' }));
+          
           if (isNextEntryBlock) {
+            serviceName = `OWNER ARRIVING ${serviceType} STR ${month} ${day}`;
             console.log(`Next entry is a BLOCK (owner arriving)`);
+          } else {
+            serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
           }
+          console.log(`Using Next Guest Date from Airtable: ${nextGuestDate}`);
         } else {
           // Fall back to searching for next reservation
           const nextReservation = await findNextReservation(base, propertyLinks[0], checkOutDate);
           
           if (nextReservation) {
-            const nextCheckIn = new Date(nextReservation.get('Check-in Date'));
-            const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
-            const day = nextCheckIn.getDate();
+            const nextCheckInDate = nextReservation.get('Check-in Date');
+            const nextCheckIn = new Date(nextCheckInDate + 'T12:00:00-07:00'); // Force Arizona time at noon
+            const month = nextCheckIn.toLocaleString('en-US', { month: 'long', timeZone: 'America/Phoenix' });
+            const day = parseInt(nextCheckIn.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/Phoenix' }));
             serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
           } else {
             serviceName = `${serviceType} STR Next Guest Unknown`;
@@ -269,14 +280,9 @@ async function createJob(req, res) {
       console.log(`Added custom instructions: "${customInstructions}"`);
     }
     
-    // Add OWNER ARRIVING if next entry is a block
-    if (isNextEntryBlock) {
-      parts.push("OWNER ARRIVING");
-      console.log(`Added OWNER ARRIVING flag`);
-    }
-    
-    // Add LONG TERM GUEST DEPARTING if applicable
-    if (isLongTermGuest) {
+    // Add LONG TERM GUEST DEPARTING if applicable (but not if owner is already in base name)
+    // Note: OWNER ARRIVING is now part of the base service name when next entry is a block
+    if (isLongTermGuest && !isNextEntryBlock) {
       parts.push("LONG TERM GUEST DEPARTING");
       console.log(`Added long-term guest flag`);
     }
@@ -535,16 +541,17 @@ async function createJob(req, res) {
         });
       }
     } else {
-      // Original messaging for prod environment
+      // Fallback messaging with timestamps
+      const timestamp = getArizonaTimestamp ? ` - ${getArizonaTimestamp()}` : '';
       if (!dateMatch) {
         syncStatus = 'Wrong Date';
-        syncDetails = `Final Service Time is **${azDate(schedStart)}** but service is **${azDate(schedLive)}**.`;
+        syncDetails = `Airtable shows ${azDate(schedStart)} at ${azTime(schedStart)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)}${timestamp}`;
       } else if (!timeMatch) {
         syncStatus = 'Wrong Time';
-        syncDetails = `Final Service Time is **${azTime(schedStart)}** but service is **${azTime(schedLive)}**.`;
+        syncDetails = `Airtable shows ${azTime(schedStart)} but HCP shows ${azTime(schedLive)}${timestamp}`;
       } else {
         syncStatus = 'Synced';
-        syncDetails = `Service matches **${azDate(schedLive)} at ${azTime(schedLive)}**.`;
+        syncDetails = `Schedules in sync: ${azDate(schedLive)} at ${azTime(schedLive)}${timestamp}`;
       }
     }
 
@@ -560,13 +567,11 @@ async function createJob(req, res) {
     }
 
     // Final update to Airtable with complete sync info
-    // Use environment-specific field names
-    const syncDetailsField = 'Service Sync Details'; // Same field name for both dev and prod
-    
+    // Use Schedule Sync Details for schedule synchronization messages
     const updateFields = {
       'Scheduled Service Time': schedLive.toISOString(),
       'Sync Status': syncStatus,
-      [syncDetailsField]: syncDetails,
+      'Schedule Sync Details': syncDetails,
       'Sync Date and Time': getArizonaTime()
     };
 
@@ -645,11 +650,9 @@ async function cancelJob(req, res) {
       console.warn(`Job ${jobId} has no schedule - nothing to delete`);
       
       // Update Airtable to reflect that there was no schedule
-      // Use environment-specific field names
-      const syncDetailsField = 'Service Sync Details'; // Same field name for both dev and prod
-      
+      // Use Service Sync Details for service status messages
       const updateFields = {
-        [syncDetailsField]: `Job has no schedule to delete. Already unscheduled. ${getArizonaTime()}`,
+        'Service Sync Details': `Job has no schedule to delete. Already unscheduled. ${getArizonaTime()}`,
         'Sync Date and Time': getArizonaTime()
       };
       
@@ -678,11 +681,9 @@ async function cancelJob(req, res) {
     }
     
     // Update Airtable to reflect schedule deletion
-    // Use environment-specific field names
-    const syncDetailsField = environment === 'development' ? 'Service Sync Details' : 'Sync Details';
-    
+    // Use Service Sync Details for service status messages
     const updateFields = {
-      [syncDetailsField]: `Job schedule deleted from HCP on ${getArizonaTime()}`,
+      'Service Sync Details': `Job schedule deleted from HCP on ${getArizonaTime()}`,
       'Sync Date and Time': getArizonaTime(),
       'Scheduled Service Time': null,
       'Service Appointment ID': null

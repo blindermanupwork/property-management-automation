@@ -1,0 +1,72 @@
+Reservation,Property Address,Property Owner,Status,Check-In ,Check-Out,Guest Name
+14134510,7953 East Obispo Avenue,Mike Carey,Cancelled,2025-09-01,10-16-2025,Mike Carey
+14767819,6805 East 2nd Street Unit #2,Mark Ley,Booked,2025-09-01,01-15-2026,Mark Ley
+14686645,15036 S 45th Pl,Brandon Passe,Booked,2025-08-20,08-24-2025,Brandon Passe
+14734566,16013 South Desert Foothills Parkway Unit #2074,Cornelius Branch,Booked,2025-08-06,08-15-2025,Cornelius Branch
+14246770,7953 East Obispo Avenue,Mike Carey,Cancelled,2025-08-04,08-18-2025,Mike Carey
+14384034,7953 East Obispo Avenue,Mike Carey,Booked,2025-08-04,08-20-2025,Mike Carey
+14567208,2065 W 1st Pl,Kathy Nelson,Booked,2025-08-01,07-31-2026,Kathy Nelson
+14358629,7953 East Obispo Avenue,Mike Carey,Booked,2025-07-30,07-31-2025,Mike Carey
+14720266,2065 W 1st Pl,Kathy Nelson,Booked,2025-07-28,08-01-2025,Kathy Nelson
+14720262,2065 W 1st Pl,Kathy Nelson,Cancelled,2025-07-28,07-31-2025,Kathy Nelson
+14612250,2065 W 1st Pl,Kathy Nelson,Pre-Trip,2025-07-24,07-28-2025,Elijah A.
+14124351,1517 N Rosemont,Kotti Rocha,Pre-Trip,2025-07-24,07-28-2025,Kait K.
+14358622,7953 East Obispo Avenue,Mike Carey,Booked,2025-07-23,07-24-2025,Mike Carey
+14744491,3551 E Terrace Ave,Chad Jenkins,Pre-Trip,2025-07-21,08-31-2025,Sharee H.
+14839183,1517 N Rosemont,Kotti Rocha,Booked,2025-07-18,07-22-2025,Kotti Rocha
+14825992,3551 E Terrace Ave,Chad Jenkins,Pre-Trip,2025-07-18,07-20-2025,Jamie W.
+14594403,2065 W 1st Pl,Kathy Nelson,Pre-Trip,2025-07-18,07-21-2025,Yvette V.
+14074529,2065 W 1st Pl,Kathy Nelson,Cancelled,2025-07-17,07-22-2025,Renee H.
+14358616,7953 East Obispo Avenue,Mike Carey,Booked,2025-07-16,07-17-2025,Mike Carey
+14840966,2065 W 1st Pl,Kathy Nelson,Booked,2025-07-15,07-17-2025,Kathy Nelson
+14826554,15036 S 45th Pl,Brandon Passe,Pre-Trip,2025-07-13,07-26-2025,Sherly P.
+14685358,3551 E Terrace Ave,Chad Jenkins,Checkin,2025-07-10,07-13-2025,Jesus H.
+14722214,7953 East Obispo Avenue,Mike Carey,Checkin,2025-07-05,07-12-2025,Olivia G.
+14662930,3551 E Terrace Ave,Chad Jenkins,Cancelled,2025-07-03,07-17-2025,Zohar L.
+14764570,2065 W 1st Pl,Kathy Nelson,Checkout,2025-07-03,07-06-2025,Fabian V.
+14699627,2065 W 1st Pl,Kathy Nelson,Cancelled,2025-07-03,07-07-2025,Yesenia M.
+14819585,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-07-02,07-10-2025,Rhonda N.
+14798906,3551 E Terrace Ave,Chad Jenkins,Cancelled,2025-07-01,07-06-2025,Jennifer S.
+14784976,15036 S 45th Pl,Brandon Passe,Checkin,2025-06-28,07-12-2025,Bryan B.
+14699894,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-06-27,07-01-2025,David O.
+14733283,7953 East Obispo Avenue,Mike Carey,Checkout,2025-06-26,06-30-2025,Katrina B.
+14358607,7953 East Obispo Avenue,Mike Carey,Booked,2025-06-25,06-26-2025,Mike Carey
+14545399,2065 W 1st Pl,Kathy Nelson,Checkout,2025-06-24,06-30-2025,Kevin Q.
+14771190,15036 S 45th Pl,Brandon Passe,Checkout,2025-06-23,06-27-2025,Bryam V.
+14469189,3551 E Terrace Ave,Chad Jenkins,Cancelled,2025-06-23,06-28-2025,GenShyuan C.
+14173207,2065 W 1st Pl,Kathy Nelson,Checkout,2025-06-20,06-22-2025,Jill M.
+14618322,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-06-19,06-27-2025,Kristyn R.
+14516891,15036 S 45th Pl,Brandon Passe,Checkout,2025-06-19,06-23-2025,Julie C.
+14358602,7953 East Obispo Avenue,Mike Carey,Booked,2025-06-18,06-19-2025,Mike Carey
+14278210,15036 S 45th Pl,Brandon Passe,Cancelled,2025-06-16,06-20-2025,Barry G.
+14130668,2065 W 1st Pl,Kathy Nelson,Cancelled,2025-06-15,06-20-2025,Kelly G.
+14717630,7953 East Obispo Avenue,Mike Carey,Booked,2025-06-13,06-16-2025,Mike Carey
+14705502,2065 W 1st Pl,Kathy Nelson,Booked,2025-06-12,06-16-2025,Kathy Nelson
+14657786,2065 W 1st Pl,Kathy Nelson,Cancelled,2025-06-12,06-15-2025,Kathy Nelson
+14358598,7953 East Obispo Avenue,Mike Carey,Booked,2025-06-11,06-12-2025,Mike Carey
+14577683,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-06-11,06-16-2025,Alexa O.
+14433146,7953 East Obispo Avenue,Mike Carey,Booked,2025-06-05,06-10-2025,Mike Carey
+14358596,7953 East Obispo Avenue,Mike Carey,Booked,2025-06-04,06-05-2025,Mike Carey
+14531316,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-06-03,06-07-2025,Dylan P.
+14380224,2065 W 1st Pl,Kathy Nelson,Checkout,2025-06-03,06-10-2025,Jasmine G.
+14678809,5512 South Rocky Point Road,Rona Edmondson,Checkout,2025-06-03,06-07-2025,Andrew P.
+14210437,15036 S 45th Pl,Brandon Passe,Cancelled,2025-06-01,06-05-2025,Brandon Passe
+14590363,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-05-31,06-02-2025,Sara M.
+14434409,5512 South Rocky Point Road,Rona Edmondson,Checkout,2025-05-30,06-03-2025,Kathryn M.
+14451650,2065 W 1st Pl,Kathy Nelson,Cancelled,2025-05-29,06-02-2025,Sage H.
+14658663,15036 S 45th Pl,Brandon Passe,Checkout,2025-05-29,06-01-2025,Darryl L.
+14615795,2065 W 1st Pl,Kathy Nelson,Checkout,2025-05-28,06-02-2025,Lily L.
+14563371,7953 East Obispo Avenue,Mike Carey,Checkout,2025-05-28,06-02-2025,Brian S.
+14656445,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-05-27,05-31-2025,Abraham S.
+14429264,2065 W 1st Pl,Kathy Nelson,Checkout,2025-05-25,05-28-2025,Madeline Z.
+14450974,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-05-24,05-26-2025,Don W.
+14450845,2065 W 1st Pl,Kathy Nelson,Booked,2025-05-22,05-25-2025,Kathy Nelson
+14355339,15036 S 45th Pl,Brandon Passe,Checkout,2025-05-22,05-27-2025,Linda L.
+14455313,7953 East Obispo Avenue,Mike Carey,Checkout,2025-05-22,05-27-2025,Sacha Anne S.
+14483641,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-05-21,05-24-2025,Sam V.
+14392164,2291 West Redwood Drive,Kristi Osborne,Checkout,2025-05-17,05-26-2025,Shawn C.
+14503711,5512 South Rocky Point Road,Rona Edmondson,Checkout,2025-05-16,05-19-2025,Scott C.
+14570081,3551 E Terrace Ave,Chad Jenkins,Checkout,2025-05-15,05-21-2025,Trevor H.
+14060873,15036 S 45th Pl,Brandon Passe,Booked,2025-05-14,05-15-2025,Brandon Passe
+14519907,7953 East Obispo Avenue,Mike Carey,Checkout,2025-05-14,05-18-2025,Christy S.
+14072773,5512 South Rocky Point Road,Rona Edmondson,Checkout,2025-05-13,05-16-2025,Krista R.

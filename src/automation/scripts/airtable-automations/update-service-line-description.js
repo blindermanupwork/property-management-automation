@@ -34,7 +34,24 @@ if (!triggerRecord) {
 
 // Get service type - use whatever is in the field, default to "Turnover" only if empty
 let serviceTypeField = triggerRecord.getCellValue("Service Type");
-let serviceType = serviceTypeField?.name || "Turnover";
+console.log("Record ID being processed:", recordId);
+console.log("Reservation UID:", triggerRecord.getCellValue("Reservation UID"));
+console.log("Service Type Field raw value:", serviceTypeField);
+console.log("Service Type Field type:", typeof serviceTypeField);
+console.log("Service Type Field stringified:", JSON.stringify(serviceTypeField));
+
+// Handle different field structures - single select returns {id, name, color}
+let serviceType = "Turnover"; // default
+if (serviceTypeField) {
+    if (typeof serviceTypeField === 'string') {
+        serviceType = serviceTypeField;
+    } else if (serviceTypeField.name) {
+        serviceType = serviceTypeField.name;
+    } else if (serviceTypeField.value) {
+        serviceType = serviceTypeField.value;
+    }
+}
+console.log("Final Service Type extracted:", serviceType);
 
 // Check if it's same-day turnover
 let sameDayTurnover = triggerRecord.getCellValue("Same-day Turnover");
@@ -81,7 +98,7 @@ let baseSvcName;
 
 if (sameDayTurnover) {
     // Same day format
-    baseSvcName = `${serviceType} STR SAME DAY`;
+    baseSvcName = `SAME DAY ${serviceType} STR`;
     console.log("Same-day turnover detected");
 } else {
     // Check if we have Next Guest Date already calculated
@@ -92,7 +109,13 @@ if (sameDayTurnover) {
         let date = new Date(nextGuestDate);
         let month = date.toLocaleString('en-US', { month: 'long' });
         let day = date.getDate();
-        baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+        
+        if (isOwnerArriving) {
+            baseSvcName = `OWNER ARRIVING ${serviceType} STR ${month} ${day}`;
+            console.log("Owner arriving on:", month, day);
+        } else {
+            baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+        }
         console.log("Using pre-calculated next guest date:", month, day);
     } else {
         // Fallback: find next guest manually (shouldn't happen if first script runs properly)
@@ -176,13 +199,9 @@ if (customInstructions) {
     parts.push(customInstructions);
 }
 
-// Add OWNER ARRIVING if owner is arriving
-if (isOwnerArriving) {
-    parts.push("OWNER ARRIVING");
-}
-
-// Add LONG TERM GUEST DEPARTING if applicable
-if (isLongTermGuest) {
+// Add LONG TERM GUEST DEPARTING if applicable (but not if owner is already in base name)
+// Note: OWNER ARRIVING is now part of the base service name when owner is arriving
+if (isLongTermGuest && !isOwnerArriving) {
     parts.push("LONG TERM GUEST DEPARTING");
 }
 
@@ -212,3 +231,5 @@ output.set('success', true);
 output.set('serviceLineDescription', serviceLineDescription);
 output.set('isLongTermGuest', isLongTermGuest);
 output.set('stayDurationDays', stayDurationDays);
+output.set('serviceType', serviceType);
+output.set('baseSvcName', baseSvcName);

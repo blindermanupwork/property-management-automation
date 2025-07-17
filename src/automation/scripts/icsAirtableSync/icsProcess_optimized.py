@@ -1084,14 +1084,19 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
     return False
 
 
-def check_for_duplicate_with_tracking(table, property_id, checkin_date, checkout_date, entry_type):
+def check_for_duplicate_with_tracking(table, property_id, checkin_date, checkout_date, entry_type, create_batch=None):
     """
     Enhanced duplicate check that returns both the duplicate status 
     and any existing records with same property but different dates.
     This helps track UID changes for the same reservation.
+    
+    ENHANCED: Also checks pending records in the create batch collector.
     """
     if not property_id:
         return False, []
+    
+    # Add debug logging
+    logging.info(f"🔍 DUPLICATE CHECK: Property {property_id}, {checkin_date} to {checkout_date}, Type: {entry_type}")
     
     try:
         # Get ALL active records for this property
@@ -1100,6 +1105,26 @@ def check_for_duplicate_with_tracking(table, property_id, checkin_date, checkout
             formula=property_formula, 
             fields=["Reservation UID", "Status", "Check-in Date", "Check-out Date", "Entry Type", "ID"]
         )
+        
+        logging.info(f"🔍 DUPLICATE CHECK: Found {len(all_property_records)} active records for property {property_id}")
+        
+        # ENHANCED: Also check pending records in the create batch
+        if create_batch and hasattr(create_batch, 'records'):
+            pending_count = 0
+            for pending_record in create_batch.records:
+                if 'fields' in pending_record:
+                    fields = pending_record['fields']
+                    prop_ids = fields.get('Property ID', [])
+                    if property_id in prop_ids:
+                        # Create a fake record structure to match the format
+                        fake_record = {
+                            'id': f'pending_{pending_count}',
+                            'fields': fields
+                        }
+                        all_property_records.append(fake_record)
+                        pending_count += 1
+            if pending_count > 0:
+                logging.info(f"🔍 DUPLICATE CHECK: Also found {pending_count} pending records in batch for property {property_id}")
         
         # Find exact duplicates and related records
         exact_duplicates = []
@@ -1111,10 +1136,15 @@ def check_for_duplicate_with_tracking(table, property_id, checkin_date, checkout
             rec_checkout = fields.get("Check-out Date", "")
             rec_entry_type = fields.get("Entry Type", "")
             
+            # Debug log each comparison
+            if rec_checkin == checkin_date and rec_checkout == checkout_date:
+                logging.info(f"🔍 DUPLICATE CHECK: Found matching dates! Checking entry type: '{rec_entry_type}' vs '{entry_type}'")
+            
             if (rec_checkin == checkin_date and 
                 rec_checkout == checkout_date and
                 rec_entry_type == entry_type):
                 exact_duplicates.append(record)
+                logging.info(f"🔍 DUPLICATE CHECK: Found exact duplicate! UID: {fields.get('Reservation UID', 'No UID')}")
             else:
                 # Different dates but same property - track for potential UID change
                 related_records.append(record)
@@ -1163,7 +1193,8 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
         property_id, 
         event["dtstart"], 
         event["dtend"], 
-        event["entry_type"]
+        event["entry_type"],
+        create_batch
     )
     if property_id and is_duplicate:
         # Check if this is our existing record or a different one
@@ -1246,11 +1277,13 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
         # Check session tracker to prevent race condition duplicates
         if session_tracker is not None and property_id:
             tracker_key = (property_id, event["dtstart"], event["dtend"], event["entry_type"])
+            logging.info(f"🔍 SESSION TRACKER: Checking key {tracker_key}")
             if tracker_key in session_tracker:
-                logging.info(f"Session tracker prevented duplicate: {original_uid} for property {property_id}")
+                logging.info(f"🔍 SESSION TRACKER: Prevented duplicate! {original_uid} for property {property_id}")
                 return "Duplicate_Ignored"
             # Add to session tracker to prevent other feeds from creating duplicates
             session_tracker.add(tracker_key)
+            logging.info(f"🔍 SESSION TRACKER: Added new key {tracker_key} (total keys: {len(session_tracker)})")
         
         # Create new record with composite UID
         new_fields = {

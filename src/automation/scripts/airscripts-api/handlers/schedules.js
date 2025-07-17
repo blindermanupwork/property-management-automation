@@ -230,7 +230,7 @@ async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
     
     const updateFields = {
       'Sync Status': 'Not Created',
-      'Service Sync Details': syncDetails,
+      'Schedule Sync Details': syncDetails,
       'Sync Date and Time': getArizonaTime()
     };
     
@@ -289,13 +289,13 @@ async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
     // Original messaging for prod environment
     if (!dateMatch) {
       syncStatus = 'Wrong Date';
-      syncDetails = `${prefix}Final Service Time is **${azDate(expectedTime)}** but service is **${azDate(schedStart)}**.`;
+      syncDetails = `${prefix}Final Service Time is ${azDate(expectedTime)} but service is ${azDate(schedStart)}.`;
     } else if (!timeMatch) {
       syncStatus = 'Wrong Time';
-      syncDetails = `${prefix}Final Service Time is **${azTime(expectedTime)}** but service is **${azTime(schedStart)}**.`;
+      syncDetails = `${prefix}Final Service Time is ${azTime(expectedTime)} but service is ${azTime(schedStart)}.`;
     } else {
       syncStatus = 'Synced';
-      syncDetails = `${prefix}Service matches **${azDate(schedStart)} at ${azTime(schedStart)}**.`;
+      syncDetails = `${prefix}Service matches ${azDate(schedStart)} at ${azTime(schedStart)}.`;
     }
   }
 
@@ -327,14 +327,18 @@ async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
   }
 
   // Update Airtable with sync status
-  // Use environment-specific field names
-  const syncDetailsField = 'Service Sync Details'; // Same field name for both dev and prod
-  
+  // Use appropriate field based on sync status
   const updateFields = {
-    'Sync Status': syncStatus,  // Single select field - just the string value
-    [syncDetailsField]: syncDetails,      // Long text field
+    'Sync Status': syncStatus,
     'Sync Date and Time': getArizonaTime()
   };
+  
+  // Only update Schedule Sync Details for mismatches, otherwise use Service Sync Details
+  if (syncStatus === 'Wrong Date' || syncStatus === 'Wrong Time') {
+    updateFields['Schedule Sync Details'] = syncDetails;
+  } else {
+    updateFields['Service Sync Details'] = syncDetails;
+  }
 
   if (atStatus) {
     updateFields['Job Status'] = atStatus;
@@ -370,9 +374,16 @@ async function checkSingleSchedule(base, hcpConfig, recordId, environment) {
       
       // Update only essential fields
       const minimalFields = {
-        [syncDetailsField]: updateFields[syncDetailsField],
-        'Sync Date and Time': updateFields['Sync Date and Time']
       };
+      
+      // Add the appropriate sync details field
+      if (updateFields['Schedule Sync Details']) {
+        minimalFields['Schedule Sync Details'] = updateFields['Schedule Sync Details'];
+      }
+      if (updateFields['Service Sync Details']) {
+        minimalFields['Service Sync Details'] = updateFields['Service Sync Details'];
+      }
+      minimalFields['Sync Date and Time'] = updateFields['Sync Date and Time'];
       
       if (updateFields['Scheduled Service Time']) {
         minimalFields['Scheduled Service Time'] = updateFields['Scheduled Service Time'];
@@ -441,7 +452,7 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
     if (buildSyncMessage && environment === 'development') {
       syncDetails = `${prefix}Creating schedule for ${azDate(expectedTime)} at ${azTime(expectedTime)}`;
     } else {
-      syncDetails = `${prefix}Creating schedule for **${azDate(expectedTime)} at ${azTime(expectedTime)}**.`;
+      syncDetails = `${prefix}Creating schedule for ${azDate(expectedTime)} at ${azTime(expectedTime)}.`;
     }
   } else {
     // Compare times using Arizona timezone
@@ -475,11 +486,11 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
       if (!dateMatch) {
         needsUpdate = true;
         syncStatus = 'Updating Date';
-        syncDetails = `${prefix}Updating from **${azDate(schedStart)}** to **${azDate(expectedTime)}**.`;
+        syncDetails = `${prefix}Updating from ${azDate(schedStart)} to ${azDate(expectedTime)}.`;
       } else if (!timeMatch) {
         needsUpdate = true;
         syncStatus = 'Updating Time';
-        syncDetails = `${prefix}Updating from **${azTime(schedStart)}** to **${azTime(expectedTime)}**.`;
+        syncDetails = `${prefix}Updating from ${azTime(schedStart)} to ${azTime(expectedTime)}.`;
       } else {
         // Mark as needing verification even if it appears synced
         needsUpdate = true;
@@ -509,14 +520,14 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
         await hcpFetch(hcpConfig, `/jobs/${jobId}/schedule`, 'PUT', schedulePayload);
         
       } else {
-        // Update existing schedule (matching original script pattern)
+        // Update existing schedule - preserve existing assignments
         const schedulePayload = {
           start_time: expectedTime.toISOString(),
           end_time: expectedEnd.toISOString(),
           arrival_window_in_minutes: 60,
           notify: true,
-          notify_pro: true,
-          dispatched_employees: [{ employee_id: hcpConfig.employeeId }]
+          notify_pro: true
+          // Note: dispatched_employees intentionally omitted to preserve existing assignments
         };
         
         console.log('Updating schedule with data:', JSON.stringify(schedulePayload, null, 2));
@@ -556,10 +567,10 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
       } else {
         if (!finalDateMatch || !finalTimeMatch) {
           syncStatus = finalDateMatch ? 'Wrong Time' : 'Wrong Date';
-          syncDetails = `${prefix}Schedule mismatch: Expected **${azDate(expectedTime)} at ${azTime(expectedTime)}** but got **${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}**.`;
+          syncDetails = `${prefix}Schedule mismatch: Expected ${azDate(expectedTime)} at ${azTime(expectedTime)} but got ${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}.`;
         } else {
           syncStatus = 'Synced';
-          syncDetails = `${prefix}Service updated to **${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}**.`;
+          syncDetails = `${prefix}Service updated to ${azDate(newScheduledTime)} at ${azTime(newScheduledTime)}.`;
         }
       }
       
@@ -598,14 +609,19 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
   }
 
   // Update Airtable with final state
-  // Use environment-specific field names
-  const syncDetailsField = 'Service Sync Details'; // Same field name for both dev and prod
-  
+  // Use appropriate field based on operation type
   const updateFields = {
-    'Sync Status': syncStatus,  // Single select field - just the string value
-    [syncDetailsField]: syncDetails,      // Long text field
+    'Sync Status': syncStatus,
     'Sync Date and Time': getArizonaTime()
   };
+  
+  // Only update Schedule Sync Details if there's a mismatch to report
+  if (syncStatus === 'Wrong Date' || syncStatus === 'Wrong Time') {
+    updateFields['Schedule Sync Details'] = syncDetails;
+  } else {
+    // For successful operations, use Service Sync Details
+    updateFields['Service Sync Details'] = syncDetails;
+  }
 
   if (finalScheduledTime) {
     updateFields['Scheduled Service Time'] = finalScheduledTime.toISOString();
@@ -646,9 +662,16 @@ async function updateSingleSchedule(base, hcpConfig, recordId, environment) {
       
       // Update only essential fields
       const minimalFields = {
-        [syncDetailsField]: updateFields[syncDetailsField],
-        'Sync Date and Time': updateFields['Sync Date and Time']
       };
+      
+      // Add the appropriate sync details field
+      if (updateFields['Schedule Sync Details']) {
+        minimalFields['Schedule Sync Details'] = updateFields['Schedule Sync Details'];
+      }
+      if (updateFields['Service Sync Details']) {
+        minimalFields['Service Sync Details'] = updateFields['Service Sync Details'];
+      }
+      minimalFields['Sync Date and Time'] = updateFields['Sync Date and Time'];
       
       if (updateFields['Scheduled Service Time']) {
         minimalFields['Scheduled Service Time'] = updateFields['Scheduled Service Time'];
