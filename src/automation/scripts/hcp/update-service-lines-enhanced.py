@@ -171,7 +171,14 @@ class HCPServiceLineUpdater:
     def build_service_line_description(self, record):
         """Build service line description following the same logic as Airtable automations"""
         # Get all needed fields
-        service_type = record.get('Service Type', 'Turnover')
+        # Extract service type - handle both object and string formats
+        service_type_field = record.get('Service Type')
+        if isinstance(service_type_field, dict) and service_type_field:
+            service_type = service_type_field.get('name', 'Turnover')
+        elif service_type_field:
+            service_type = service_type_field
+        else:
+            service_type = 'Turnover'
         same_day = record.get('Same-day Turnover', False)
         # Check both Owner Arriving checkbox and Next Entry Is Block for backward compatibility
         is_owner_arriving = record.get('Owner Arriving', False) or record.get('Next Entry Is Block', False)
@@ -190,7 +197,7 @@ class HCPServiceLineUpdater:
         
         # Build base service name
         if same_day:
-            base_svc_name = f"{service_type} STR SAME DAY"
+            base_svc_name = f"SAME DAY {service_type} STR"
         elif next_guest_date:
             next_date = datetime.fromisoformat(next_guest_date.replace('Z', '+00:00'))
             month = next_date.strftime('%B')

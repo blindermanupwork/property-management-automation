@@ -67,7 +67,7 @@ let propertyRecordId = propertyLinkedRecords[0].id;
 console.log("Property record ID:", propertyRecordId);
 
 // Query ALL records
-let query = await table.selectRecordsAsync({
+query = await table.selectRecordsAsync({
     fields: ["Property ID", "Check-in Date", "Entry Type", "Status", "Reservation UID"]
 });
 

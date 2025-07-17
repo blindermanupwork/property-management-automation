@@ -34,48 +34,59 @@ function formatArizonaDateTime(date) {
 }
 
 /**
+ * Get current timestamp in Arizona time zone for sync details
+ * @returns {string} Formatted timestamp string
+ */
+function getArizonaTimestamp() {
+  const now = new Date();
+  return formatInTimeZone(now, 'America/Phoenix', 'MMM d, h:mm a');
+}
+
+/**
  * Build clear, explicit sync status messages
  * @param {string} status - Status type (SYNCED, WRONG_DATE, WRONG_TIME, etc.)
  * @param {Object} data - Data for the message
  * @returns {string} Clear sync status message
  */
 function buildSyncMessage(status, data) {
+  const timestamp = ` - ${getArizonaTimestamp()}`;
+  
   switch (status) {
     case 'SYNCED':
-      return `✅ Schedule is in sync. Both Airtable and HCP show ${formatArizonaDateTime(data.airtableValue)}`;
+      return `Schedules in sync: ${formatArizonaDateTime(data.airtableValue)}${timestamp}`;
     
     case 'WRONG_DATE':
-      return `⚠️ DATE MISMATCH: Airtable shows ${formatArizonaDate(data.airtableValue)} but HCP shows ${formatArizonaDate(data.hcpValue)}`;
+      return `Airtable shows ${formatArizonaDate(data.airtableValue)} but HCP shows ${formatArizonaDate(data.hcpValue)}${timestamp}`;
     
     case 'WRONG_TIME':
-      return `⚠️ TIME MISMATCH: Airtable shows ${formatArizonaTime(data.airtableValue)} but HCP shows ${formatArizonaTime(data.hcpValue)}`;
+      return `Airtable shows ${formatArizonaTime(data.airtableValue)} but HCP shows ${formatArizonaTime(data.hcpValue)}${timestamp}`;
     
     case 'JOB_CANCELED':
-      return `❌ Job was canceled on ${formatArizonaDateTime(data.canceledAt)}`;
+      return `Job canceled on ${formatArizonaDateTime(data.canceledAt)}${timestamp}`;
     
     case 'SCHEDULE_UPDATED':
-      return `✅ Schedule updated successfully. HCP now shows ${formatArizonaDateTime(data.newValue)}`;
+      return `✅ Schedule updated successfully. HCP now shows ${formatArizonaDateTime(data.newValue)}${timestamp}`;
     
     case 'SCHEDULE_UPDATE_FAILED':
-      return `❌ Failed to update schedule: ${data.error}`;
+      return `❌ Failed to update schedule: ${data.error}${timestamp}`;
     
     case 'NO_JOB':
-      return `⚠️ No HCP job exists for this reservation`;
+      return `⚠️ No HCP job exists for this reservation${timestamp}`;
     
     case 'NO_APPOINTMENT':
-      return `⚠️ HCP job exists but has no appointment scheduled`;
+      return `⚠️ HCP job exists but has no appointment scheduled${timestamp}`;
     
     case 'WEBHOOK_UPDATE':
-      return `🔄 Updated from HCP webhook at ${formatArizonaDateTime(data.timestamp)} - ${data.details || 'Status change'}`;
+      return `🔄 Updated from HCP webhook - ${data.details || 'Status change'} - ${formatArizonaDateTime(data.timestamp)}`;
     
     case 'WEBHOOK_ERROR':
-      return `❌ Webhook processing error at ${formatArizonaDateTime(data.timestamp)}: ${data.error}`;
+      return `❌ Webhook processing error: ${data.error} - ${formatArizonaDateTime(data.timestamp)}`;
     
     case 'MANUAL_SYNC':
-      return `🔄 Manual sync initiated at ${formatArizonaDateTime(data.timestamp)}`;
+      return `🔄 Manual sync initiated - ${formatArizonaDateTime(data.timestamp)}`;
     
     case 'AUTO_SYNC':
-      return `🔄 Automated sync at ${formatArizonaDateTime(data.timestamp)}`;
+      return `🔄 Automated sync - ${formatArizonaDateTime(data.timestamp)}`;
     
     default:
       return `Status: ${status} - ${JSON.stringify(data)}`;
@@ -86,6 +97,7 @@ function buildSyncMessage(status, data) {
 module.exports = {
   buildSyncMessage,
   formatArizonaDate,
+  getArizonaTimestamp,
   formatArizonaTime,
   formatArizonaDateTime
 };

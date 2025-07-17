@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.8** - Enhanced Service Line Updates with Owner Detection
+**Current Version: 2.2.8** - Enhanced Service Line Updates with Owner Detection + Property Name Logging
 
 ## 📁 Project Structure (as of June 11, 2025)
 
@@ -72,6 +72,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── api/                     # API documentation
 │   ├── testing/                 # Test documentation
 │   └── deployment/              # Deployment guides
+├── docs_v2/                     # Enhanced documentation (v2.2.8+)
+│   └── logging-architecture.md  # Environment-specific logging design
 │
 ├── app/                         # React Native mobile app
 ├── config/                      # Configuration files
@@ -94,10 +96,17 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Owner arrival detection**: Auto-detects blocks and adds "OWNER ARRIVING" to service lines
 - ✅ **Webhook forwarding system**: Dual authentication support implemented
 - ✅ **Real-time console output**: All automation processes show live progress
-- ✅ **Environment-specific webhook logs**: Separate logs for dev (webhook_development.log) and prod (webhook.log)
+- ✅ **Environment-specific logging system**: Complete log separation for all components (v2.2.8)
+  - CSV processing: `csv_sync_Development.log` / `csv_sync_Production.log`
+  - ICS processing: `ics_sync_dev.log` / `ics_sync_prod.log` 
+  - Webhook processing: `webhook_development.log` / `webhook.log`
+  - Automation runners: `automation_dev*.log` / `automation_prod*.log`
 - ✅ **CSV Duplicate Detection Fix**: Fixed composite UID vs base UID lookup mismatch (June 23, 2025)
 - ✅ **Duplicate Cleanup Script**: Script to mark old duplicates as "Old" status
-- ✅ **HCP Job Reconciliation**: Automatic matching of unlinked HCP jobs to Airtable reservations
+- ✅ **HCP Job Reconciliation (Optimized)**: High-performance automatic matching of unlinked HCP jobs to Airtable reservations with parallel processing
+- ✅ **Reservation Duplicate Detection**: Scripts to find and fix duplicate active UIDs and property/date conflicts (June 30, 2025)
+- ✅ **Property Name Logging**: CSV sync logs now display property names (e.g., "2065 W 1st Pl, Mesa, AZ") instead of cryptic record IDs for better searchability (July 12, 2025)
+- ✅ **Property Name Logging**: CSV logs now show human-readable property names instead of cryptic record IDs (July 11, 2025)
 
 
 ## HCP Sync Script Locations
@@ -129,6 +138,18 @@ python3 critical-business-logic-tests.py       # Run business logic tests
 # Cleanup scripts
 python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --dry-run  # Test cleanup
 python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --execute  # Run cleanup
+
+# HCP Job Reconciliation (OPTIMIZED VERSION)
+python3 src/automation/scripts/hcp/reconcile-jobs-optimized.py --env dev --dry-run    # Test dev reconciliation
+python3 src/automation/scripts/hcp/reconcile-jobs-optimized.py --env dev --execute   # Run dev reconciliation
+python3 src/automation/scripts/hcp/reconcile-jobs-optimized.py --env prod --dry-run  # Test prod reconciliation
+python3 src/automation/scripts/hcp/reconcile-jobs-optimized.py --env prod --execute  # Run prod reconciliation
+
+# Duplicate detection and fixing scripts
+python3 src/automation/scripts/find-duplicate-active-uids.py            # Find UIDs with multiple active records
+python3 src/automation/scripts/fix-uid-duplicates.py --execute         # Fix duplicate active UIDs
+python3 src/automation/scripts/find-property-date-duplicates-active.py  # Find property/date duplicates with multiple active UIDs
+python3 src/automation/scripts/find-property-date-duplicates-active.py --fix  # Fix property/date duplicates
 
 # Code quality
 black src/ tests/                              # Format code
@@ -166,14 +187,39 @@ node tools/test-mcp-connection.js              # Test MCP server connectivity
 ./cron_remove.sh                              # Remove old cron jobs
 # Note: These are symlinks to src/automation/scripts/system/
 
-# View logs
+# View logs - Environment-Specific Logging (v2.2.8)
 tail -f src/automation/logs/automation_dev*.log     # Development automation logs
 tail -f src/automation/logs/automation_prod*.log    # Production automation logs
+tail -f src/automation/logs/csv_sync_Development.log # Development CSV processing logs
+tail -f src/automation/logs/csv_sync_Production.log  # Production CSV processing logs
+tail -f src/automation/logs/ics_sync_dev.log        # Development ICS processing logs
+tail -f src/automation/logs/ics_sync_prod.log       # Production ICS processing logs
 tail -f src/automation/logs/webhook_development.log  # Development webhook logs
 tail -f src/automation/logs/webhook.log             # Production webhook logs
 
 # Check cron status
 crontab -l                                     # View current cron jobs
+```
+
+### 🚨 CRITICAL: Running Evolve Scraper Manually
+```bash
+# ⚠️ IMPORTANT: Environment variable MUST be set BEFORE Python starts!
+
+# ✅ CORRECT - Run Evolve scraper for PRODUCTION:
+ENVIRONMENT=production python3 src/automation/scripts/evolve/evolveScrape.py --headless --sequential
+
+# ✅ CORRECT - Run Evolve scraper for DEVELOPMENT:
+ENVIRONMENT=development python3 src/automation/scripts/evolve/evolveScrape.py --headless --sequential
+
+# ❌ WRONG - This will NOT work:
+export ENVIRONMENT=production
+python3 src/automation/scripts/evolve/evolveScrape.py  # Environment already set to dev!
+
+# Why? The Config singleton is created when Python imports the module, BEFORE your export runs.
+
+# Other important flags:
+# --headless     : Run without GUI (required on server)
+# --sequential   : Run tab exports one after another (avoids Chrome conflicts)
 ```
 
 ### System Features & Data Volumes
@@ -391,6 +437,23 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 
 ## Key System Features (v2.2.8)
 
+### **Property Name Logging Enhancement**
+- **Feature**: Human-readable property names in all CSV sync logs
+- **Format**: `Property "2065 W 1st Pl, Mesa, AZ" (recsKzsYIlFCXXmg5)` instead of just `Property recsKzsYIlFCXXmg5`
+- **Benefits**: 
+  - Easy log searching without needing to look up property record IDs
+  - Better debugging and monitoring of specific properties
+  - Consistent property identification across all log entries
+- **Implementation**: Comprehensive property mapping loaded at initialization using Property Name and Address fields
+
+### **Property Name Logging Enhancement**
+- **Feature**: CSV processing logs now display human-readable property names
+- **Implementation**: Property ID to name mapping loaded at initialization
+- **Format**: `"Property Name" (record_id)` instead of just `record_id`
+- **Coverage**: All property references in logging statements
+- **Example**: `🔍 Property "2065 W 1st Pl, Mesa, AZ" (recsKzsYIlFCXXmg5)` instead of `🔍 Property recsKzsYIlFCXXmg5`
+- **Benefit**: Easier to search logs and identify properties without looking up record IDs
+
 ### **Enhanced Service Line Updates with Owner Detection**
 - **Feature**: Automatically detect when property owners are arriving
 - **Detection Logic**: Identifies Block entries checking in same/next day after reservation checkout
@@ -470,6 +533,23 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
    # Filter for specific job in dev
    grep "job_fdf67b8c04c943e98d75230105a033ab" /home/opc/automation/src/automation/logs/webhook_development.log
    ```
+
+### **Sync Field Business Rules & Message Formatting (v2.2.8)**
+
+#### **Comprehensive Sync Field Management**
+- **Complete Business Rules**: See `docs/sync-field-business-rules.md` for detailed field usage guidelines
+- **Message Formatting Standards**: All sync messages use right-side timestamps (`[content] - Jul 10, 3:45 PM`)
+- **Airtable Compatibility**: Fixed problematic `**bold**` markdown that displayed as literal asterisks
+- **Cross-System Consistency**: Standardized formatting across 6 components:
+  - syncMessageBuilder.js (development)
+  - jobs.js & schedules.js (API handlers)
+  - webhook.py (webhook processing)
+  - dev-hcp-sync.cjs & prod-hcp-sync.cjs (sync scripts)
+
+#### **Field Separation Strategy**
+- **Schedule Sync Details**: Alert field - only populated when schedules are mismatched
+- **Service Sync Details**: Activity log - continuously updated with all operations
+- **Reduced Noise**: Webhook updates only for significant status changes (In Progress, Completed, Canceled)
 
 ### **Enhanced HCP MCP Capabilities (v2.2.1)**
 

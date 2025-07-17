@@ -386,19 +386,44 @@ def format_employee_names(employees):
         return ""
     return ", ".join([f"{emp.get('first_name', '')} {emp.get('last_name', '')}" for emp in employees])
 
-def update_sync_info(record_id, details):
-    """Update sync information for a record"""
+def get_az_timestamp():
+    """Get current time formatted for Arizona timezone"""
+    az_tz = pytz.timezone('America/Phoenix')
+    now_az = datetime.now(az_tz)
+    return now_az.strftime('%b %d, %I:%M %p')
+
+def update_service_sync_info(record_id, details):
+    """Update Service Sync Details for job progression and status updates"""
     try:
         # Get current UTC time for Airtable (it expects UTC)
         now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        # Use environment-specific field names
-        field_name = "Service Sync Details"  # Use same field for both dev and prod
+        # Add timestamp to details
+        timestamped_details = f"**{get_az_timestamp()}** - {details}"
         return reservations_table.update(record_id, {
             "Sync Date and Time": now,
-            field_name: details
+            "Service Sync Details": timestamped_details
         })
     except Exception as e:
-        logger.error(f"Error updating sync info for record {record_id}: {e}")
+        logger.error(f"Error updating service sync info for record {record_id}: {e}")
+
+def update_schedule_sync_info(record_id, details):
+    """Update Schedule Sync Details for schedule synchronization issues"""
+    try:
+        # Get current UTC time for Airtable (it expects UTC)
+        now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        # Add timestamp to details
+        timestamped_details = f"**{get_az_timestamp()}** - {details}"
+        return reservations_table.update(record_id, {
+            "Sync Date and Time": now,
+            "Schedule Sync Details": timestamped_details
+        })
+    except Exception as e:
+        logger.error(f"Error updating schedule sync info for record {record_id}: {e}")
+
+# Legacy function for backward compatibility
+def update_sync_info(record_id, details):
+    """Legacy function - redirects to service sync info"""
+    return update_service_sync_info(record_id, details)
 
 def map_work_status_to_job_status(work_status):
     """Map HCP work status to our job status"""
@@ -435,13 +460,21 @@ def handle_status_update(job_data, existing_record):
         update_data["Job Completed Time"] = work_timestamps.get("completed_at")
         
         result = reservations_table.update(record_id, update_data)
-        # Use clearer messages for dev environment
-        if environment == 'development':
-            sync_details = f"✅ Updated HCP job status to \"{job_status}\""
+        
+        # REDUCED NOISE: Only update Service Sync Details for significant status changes
+        # Skip routine status updates to reduce noise per business rules
+        significant_statuses = ["In Progress", "Completed", "Canceled"]
+        if job_status in significant_statuses:
+            # Use clearer messages for dev environment
+            if environment == 'development':
+                sync_details = f"✅ Job {job_status.lower()}"
+            else:
+                sync_details = f"Job {job_status.lower()}"
+            update_service_sync_info(record_id, sync_details)
+            logger.info(f"✅ Updated significant status for record {record_id}: {job_status}")
         else:
-            sync_details = f"Updated job status to {job_status}"
-        update_sync_info(record_id, sync_details)
-        logger.info(f"✅ Updated status for record {record_id}: {job_status}")
+            logger.info(f"✅ Updated status (no sync details) for record {record_id}: {job_status}")
+        
         return result
     except Exception as e:
         logger.error(f"Error handling status update: {e}")
@@ -456,12 +489,13 @@ def handle_employee_assignment(job_data, existing_record):
             assignee = None
         record_id = existing_record.get("id")
         result = reservations_table.update(record_id, {"Assignee": assignee})
+        # Employee assignment is a significant event - keep Service Sync Details update
         # Use clearer messages for dev environment
         if environment == 'development':
-            sync_details = f"✅ Updated HCP assignee to: {assignee or '(unassigned)'}"
+            sync_details = f"✅ Assigned to: {assignee or '(unassigned)'}"
         else:
-            sync_details = f"Updated assignee to: {assignee or '(empty)'}"
-        update_sync_info(record_id, sync_details)
+            sync_details = f"Assigned to: {assignee or '(empty)'}"
+        update_service_sync_info(record_id, sync_details)
         logger.info(f"✅ Updated assignee for record {record_id}: {assignee or '(empty)'}")
         return result
     except Exception as e:
@@ -474,20 +508,67 @@ def handle_scheduling(job_data, existing_record, is_rescheduled=False):
         record_id = existing_record.get("id")
         schedule_data = job_data.get("schedule", {})
         scheduled_start = schedule_data.get("scheduled_start")
+        
+        # Get the Final Service Time to compare with new schedule
+        final_service_time = existing_record.get("fields", {}).get("Final Service Time")
+        
+        # Update scheduled service time
         update_data = {"Scheduled Service Time": scheduled_start}
-        result = reservations_table.update(record_id, update_data)
-        # Use clearer messages for dev environment
-        logger.info(f"DEBUG: Environment is '{environment}' (type: {type(environment)})")
-        if environment == 'development':
-            if is_rescheduled:
-                sync_details = "✅ Rescheduled HCP job schedule"
-            else:
-                sync_details = "✅ Updated HCP job schedule"
+        
+        # Check sync status if we have both times
+        sync_status = None
+        sync_details = None
+        
+        if final_service_time and scheduled_start:
+            try:
+                # Parse times for comparison
+                scheduled_dt = datetime.fromisoformat(scheduled_start.replace('Z', '+00:00'))
+                final_dt = datetime.fromisoformat(final_service_time.replace('Z', '+00:00'))
+                
+                # Convert to Arizona timezone for comparison
+                az_tz = pytz.timezone('America/Phoenix')
+                scheduled_az = scheduled_dt.astimezone(az_tz)
+                final_az = final_dt.astimezone(az_tz)
+                
+                # Compare dates and times
+                date_match = scheduled_az.date() == final_az.date()
+                time_match = (scheduled_az.hour == final_az.hour and 
+                             scheduled_az.minute == final_az.minute)
+                
+                # Determine sync status
+                if date_match and time_match:
+                    sync_status = "Synced"
+                    sync_details = f"Schedules in sync: {scheduled_az.strftime('%B %d at %I:%M %p')}"
+                elif not date_match:
+                    sync_status = "Wrong Date"
+                    sync_details = f"Airtable shows {final_az.strftime('%B %d at %I:%M %p')} but HCP shows {scheduled_az.strftime('%B %d at %I:%M %p')}"
+                else:  # date matches but time doesn't
+                    sync_status = "Wrong Time"
+                    sync_details = f"Airtable shows {final_az.strftime('%I:%M %p')} but HCP shows {scheduled_az.strftime('%I:%M %p')}"
+                
+                # Add sync status to update
+                if sync_status:
+                    update_data["Sync Status"] = sync_status
+                    
+            except Exception as sync_error:
+                logger.error(f"Error checking sync status: {sync_error}")
+                # Fall back to basic schedule update message
+                sync_details = "Schedule rescheduled" if is_rescheduled else "Schedule updated"
         else:
-            sync_details = "Rescheduled job" if is_rescheduled else "Updated schedule"
-        logger.info(f"DEBUG: Setting sync_details to: '{sync_details}'")
-        update_sync_info(record_id, sync_details)
+            # No Final Service Time to compare with, use basic message
+            sync_details = "Schedule rescheduled" if is_rescheduled else "Schedule updated"
+        
+        # Update Airtable with new schedule and sync info
+        result = reservations_table.update(record_id, update_data)
+        
+        # Update schedule sync details separately (includes sync date/time)
+        if sync_details:
+            update_schedule_sync_info(record_id, sync_details)
+        
         logger.info(f"✅ Updated schedule for record {record_id}")
+        if sync_status:
+            logger.info(f"   Sync Status: {sync_status}")
+        
         return result
     except Exception as e:
         logger.error(f"Error handling scheduling: {e}")
@@ -549,17 +630,54 @@ def handle_appointment_scheduled(appointment_data, existing_record):
             "Scheduled Service Time": start_time
         }
         
+        # Check sync status for scheduled appointments
+        final_service_time = existing_record.get('fields', {}).get('Final Service Time')
+        sync_status = None
+        
+        if final_service_time and start_time:
+            try:
+                # Parse times for comparison
+                scheduled_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                final_dt = datetime.fromisoformat(final_service_time.replace('Z', '+00:00'))
+                
+                # Convert to Arizona timezone for comparison
+                az_tz = pytz.timezone('America/Phoenix')
+                scheduled_az = scheduled_dt.astimezone(az_tz)
+                final_az = final_dt.astimezone(az_tz)
+                
+                # Compare dates and times
+                date_match = scheduled_az.date() == final_az.date()
+                time_match = (scheduled_az.hour == final_az.hour and 
+                             scheduled_az.minute == final_az.minute)
+                
+                # Determine sync status
+                if date_match and time_match:
+                    sync_status = "Synced"
+                elif not date_match:
+                    sync_status = "Wrong Date"
+                else:  # date matches but time doesn't
+                    sync_status = "Wrong Time"
+                    
+                # Add sync status to update data
+                if sync_status:
+                    update_data["Sync Status"] = sync_status
+                    
+            except Exception as sync_error:
+                logger.error(f"Error checking sync status in appointment scheduled: {sync_error}")
+                # Continue without sync status update
+        
         logger.info(f"📋 Appointment ID: {appointment_id}")
         logger.info(f"👤 Assignee: {assignee or '(empty)'}")
         logger.info(f"⏰ Scheduled start: {start_time or '(empty)'}")
         
         result = reservations_table.update(record_id, update_data)
-        # Use clearer messages for dev environment
+        # Appointment scheduling is a significant event - keep Service Sync Details update
+        # Use clearer messages for dev environment  
         if environment == 'development':
             sync_details = f"✅ Appointment scheduled: {format_datetime_for_display(start_time)}, assignee: {assignee or '(unassigned)'}"
         else:
             sync_details = f"Appointment {appointment_id} scheduled, assignee: {assignee or '(empty)'}"
-        update_sync_info(record_id, sync_details)
+        update_service_sync_info(record_id, sync_details)
         logger.info(f"✅ Appointment {appointment_id} scheduled for record: {record_id}")
         return result
     except Exception as e:
@@ -624,16 +742,59 @@ def handle_appointment_rescheduled(appointment_data, existing_record):
                 return None  # Don't update, the assignee webhook already handled it
             
             if time_changed:
-                if assignee:
-                    sync_details = f"✅ Schedule updated: {format_datetime_for_display(start_time)}, assignee: {assignee}"
+                # Check sync status for time changes
+                final_service_time = existing_record.get('fields', {}).get('Final Service Time')
+                sync_status = None
+                
+                if final_service_time and start_time:
+                    try:
+                        # Parse times for comparison
+                        scheduled_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                        final_dt = datetime.fromisoformat(final_service_time.replace('Z', '+00:00'))
+                        
+                        # Convert to Arizona timezone for comparison
+                        az_tz = pytz.timezone('America/Phoenix')
+                        scheduled_az = scheduled_dt.astimezone(az_tz)
+                        final_az = final_dt.astimezone(az_tz)
+                        
+                        # Compare dates and times
+                        date_match = scheduled_az.date() == final_az.date()
+                        time_match = (scheduled_az.hour == final_az.hour and 
+                                     scheduled_az.minute == final_az.minute)
+                        
+                        # Determine sync status and schedule sync details
+                        if date_match and time_match:
+                            sync_status = "Synced"
+                            schedule_sync_details = f"Schedules in sync: {scheduled_az.strftime('%B %d at %I:%M %p')}"
+                        elif not date_match:
+                            sync_status = "Wrong Date"
+                            schedule_sync_details = f"Airtable shows {final_az.strftime('%B %d at %I:%M %p')} but HCP shows {scheduled_az.strftime('%B %d at %I:%M %p')}"
+                        else:  # date matches but time doesn't
+                            sync_status = "Wrong Time"
+                            schedule_sync_details = f"Airtable shows {final_az.strftime('%I:%M %p')} but HCP shows {scheduled_az.strftime('%I:%M %p')}"
+                            
+                    except Exception as sync_error:
+                        logger.error(f"Error checking sync status in appointment reschedule: {sync_error}")
+                        # Fall back to basic message
+                        schedule_sync_details = "Appointment rescheduled"
                 else:
-                    sync_details = f"✅ Schedule updated: {format_datetime_for_display(start_time)} (no assignee)"
+                    # No Final Service Time to compare with
+                    schedule_sync_details = "Appointment rescheduled"
+                        
+                # Add sync status to update data if determined
+                if sync_status:
+                    update_data["Sync Status"] = sync_status
+                    
+                # Update schedule sync details
+                if schedule_sync_details:
+                    update_schedule_sync_info(record_id, schedule_sync_details)
             else:
                 # No real changes, skip this update
                 logger.info(f"No actual changes detected in rescheduled webhook")
                 return None
         else:
-            sync_details = f"Appointment {appointment_id} rescheduled, assignee: {assignee or '(empty)'}"
+            # Basic fallback for rescheduled appointment
+            update_schedule_sync_info(record_id, "Appointment rescheduled")
         
         # Now update Airtable with the changes
         update_data = {
@@ -643,7 +804,12 @@ def handle_appointment_rescheduled(appointment_data, existing_record):
         }
         
         result = reservations_table.update(record_id, update_data)
-        update_sync_info(record_id, sync_details)
+        
+        # Update service sync details for assignee change
+        if assignee:
+            update_service_sync_info(record_id, f"Appointment rescheduled, assignee: {assignee}")
+        else:
+            update_service_sync_info(record_id, "Appointment rescheduled (no assignee)")
         logger.info(f"✅ Appointment {appointment_id} rescheduled for record: {record_id}")
         return result
     except Exception as e:
@@ -670,12 +836,13 @@ def handle_appointment_pros_assigned(appointment_data, existing_record):
         logger.info(f"👤 New assignee: {assignee or '(empty)'}")
         
         result = reservations_table.update(record_id, update_data)
+        # Assignment change is a significant event - keep Service Sync Details update
         # Use clearer messages for dev environment
         if environment == 'development':
             sync_details = f"✅ Assignee updated: {assignee or '(none)'}"
         else:
             sync_details = f"Pros assigned to appointment {appointment_id}: {assignee or '(empty)'}"
-        update_sync_info(record_id, sync_details)
+        update_service_sync_info(record_id, sync_details)
         logger.info(f"✅ Pros assigned to appointment {appointment_id} for record: {record_id}")
         return result
     except Exception as e:
@@ -710,6 +877,7 @@ def handle_appointment_pros_unassigned(appointment_data, existing_record):
         logger.info(f"👤 Remaining assignee: {assignee or '(none)'}")
         
         result = reservations_table.update(record_id, update_data)
+        # Assignment change is a significant event - keep Service Sync Details update
         # Use clearer messages for dev environment
         if environment == 'development':
             if assignee:
@@ -720,7 +888,7 @@ def handle_appointment_pros_unassigned(appointment_data, existing_record):
                 sync_details = f"⚠️ All assignees removed"
         else:
             sync_details = f"Pros unassigned from appointment {appointment_id}, remaining: {assignee or '(none)'}"
-        update_sync_info(record_id, sync_details)
+        update_service_sync_info(record_id, sync_details)
         logger.info(f"✅ Pros unassigned from appointment {appointment_id} for record: {record_id}")
         return result
     except Exception as e:

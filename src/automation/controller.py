@@ -184,7 +184,7 @@ class AutomationController:
                 fields = record.get("fields", {})
                 name = fields.get('Name', "")
                 is_active = fields.get('Active', False)
-                last_ran = fields.get('Last Ran', "Never")
+                last_ran = fields.get('Last Ran Time', "Never")
                 sync_details = fields.get('Sync Details', "No details")
                 
                 automations[name] = {
@@ -220,7 +220,7 @@ class AutomationController:
                 fields = record.get("fields", {})
                 name = fields.get('Name', "Unknown")
                 is_active = fields.get('Active', False)
-                last_ran = fields.get('Last Ran', "Never")
+                last_ran = fields.get('Last Ran Time', "Never")
                 sync_details = fields.get('Sync Details', "No details")
                 
                 status_icon = "✅" if is_active else "❌"
@@ -252,7 +252,7 @@ class AutomationController:
         
         # Import automation functions based on environment
         # These will be imported dynamically based on the config
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation, run_service_line_updates
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_add_jobs_automation, run_sync_jobs_automation, run_job_reconciliation, run_service_line_updates
         
         # Define automation mappings
         automations = [
@@ -260,7 +260,8 @@ class AutomationController:
             ("Evolve", run_evolve_automation),
             ("CSV Files", run_csv_automation),
             ("ICS Calendar", run_ics_automation),
-            ("Add/Sync Service Jobs", run_hcp_automation),
+            ("Add Service Jobs", run_add_jobs_automation),
+            ("Sync Service Jobs", run_sync_jobs_automation),
             ("Update Service Lines", run_service_line_updates),
         ]
         
@@ -329,7 +330,7 @@ class AutomationController:
             execute: For reconciliation, whether to execute or dry-run
         """
         # Import automation functions
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_job_reconciliation, run_service_line_updates
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_add_jobs_automation, run_sync_jobs_automation, run_job_reconciliation, run_service_line_updates
         
         # Map automation IDs to functions
         automation_map = {
@@ -337,7 +338,9 @@ class AutomationController:
             "Evolve": run_evolve_automation,
             "CSV Files": run_csv_automation,
             "ICS Calendar": run_ics_automation,
-            "Add/Sync Service Jobs": run_hcp_automation,
+            "Add/Sync Service Jobs": run_hcp_automation,  # Legacy support
+            "Add Service Jobs": run_add_jobs_automation,
+            "Sync Service Jobs": run_sync_jobs_automation,
             "Job Reconciliation": run_job_reconciliation,
             "Update Service Lines": run_service_line_updates,
         }

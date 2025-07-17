@@ -304,14 +304,17 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
     3. Preserves all HCP fields from the most recent ACTIVE record
     4. Returns the new record ID
     """
+    logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone called with {len(records)} records, status={status}")
     update_batch = BatchCollector(table, op="update")
     
     # Find the most recent ACTIVE record to use as template
     if not records:
+        logging.info(f"🔍 DEBUG: No records provided, returning None")
         return None
     
     # Filter for active records (New or Modified)
     active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
+    logging.info(f"🔍 DEBUG: Found {len(active_records)} active records out of {len(records)} total")
     
     # If no active records, use the most recent record
     if active_records:
@@ -320,8 +323,10 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
         latest = max(records, key=lambda r: r["fields"].get("Last Updated", ""))
     
     old_f = latest["fields"]
+    logging.info(f"🔍 DEBUG: Using record ID {latest['id']} as template (status: {old_f.get('Status')})")
     
     # Mark ALL records as Old
+    logging.info(f"🔍 DEBUG: Marking {len(records)} records as Old")
     for record in records:
         update_batch.add({
             "id": record["id"],
@@ -329,10 +334,14 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
         })
     
     # Flush updates
+    logging.info(f"🔍 DEBUG: Flushing batch updates to mark records as Old")
     update_batch.done()
+    logging.info(f"🔍 DEBUG: Batch updates completed successfully")
     
     # Build clone (copy everything except blacklist)
+    logging.info(f"🔍 DEBUG: Building clone from template record")
     clone = {k: v for k, v in old_f.items() if k not in WRITE_BLACKLIST}
+    logging.info(f"🔍 DEBUG: Base clone has {len(clone)} fields")
     
     # IMPORTANT: Explicitly preserve ALL HCP fields from the latest record
     # This ensures they're carried forward even if some would normally be excluded
@@ -344,9 +353,13 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
     
     # Apply the changes and status
     clone.update(Status=status, **field_to_change, **{"Last Updated": now_iso})
+    logging.info(f"🔍 DEBUG: Final clone has {len(clone)} fields, status={status}")
     
     # Write new row
-    return table.create(clone)
+    logging.info(f"🔍 DEBUG: Creating new record in Airtable")
+    result = table.create(clone)
+    logging.info(f"🔍 DEBUG: Successfully created new record: {result}")
+    return result
 
 # ---------------------------------------------------------------------------
 # Keyword Mappings for ICS Parsing
@@ -995,9 +1008,23 @@ def has_changes(event, airtable_record):
                     f"{at_fields.get('Entry Type')} -> {event['entry_type']}")
         return True
     
-    if at_fields.get("Service Type") != event["service_type"]:
+    # Service Type preservation logic
+    at_service_type = at_fields.get("Service Type", "")
+    default_service_types = ["Turnover", "Needs Review", "Owner Arrival"]
+    
+    # If the existing Service Type is not a default value and the ICS wants to set it to a default value,
+    # preserve the existing one
+    if (at_service_type not in default_service_types and 
+        event["service_type"] in default_service_types and
+        at_service_type != ""):
+        # Don't report a change - we'll preserve the existing value
+        logging.info(f"🛡️ Preserving existing Service Type '{at_service_type}' for {event['uid']} (not overwriting with '{event['service_type']}')")
+        # Update the event to use the preserved value
+        event["service_type"] = at_service_type
+        # No change to report
+    elif at_service_type != event["service_type"]:
         logging.info(f"Service Type changed for {event['uid']}: "
-                    f"{at_fields.get('Service Type')} -> {event['service_type']}")
+                    f"{at_service_type} -> {event['service_type']}")
         return True
     
     if at_fields.get("Block Type") != event["block_type"]:
@@ -1262,18 +1289,24 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     
     # Get all UIDs for this feed URL
     feed_keys = [(uid, feed_url) for uid, feed_url in existing_records.keys() if feed_url == url]
+    logging.info(f"🔍 DEBUG: Found {len(feed_keys)} existing record keys for feed {url}")
     
     # Find pairs that exist in Airtable but weren't in this feed
     missing_keys = [pair for pair in feed_keys if pair not in processed_uid_url_pairs]
+    logging.info(f"🔍 DEBUG: Found {len(missing_keys)} missing keys that should be removed")
     
-    for uid, feed_url in missing_keys:
+    for i, (uid, feed_url) in enumerate(missing_keys):
+        logging.info(f"🔍 DEBUG: Processing missing key {i+1}/{len(missing_keys)}: {uid}")
         records = existing_records.get((uid, feed_url), [])
         active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
         
         for rec in active_records:
             fields = rec["fields"]
+            record_id = fields.get("ID")
+            logging.info(f"🔍 DEBUG: Checking record {record_id} for removal conditions")
             # Skip if the stay is fully past
             if fields.get("Check-out Date", "") < today_iso:
+                logging.info(f"🔍 DEBUG: Skipping record {record_id} - checkout date is in past")
                 continue
             
             # NEW: Check if this record matches a duplicate that was detected
@@ -1291,7 +1324,10 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                     continue
                 
             # Mark this record as Removed through mark_all_as_old_and_clone
-            mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
+            logging.info(f"🔍 DEBUG: About to call mark_all_as_old_and_clone for record {rec['fields'].get('ID')} (UID: {uid})")
+            logging.info(f"🔍 DEBUG: Records passed to function: {len(records)} records")
+            result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
+            logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
             removed_count += 1
     
     # Return stats including removals

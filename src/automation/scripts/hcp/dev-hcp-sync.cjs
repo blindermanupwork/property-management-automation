@@ -12,6 +12,24 @@ const Airtable = require('airtable');
 // Use native fetch in Node 18+
 const { fetch } = globalThis;
 
+// Parse command line arguments
+const args = process.argv.slice(2);
+const ADD_ONLY = args.includes('--add-only');
+const SYNC_ONLY = args.includes('--sync-only');
+
+if (ADD_ONLY && SYNC_ONLY) {
+  console.error('❌ Cannot specify both --add-only and --sync-only');
+  process.exit(1);
+}
+
+if (ADD_ONLY) {
+  console.log('🔧 Running in ADD ONLY mode - will create new jobs but skip sync verification');
+} else if (SYNC_ONLY) {
+  console.log('🔍 Running in SYNC ONLY mode - will verify existing jobs but skip job creation');
+} else {
+  console.log('🔧 Running in FULL mode - will create jobs and verify sync status');
+}
+
 // Import sync message builder for dev environment
 let buildSyncMessage = null;
 try {
@@ -52,6 +70,19 @@ const fmtDate = (d) => {
   const mon = dt.toLocaleString('en-US', { month: 'long', timeZone: AZ_TZ });
   const day = dt.getDate();
   return `${mon} ${day}`;
+};
+
+// Get Arizona timestamp for sync details
+const getAzTimestamp = () => {
+  const now = new Date();
+  return now.toLocaleString('en-US', {
+    timeZone: AZ_TZ,
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
 };
 
 // HCP API helper with rate limiting
@@ -123,34 +154,45 @@ async function syncMultipleJobs() {
     
     console.log(`📊 Found ${allRecords.length} total reservations`);
     
-    // Filter records that need job creation
-    const recordsToProcess = allRecords.filter(rec => {
-      const hasJob = rec.fields['Service Job ID'];
-      const serviceType = rec.fields['Service Type'];
-      const finalTime = rec.fields['Final Service Time'];
+    // Filter records that need job creation (only if not SYNC_ONLY)
+    let recordsToProcess = [];
+    if (!SYNC_ONLY) {
+      recordsToProcess = allRecords.filter(rec => {
+        const hasJob = rec.fields['Service Job ID'];
+        const serviceType = rec.fields['Service Type'];
+        const finalTime = rec.fields['Final Service Time'];
+        
+        // Create job if: NO job ID exists AND has service type AND has final time
+        return !hasJob && serviceType && finalTime;
+      });
       
-      // Create job if: NO job ID exists AND has service type AND has final time
-      return !hasJob && serviceType && finalTime;
-    });
+      console.log(`🎯 ${recordsToProcess.length} reservations need job creation`);
+    } else {
+      console.log('⏭️ Skipping job creation (SYNC_ONLY mode)');
+    }
     
-    console.log(`🎯 ${recordsToProcess.length} reservations need job creation`);
-    
-    // Check ALL records that have jobs for sync verification
-    const recordsToVerify = allRecords.filter(rec => {
-      const hasJob = rec.fields['Service Job ID'];
-      const finalTime = rec.fields['Final Service Time'];
+    // Check ALL records that have jobs for sync verification (only if not ADD_ONLY)
+    let recordsToVerify = [];
+    if (!ADD_ONLY) {
+      recordsToVerify = allRecords.filter(rec => {
+        const hasJob = rec.fields['Service Job ID'];
+        const finalTime = rec.fields['Final Service Time'];
+        
+        // Verify sync for: ANY record with job ID AND final time
+        return hasJob && finalTime;
+      });
       
-      // Verify sync for: ANY record with job ID AND final time
-      return hasJob && finalTime;
-    });
-    
-    console.log(`🔍 ${recordsToVerify.length} existing jobs will be checked for sync status`);
+      console.log(`🔍 ${recordsToVerify.length} existing jobs will be checked for sync status`);
+    } else {
+      console.log('⏭️ Skipping sync verification (ADD_ONLY mode)');
+    }
     
     let successCount = 0;
     let errorCount = 0;
     let verifyCount = 0;
     
-    // First, verify existing jobs
+    // First, verify existing jobs (only if not ADD_ONLY)
+    if (!ADD_ONLY) {
     for (const rec of recordsToVerify) {
       const jobId = rec.fields['Service Job ID'];
       const finalTime = rec.fields['Final Service Time'];
@@ -199,16 +241,28 @@ async function syncMultipleJobs() {
           }
         } else {
           syncStatus = dateMatch && timeMatch ? 'Synced' : (!dateMatch ? 'Wrong Date' : 'Wrong Time');
-          syncDetails = `Schedule verification: ${dateMatch && timeMatch ? 'In sync' : 'Mismatch detected'}`;
+          if (!dateMatch) {
+            syncDetails = `Airtable shows ${azDate(schedExpected)} at ${azTime(schedExpected)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)} - ${getAzTimestamp()}`;
+          } else if (!timeMatch) {
+            syncDetails = `Airtable shows ${azTime(schedExpected)} but HCP shows ${azTime(schedLive)} - ${getAzTimestamp()}`;
+          } else {
+            syncDetails = null; // No mismatch, don't update Schedule Sync Details
+          }
         }
         
         // Update Airtable with verification results
-        await base('Reservations').update(rec.id, {
+        const updateFields = {
           'Sync Status': syncStatus,
-          'Service Sync Details': syncDetails,
           'Sync Date and Time': new Date().toISOString(),
           'Scheduled Service Time': schedLive.toISOString()
-        });
+        };
+        
+        // Only update Schedule Sync Details if there's a mismatch
+        if (syncDetails) {
+          updateFields['Schedule Sync Details'] = syncDetails;
+        }
+        
+        await base('Reservations').update(rec.id, updateFields);
         
         console.log(`   ✅ Updated sync status: ${syncStatus}`);
         if (syncStatus !== 'Synced') {
@@ -221,11 +275,15 @@ async function syncMultipleJobs() {
         console.error(`   ❌ Error verifying job ${jobId}: ${error.message}`);
       }
     }
+    }
     
-    // Process each record that needs job creation
+    // Process each record that needs job creation (only if not SYNC_ONLY)
+    if (!SYNC_ONLY) {
     for (const rec of recordsToProcess) {
       const resUID = rec.fields['Reservation UID'] || rec.id;
-      const serviceType = rec.fields['Service Type'];
+      // Get service type - handle both object and string formats
+      const serviceTypeField = rec.fields['Service Type'];
+      const serviceType = (typeof serviceTypeField === 'object' && serviceTypeField && serviceTypeField.name) ? serviceTypeField.name : (serviceTypeField || 'Turnover');
       const finalTime = rec.fields['Final Service Time'];
       const propLinks = rec.fields['Property ID'] || [];
       const sameDayTurnover = rec.fields['Same-day Turnover'];
@@ -248,7 +306,7 @@ async function syncMultipleJobs() {
         let baseSvcName;
         
         if (sameDayTurnover) {
-          baseSvcName = `${serviceType} STR SAME DAY`;
+          baseSvcName = `SAME DAY ${serviceType} STR`;
           console.log(`Same-day ${serviceType} -- Setting base service name to: ${baseSvcName}`);
         } else {
           const checkOutDate = rec.fields['Check-out Date'];
@@ -263,21 +321,22 @@ async function syncMultipleJobs() {
               const nextEntryType = nextEntry.fields['Entry Type'];
               const isBlock = nextEntryType === 'Block';
               
+              const nextCheckIn = new Date(nextCheckInDate + 'T12:00:00-07:00'); // Force Arizona time at noon
+              const month = nextCheckIn.toLocaleString('en-US', { month: 'long', timeZone: 'America/Phoenix' });
+              const day = parseInt(nextCheckIn.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/Phoenix' }));
+              
               if (isBlock) {
+                baseSvcName = `OWNER ARRIVING ${serviceType} STR ${month} ${day}`;
                 console.log(`Next entry is a BLOCK (owner arriving) on ${nextCheckInDate}`);
+                console.log(`Setting base service name to: ${baseSvcName}`);
+                rec.isNextEntryBlock = true;
               } else {
+                baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
                 const nextResUID = nextEntry.fields['Reservation UID'] || nextEntry.id;
                 console.log(`Next entry is reservation ${nextResUID} on ${nextCheckInDate}`);
+                console.log(`Setting base service name to: ${baseSvcName}`);
+                rec.isNextEntryBlock = false;
               }
-              
-              const nextCheckIn = new Date(nextCheckInDate);
-              const month = nextCheckIn.toLocaleString('en-US', { month: 'long' });
-              const day = nextCheckIn.getDate();
-              baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
-              console.log(`Setting base service name to: ${baseSvcName}`);
-              
-              // Store block status for later use
-              rec.isNextEntryBlock = isBlock;
             } else {
               baseSvcName = `${serviceType} STR Next Guest Unknown`;
               console.log(`No next entry found -- Setting base service name to: ${baseSvcName}`);
@@ -336,14 +395,9 @@ async function syncMultipleJobs() {
           console.log(`Added custom instructions: "${customInstructions}"`);
         }
         
-        // Add OWNER ARRIVING if next entry is a block
-        if (rec.isNextEntryBlock) {
-          parts.push("OWNER ARRIVING");
-          console.log(`Added OWNER ARRIVING flag`);
-        }
-        
-        // Add LONG TERM GUEST DEPARTING if applicable
-        if (isLongTermGuest) {
+        // Add LONG TERM GUEST DEPARTING if applicable (but not if owner is already in base name)
+        // Note: OWNER ARRIVING is now part of the base service name when next entry is a block
+        if (isLongTermGuest && !rec.isNextEntryBlock) {
           parts.push("LONG TERM GUEST DEPARTING");
           console.log(`Added long-term guest flag`);
         }
@@ -397,16 +451,27 @@ async function syncMultipleJobs() {
           continue;
         }
         
-        // Get template ID
+        // Get template ID - map service type to appropriate template
+        // Normalize service type for template selection but preserve original for display
+        let templateServiceType;
+        if (serviceType === 'Return Laundry') {
+          templateServiceType = 'Return Laundry';
+        } else if (serviceType === 'Inspection') {
+          templateServiceType = 'Inspection';
+        } else {
+          // Everything else uses Turnover template (including Initial Service, Deep Clean, etc.)
+          templateServiceType = 'Turnover';
+        }
+        
         const templateMap = {
           'Turnover': propRec.fields['Turnover Job Template ID'],
           'Return Laundry': propRec.fields['Return Laundry Job Template ID'],
           'Inspection': propRec.fields['Inspection Job Template ID']
         };
         
-        const templateId = templateMap[serviceType];
+        const templateId = templateMap[templateServiceType];
         if (!templateId) {
-          console.log(`⚠️  Skipping - No template ID for ${serviceType}`);
+          console.log(`⚠️  Skipping - No template ID for ${serviceType} (using ${templateServiceType} template)`);
           errorCount++;
           continue;
         }
@@ -418,10 +483,11 @@ async function syncMultipleJobs() {
         console.log(`   Scheduled: ${finalTime}`);
         
         // Enhanced job creation with job type IDs from environment
+        // Use templateServiceType for job type selection
         let jobTypeId;
-        if (serviceType === 'Return Laundry') {
+        if (templateServiceType === 'Return Laundry') {
           jobTypeId = process.env.DEV_HCP_RETURN_LAUNDRY_JOB_TYPE;
-        } else if (serviceType === 'Inspection') {
+        } else if (templateServiceType === 'Inspection') {
           jobTypeId = process.env.DEV_HCP_INSPECTION_JOB_TYPE;
         } else {
           // Default to Turnover for any other service type
@@ -430,11 +496,11 @@ async function syncMultipleJobs() {
         
         // Fallback to Turnover if job type ID is not found
         if (!jobTypeId) {
-          console.log(`⚠️  No job type ID found for ${serviceType}, defaulting to Turnover`);
+          console.log(`⚠️  No job type ID found for ${templateServiceType}, defaulting to Turnover`);
           jobTypeId = process.env.DEV_HCP_TURNOVER_JOB_TYPE;
         }
         
-        console.log(`Using ${serviceType} job type ${jobTypeId}`);
+        console.log(`Using ${templateServiceType} job type ${jobTypeId} for ${serviceType} service`);
         
         // Create HCP job with job type ID
         const jobBody = {
@@ -571,9 +637,15 @@ async function syncMultipleJobs() {
             });
           }
         } else {
-          // Fallback for prod environment
+          // Fallback for dev environment
           syncStatus = dateMatch && timeMatch ? 'Synced' : (!dateMatch ? 'Wrong Date' : 'Wrong Time');
-          syncDetails = `Created DEV job ${jobId} with service name: ${svcName}`;
+          if (!dateMatch) {
+            syncDetails = `Created job ${jobId} - Airtable shows ${azDate(schedExpected)} at ${azTime(schedExpected)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)} - ${getAzTimestamp()}`;
+          } else if (!timeMatch) {
+            syncDetails = `Created job ${jobId} - Airtable shows ${azTime(schedExpected)} but HCP shows ${azTime(schedLive)} - ${getAzTimestamp()}`;
+          } else {
+            syncDetails = null; // No mismatch, don't update Schedule Sync Details
+          }
         }
         
         const updateFields = {
@@ -582,12 +654,16 @@ async function syncMultipleJobs() {
           'Job Status': 'Scheduled',
           'Sync Status': syncStatus,
           'Sync Date and Time': new Date().toISOString(),
-          'Service Sync Details': syncDetails,  // Use the new field name for dev
           'Scheduled Service Time': schedLive.toISOString()
         };
         
         if (appointmentId) {
           updateFields['Service Appointment ID'] = appointmentId;
+        }
+        
+        // Only update Schedule Sync Details if there's a mismatch
+        if (syncDetails) {
+          updateFields['Schedule Sync Details'] = syncDetails;
         }
         
         await base('Reservations').update(rec.id, updateFields);
@@ -602,6 +678,7 @@ async function syncMultipleJobs() {
         console.error(`❌ Error processing ${resUID}: ${error.message}`);
         errorCount++;
       }
+    }
     }
     
     console.log('\n📊 Sync Summary:');
