@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.8** - Enhanced Service Line Updates with Owner Detection + Property Name Logging
+**Current Version: 2.2.9** - Hybrid UID + Property/Dates/Type Duplicate Detection
 
-## 📁 Project Structure (as of June 11, 2025)
+## 📁 Project Structure (as of July 21, 2025)
 
 ```
 /home/opc/automation/
@@ -32,7 +32,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── logs/                # All system logs
 │       └── scripts/
 │           ├── CSVtoAirtable/   # CSV processing
-│           ├── icsAirtableSync/ # ICS processing
+│           │   ├── csvProcess.py         # Original CSV processor
+│           │   ├── csvProcess_hybrid.py  # Hybrid UID + property/dates/type detection (v2.2.9)
+│           │   └── csvProcess_best.py    # Backup of best working version
+│           ├── icsAirtableSync/ # ICS processing (with hybrid detection)
 │           ├── evolve/          # Evolve scraping
 │           ├── webhook/         # Webhook handling
 │           ├── hcp/             # HousecallPro sync
@@ -60,7 +63,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │
 ├── testing/                     # All testing related
 │   ├── test-runners/            # Test execution scripts
-│   │   ├── *.py                 # Python tests
+│   │   ├── test_ics_hybrid.py  # ICS hybrid processing tests (v2.2.9)
+│   │   ├── test_csv_hybrid.py  # CSV hybrid processing tests (v2.2.9)
+│   │   ├── test_hybrid_live.py # Live Airtable integration tests (v2.2.9)
+│   │   ├── run_hybrid_tests.sh # Automated test runner for hybrid processing
+│   │   ├── *.py                 # Other Python tests
 │   │   └── *.cjs                # JavaScript tests
 │   └── test-scenarios/          # Test data files
 │       ├── scenarios/           # Organized test scenarios
@@ -84,10 +91,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.8)
+### Current System State (v2.2.9)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
-- ✅ **Optimized cron scheduling**: Both environments run every 4 hours (staggered)
+- ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
 - ✅ **🚀 BULLETPROOF HCP MCP**: Native TypeScript analysis, <10ms execution, zero bash failures
 - ✅ **CloudMailin Integration**: Replaced Gmail OAuth with webhook-based email processing
 - ✅ **Enhanced search capabilities**: Address search, job filtering, revenue analysis
@@ -106,7 +113,11 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **HCP Job Reconciliation (Optimized)**: High-performance automatic matching of unlinked HCP jobs to Airtable reservations with parallel processing
 - ✅ **Reservation Duplicate Detection**: Scripts to find and fix duplicate active UIDs and property/date conflicts (June 30, 2025)
 - ✅ **Property Name Logging**: CSV sync logs now display property names (e.g., "2065 W 1st Pl, Mesa, AZ") instead of cryptic record IDs for better searchability (July 12, 2025)
-- ✅ **Property Name Logging**: CSV logs now show human-readable property names instead of cryptic record IDs (July 11, 2025)
+- ✅ **Hybrid Duplicate Detection (v2.2.9)**: Prevents false "Removed" markings for dynamic UID systems (July 21, 2025)
+  - Fixed 420 records incorrectly marked as "Removed" when active duplicates existed
+  - Implements UID matching first, then property/dates/type fallback for Lodgify/Evolve
+  - Consistent approach across both ICS and CSV processing
+  - Comprehensive test suites validate all edge cases
 
 
 ## HCP Sync Script Locations
@@ -134,6 +145,12 @@ python3 test_setup.py                          # Validate setup
 cd testing/test-runners
 python3 comprehensive-e2e-test.py              # Run end-to-end tests
 python3 critical-business-logic-tests.py       # Run business logic tests
+
+# Hybrid Processing Tests (v2.2.9)
+python3 test_ics_hybrid.py                     # Test ICS hybrid duplicate detection
+python3 test_csv_hybrid.py                     # Test CSV hybrid duplicate detection
+python3 test_hybrid_live.py                    # Test live Airtable integration
+./run_hybrid_tests.sh                          # Run all hybrid tests automatically
 
 # Cleanup scripts
 python3 src/automation/scripts/cleanup-duplicate-reservations.py --env prod --dry-run  # Test cleanup
@@ -181,9 +198,9 @@ node tools/test-mcp-connection.js              # Test MCP server connectivity
 
 ### Environment Management
 ```bash
-# Cron setup (Both environments now run every 4 hours, staggered by 10 minutes)
+# Cron setup
 ./cron_setup_dev.sh                           # Setup development cron (every 4hr at :10)
-./cron_setup_prod.sh                          # Setup production cron (every 4hr at :00)
+./cron_setup_prod.sh                          # Setup production cron (every 1hr at :00)
 ./cron_remove.sh                              # Remove old cron jobs
 # Note: These are symlinks to src/automation/scripts/system/
 
@@ -227,7 +244,7 @@ python3 src/automation/scripts/evolve/evolveScrape.py  # Environment already set
 # Daily Operations (Production data as of v2.2.1):
 # - iTrip email processing: 50+ reservation CSVs daily
 # - ICS feeds processed: 246 feeds (prod), 255 feeds (dev) 
-# - Evolve properties: Auto-scraped every 4 hours
+# - Evolve properties: Auto-scraped hourly (prod), every 4 hours (dev)
 # - Service line custom instructions: Unicode support, 200-char limit
 # - Webhook forwarding: Dual auth with security headers
 ```
@@ -293,7 +310,7 @@ This is a comprehensive property management automation system that orchestrates 
 - **Python**: Core automation logic, universal runners, data processing
 - **JavaScript/TypeScript**: AI agent (OpenAI integration), HousecallPro API, MCP servers
 - **MCP (Model Context Protocol)**: Airtable and HousecallPro integrations for Claude
-- **Cron**: Automated scheduling (4hr intervals - both dev and prod, staggered by 10 minutes)
+- **Cron**: Automated scheduling (prod: hourly, dev: 4hr intervals)
 
 ### MCP Server Integration (Enhanced v2.2.2 - Bulletproof)
 - `airtable-mcp-server`: Provides Claude access to Airtable data
@@ -435,7 +452,37 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 ```
 
 
-## Key System Features (v2.2.8)
+## Key System Features (v2.2.9)
+
+### **Hybrid UID + Property/Dates/Type Duplicate Detection (NEW in v2.2.9)**
+- **Problem Solved**: Lodgify and Evolve change UIDs on every ICS download, causing false "Removed" markings
+- **Solution**: Hybrid approach that tries UID matching first, then falls back to property/dates/type matching
+- **Impact**: Fixed 420 records incorrectly marked as "Removed" when active duplicates existed
+- **Implementation**: 
+  - ICS Processing: Already had hybrid detection, but needed refinement
+  - CSV Processing: New `csvProcess_hybrid.py` implements same approach
+  - Session tracking prevents duplicates within same processing run
+  - Composite UID support (e.g., "14516891_recL6AiK5pINSbcnu")
+- **Key Logic**:
+  ```python
+  # HYBRID APPROACH: Try UID matching first
+  all_records = all_reservation_records.get((uid, feed_url), [])
+  
+  # Also check composite UID
+  if not all_records and res.get("property_id"):
+      composite_key = (f"{uid}_{res['property_id']}", feed_url)
+      all_records = all_reservation_records.get(composite_key, [])
+  
+  # HYBRID APPROACH: If no UID match, try property+dates+type matching
+  if not all_records and res.get("property_id"):
+      # Find records with same property, check-in, check-out, and entry type
+      # This handles Lodgify/Evolve where UIDs change but property/dates remain constant
+  ```
+- **Testing**: Comprehensive test suites validate all edge cases
+  - `test_ics_hybrid.py`: Tests 5 ICS scenarios including Lodgify UID changes
+  - `test_csv_hybrid.py`: Tests iTrip/Evolve CSV scenarios
+  - `test_hybrid_live.py`: Live Airtable integration tests
+  - `run_hybrid_tests.sh`: Automated test runner
 
 ### **Property Name Logging Enhancement**
 - **Feature**: Human-readable property names in all CSV sync logs
@@ -597,6 +644,39 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 - **Sources**: Airbnb, VRBO, Booking.com, Hospitable, and other property management systems
 - **CSV Processing**: Daily iTrip reports and Evolve data automatically processed
 - **Environment Isolation**: Complete separation between dev and prod data flows
+
+## Duplicate Detection Test Framework (v2.2.8)
+
+### Automated Testing
+The system now includes automated duplicate detection testing that runs after every ICS and CSV processing:
+
+#### Test Scenarios
+1. **New reservation** - New UID and dates should be created
+2. **Same UID modifications** - Same UID with changes should update existing
+3. **UID removed (future)** - Missing UID with future checkout marks as removed
+4. **Different UID same dates** - Lodgify case - new UID but same dates ignores duplicate
+5. **Same UID different dates** - Date change for same UID updates existing
+6. **Block vs Reservation** - Different entry types are separate
+
+#### Integration
+- **ICS Processing**: Tests run automatically after successful processing
+- **CSV Processing**: Tests run automatically after successful processing
+- **Results Storage**: Test results are saved to Airtable "Automation" table
+- **Record Name**: "Duplicate Detection Tests"
+- **Fields Updated**:
+  - `Last Ran Time`: Timestamp of test execution
+  - `Sync Details`: Detailed test results with pass/fail for each scenario
+  - `Active`: Checkbox indicating if all tests passed
+
+#### Manual Testing
+```bash
+# Run tests standalone
+python3 src/automation/scripts/test_duplicate_detection_framework.py
+
+# View test results in logs
+tail -f src/automation/logs/ics_sync_*.log | grep "duplicate detection"
+tail -f src/automation/logs/csv_sync_*.log | grep "duplicate detection"
+```
 
 ## HCP MCP Usage Guide
 
