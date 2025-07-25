@@ -230,6 +230,10 @@ def webhook_worker():
             # Get webhook data from queue (blocks until available)
             webhook_data = webhook_queue.get(timeout=60)  # 60 second timeout
             
+            # CRITICAL DEBUGGING: Track when webhooks are processed from queue
+            event_type = webhook_data.get("event", "unknown")
+            logger.info(f"🔄 Processing webhook from queue - Event: {event_type} at {datetime.now().strftime('%H:%M:%S.%f')[:12]}")
+            
             # Process regular HCP webhook
             process_webhook_async(webhook_data)
             
@@ -1003,7 +1007,8 @@ def hcp_webhook():
         # Add webhook to processing queue instead of processing synchronously
         try:
             webhook_queue.put_nowait(data)
-            logger.info(f"📤 Added webhook to queue - Event: {event_type}")
+            # CRITICAL DEBUGGING: Track webhook timing
+            logger.info(f"📤 Added webhook to queue - Event: {event_type} at {datetime.now().strftime('%H:%M:%S.%f')[:12]}")
         except queue.Full:
             logger.error("❌ Webhook queue is full! Dropping webhook")
             return jsonify({"status": "error", "message": "Queue full"}), 200

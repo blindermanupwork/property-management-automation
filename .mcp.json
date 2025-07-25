@@ -1,22 +1,12 @@
 {
   "mcpServers": {
-    "airtable-dev": {
-      "command": "node",
-      "args": [
-        "/home/opc/automation/tools/airtable-mcp-server/dist/index.js"
-      ],
-      "env": {
-        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY_DEV}",
-        "NODE_ENV": "development"
-      }
-    },
     "hcp-mcp-dev": {
       "command": "node",
       "args": [
         "/home/opc/automation/tools/hcp-mcp-dev/dist/index.js"
       ],
       "env": {
-        "HCP_API_KEY": "${HCP_API_KEY_DEV}",
+        "HCP_API_KEY": "${DEV_HCP_TOKEN}",
         "NODE_ENV": "development"
       }
     },
@@ -26,7 +16,7 @@
         "/home/opc/automation/tools/hcp-mcp-prod/dist/hcp-mcp-prod/src/index.js"
       ],
       "env": {
-        "HCP_API_KEY": "${HCP_API_KEY_PROD}",
+        "HCP_API_KEY": "${PROD_HCP_TOKEN}",
         "NODE_ENV": "production"
       }
     }

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.9** - Hybrid UID + Property/Dates/Type Duplicate Detection
+**Current Version: 2.2.10** - Enhanced sync reporting and iTrip next guest date support
 
 ## 📁 Project Structure (as of July 21, 2025)
 
@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── CLAUDE.md                    # This file - AI instructions
 ├── CLAUDE.local.md              # Private AI instructions
 ├── TASK_TRACKER.md              # Active task tracking
-├── VERSION                      # Current version (2.2.7)
+├── VERSION                      # Current version (2.2.10)
 ├── .env                         # Environment variables
 ├── package.json                 # Node.js dependencies
 │
@@ -32,8 +32,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── logs/                # All system logs
 │       └── scripts/
 │           ├── CSVtoAirtable/   # CSV processing
-│           │   ├── csvProcess.py         # Original CSV processor
-│           │   ├── csvProcess_hybrid.py  # Hybrid UID + property/dates/type detection (v2.2.9)
+│           │   ├── csvProcess.py         # Main stable CSV processor
+│           │   ├── csvProcess_enhanced.py # Wrapper for main processor
 │           │   └── csvProcess_best.py    # Backup of best working version
 │           ├── icsAirtableSync/ # ICS processing (with hybrid detection)
 │           ├── evolve/          # Evolve scraping
@@ -63,11 +63,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │
 ├── testing/                     # All testing related
 │   ├── test-runners/            # Test execution scripts
-│   │   ├── test_ics_hybrid.py  # ICS hybrid processing tests (v2.2.9)
-│   │   ├── test_csv_hybrid.py  # CSV hybrid processing tests (v2.2.9)
-│   │   ├── test_hybrid_live.py # Live Airtable integration tests (v2.2.9)
-│   │   ├── run_hybrid_tests.sh # Automated test runner for hybrid processing
-│   │   ├── *.py                 # Other Python tests
+│   │   ├── *.py                 # Python tests
 │   │   └── *.cjs                # JavaScript tests
 │   └── test-scenarios/          # Test data files
 │       ├── scenarios/           # Organized test scenarios
@@ -91,7 +87,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.9)
+### Current System State (v2.2.10)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
@@ -113,11 +109,9 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **HCP Job Reconciliation (Optimized)**: High-performance automatic matching of unlinked HCP jobs to Airtable reservations with parallel processing
 - ✅ **Reservation Duplicate Detection**: Scripts to find and fix duplicate active UIDs and property/date conflicts (June 30, 2025)
 - ✅ **Property Name Logging**: CSV sync logs now display property names (e.g., "2065 W 1st Pl, Mesa, AZ") instead of cryptic record IDs for better searchability (July 12, 2025)
-- ✅ **Hybrid Duplicate Detection (v2.2.9)**: Prevents false "Removed" markings for dynamic UID systems (July 21, 2025)
-  - Fixed 420 records incorrectly marked as "Removed" when active duplicates existed
-  - Implements UID matching first, then property/dates/type fallback for Lodgify/Evolve
-  - Consistent approach across both ICS and CSV processing
-  - Comprehensive test suites validate all edge cases
+- ✅ **Enhanced Sync Reporting**: Detailed breakdowns showing new/modified/removed counts for both reservations and blocks (v2.2.10)
+- ✅ **iTrip Next Guest Date Support**: Service lines now use iTrip-provided next guest dates when available (v2.2.10)
+- ✅ **Single Error Symbol Display**: Fixed double ❌ issue in error messages (v2.2.10)
 
 
 ## HCP Sync Script Locations
@@ -454,36 +448,6 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
 
 ## Key System Features (v2.2.9)
 
-### **Hybrid UID + Property/Dates/Type Duplicate Detection (NEW in v2.2.9)**
-- **Problem Solved**: Lodgify and Evolve change UIDs on every ICS download, causing false "Removed" markings
-- **Solution**: Hybrid approach that tries UID matching first, then falls back to property/dates/type matching
-- **Impact**: Fixed 420 records incorrectly marked as "Removed" when active duplicates existed
-- **Implementation**: 
-  - ICS Processing: Already had hybrid detection, but needed refinement
-  - CSV Processing: New `csvProcess_hybrid.py` implements same approach
-  - Session tracking prevents duplicates within same processing run
-  - Composite UID support (e.g., "14516891_recL6AiK5pINSbcnu")
-- **Key Logic**:
-  ```python
-  # HYBRID APPROACH: Try UID matching first
-  all_records = all_reservation_records.get((uid, feed_url), [])
-  
-  # Also check composite UID
-  if not all_records and res.get("property_id"):
-      composite_key = (f"{uid}_{res['property_id']}", feed_url)
-      all_records = all_reservation_records.get(composite_key, [])
-  
-  # HYBRID APPROACH: If no UID match, try property+dates+type matching
-  if not all_records and res.get("property_id"):
-      # Find records with same property, check-in, check-out, and entry type
-      # This handles Lodgify/Evolve where UIDs change but property/dates remain constant
-  ```
-- **Testing**: Comprehensive test suites validate all edge cases
-  - `test_ics_hybrid.py`: Tests 5 ICS scenarios including Lodgify UID changes
-  - `test_csv_hybrid.py`: Tests iTrip/Evolve CSV scenarios
-  - `test_hybrid_live.py`: Live Airtable integration tests
-  - `run_hybrid_tests.sh`: Automated test runner
-
 ### **Property Name Logging Enhancement**
 - **Feature**: Human-readable property names in all CSV sync logs
 - **Format**: `Property "2065 W 1st Pl, Mesa, AZ" (recsKzsYIlFCXXmg5)` instead of just `Property recsKzsYIlFCXXmg5`
@@ -492,14 +456,7 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
   - Better debugging and monitoring of specific properties
   - Consistent property identification across all log entries
 - **Implementation**: Comprehensive property mapping loaded at initialization using Property Name and Address fields
-
-### **Property Name Logging Enhancement**
-- **Feature**: CSV processing logs now display human-readable property names
-- **Implementation**: Property ID to name mapping loaded at initialization
-- **Format**: `"Property Name" (record_id)` instead of just `record_id`
 - **Coverage**: All property references in logging statements
-- **Example**: `🔍 Property "2065 W 1st Pl, Mesa, AZ" (recsKzsYIlFCXXmg5)` instead of `🔍 Property recsKzsYIlFCXXmg5`
-- **Benefit**: Easier to search logs and identify properties without looking up record IDs
 
 ### **Enhanced Service Line Updates with Owner Detection**
 - **Feature**: Automatically detect when property owners are arriving

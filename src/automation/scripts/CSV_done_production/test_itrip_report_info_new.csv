@@ -1,0 +1,5 @@
+Checkin,Checkout,"Date Booked","Tenant Name","Tenant Phone","Property Name","Property Address","Property Owner",BR/BA,Size,"Next Booking","Next Tenant Name","Next Tenant Phone","Same Day?","Contractor Info","Reservation ID"
+"2025-08-01 16:00:00","2025-08-05 10:00:00","2025-06-09 10:30:37","Test Guest","(555) 123-4567","Clubgate Dr Kierland #21287517","15221 N Clubgate Dr #2036, Scottsdale, AZ 85254","Lawrence J Doss",2/2,1340,"2025-08-06 16:00:00","Next Guest","(555) 987-6543",No,"Work Order #TEST123 Due: Aug 5th 10:00 am
+Test contractor instructions to verify iTrip Report Info field
+Door code and Gate Code
+Property Address 15221 N Clubgate Dr #2036, Scottsdale, AZ 85254 Gate Code: 8881# and Door Code 6051",TEST999888

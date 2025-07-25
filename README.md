@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.8** - Enhanced Service Line Updates with Owner Detection
+**Version 2.2.10** - Enhanced Sync Status Reporting & iTrip Next Guest Date Override
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -53,7 +53,7 @@ This system provides complete isolation between development and production:
 automation/                                 # Project root
 ├── 📄 Core System Files
 │   ├── README.md                           # This comprehensive guide
-│   ├── VERSION                             # Current version (2.2.1)
+│   ├── VERSION                             # Current version (2.2.10)
 │   ├── CHANGELOG.md                        # Version history
 │   ├── setup.py                           # Package installation config
 │   ├── requirements.txt                   # Python dependencies
@@ -196,7 +196,7 @@ nano config/environments/prod/.env
   - Works with all job creation methods (dev/prod sync, API)
   - Format: `${customInstructions} - LONG TERM GUEST DEPARTING ${baseSvcName}`
 
-### **6. Service Line Updates with Owner Detection** (NEW v2.2.8)
+### **6. Service Line Updates with Owner Detection** (v2.2.8+)
 Enhanced service line update script that automatically detects owner arrivals:
 
 #### **Owner Detection Logic**:
@@ -204,6 +204,11 @@ Enhanced service line update script that automatically detects owner arrivals:
 - Checks if block checks in same day or next day after reservation checkout
 - Automatically sets "Owner Arriving" field in Airtable
 - Adds "OWNER ARRIVING" to service line description
+
+#### **iTrip Next Guest Date Override** (NEW v2.2.10):
+- iTrip Next Guest Date field now takes precedence over calculated dates
+- When an iTrip reservation has this field populated, it overrides the normal next guest lookup
+- Ensures accuracy for iTrip-specific scheduling requirements
 
 #### **Service Line Description Hierarchy**:
 1. Custom Instructions (max 200 chars)
@@ -463,7 +468,15 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 
 ## 📝 Version History
 
-### **Version 2.2.3** (Current)
+### **Version 2.2.10** (Current)
+- ✅ **Enhanced Sync Status Reporting** - Detailed breakdowns of new/modified/removed with reservation/block counts
+- ✅ **iTrip Next Guest Date Override** - Field now takes precedence over calculated dates
+- ✅ **Fixed Double Error Symbols** - Removed duplicate ❌ in sync failure messages
+- ✅ **Cleaned Up Duplicate Detection Tests** - Removed test records from Airtable automation table
+
+### **Version 2.2.8-2.2.9**
+- ✅ **Enhanced Service Line Updates with Owner Detection**
+- ✅ **Hybrid UID Duplicate Detection** - Composite UID support for CSV processing
 - ✅ **Long-term Guest Detection** (14+ day stays get "LONG TERM GUEST DEPARTING" prefix)
 - ✅ **Service Line Custom Instructions Fix** (proper format: `${customInstructions} - ${baseSvcName}`)
 - ✅ **HCP MCP Server Enhancements** (new search tools, analysis capabilities)

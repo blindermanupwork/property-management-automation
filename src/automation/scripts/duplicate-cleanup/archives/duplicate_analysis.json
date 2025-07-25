@@ -1,0 +1,3460 @@
+{
+  "rechv2TI0eTpZGZoa": {
+    "property_name": "Pritchett [] 825 W Monterey Pl, Chandler",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-16",
+        "checkout": "2025-07-20",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recxsNsjrFr0iu6VG",
+          "airtable_id": 41278,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec8nio5LxlEcL7M7",
+            "airtable_id": 41236,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recuDoaZduPHn1u4M",
+            "airtable_id": 41196,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "reco1CHJYG36Guqzj",
+            "airtable_id": 41156,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recgXTzcOH1SP0bMT",
+            "airtable_id": 41115,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recHvIva4qxhMF9PW",
+            "airtable_id": 40953,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "rec9jfsNDdaq08QrM": {
+    "property_name": "Clubgate Dr Kierland #21287517",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-06-27",
+        "checkout": "2025-07-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recfXk8krLoJgYRT8",
+          "airtable_id": 41021,
+          "uid": "4586545_rec9jfsNDdaq08QrM",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recK2qncbVWku4CsA",
+            "airtable_id": 41043,
+            "uid": "4586545",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recRQSv5kFaVKAXdj": {
+    "property_name": "Mayes [] 2824 N 82nd St Scottsdale",
+    "duplicate_groups": 13,
+    "duplicates": [
+      {
+        "checkin": "2025-07-03",
+        "checkout": "2025-07-04",
+        "entry_type": "Block",
+        "total_records": 14,
+        "keep": {
+          "id": "recNAyrXXOYEHGFtp",
+          "airtable_id": 40912,
+          "uid": "071cc26c-543a-4cec-8338-cb29f4e8a8f6_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:56.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recG1oer33EDrsEyr",
+            "airtable_id": 40870,
+            "uid": "eca0c414-1cb8-4111-a1df-6aef9dc819b9_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:47.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "receqVI1cOulJgPrv",
+            "airtable_id": 41272,
+            "uid": "0fb88239-68a1-4dd2-9888-a8cac5bac536_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recs1IMFy3Trk002U",
+            "airtable_id": 41250,
+            "uid": "2a786e67-715f-4d2c-ab71-db8c38c7e46b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec0d9tPufa5F4jwU",
+            "airtable_id": 41230,
+            "uid": "86d9249f-1b9f-48fd-9fa9-7a9ca2ce2c70_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recOyyPhy88zi3vl1",
+            "airtable_id": 41210,
+            "uid": "8ef2fa00-7f90-4c95-b34c-bee1a0267333_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec4YVfJI9FDCyK5J",
+            "airtable_id": 41190,
+            "uid": "358be9df-49d9-4343-a0d5-ae25ccf004a2_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recuTsgR9JzswqbVQ",
+            "airtable_id": 41170,
+            "uid": "2683d022-5244-46f7-a11e-d29be2a4b7a4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recyqabBXLi73GAVJ",
+            "airtable_id": 41150,
+            "uid": "81f00e3d-9fb1-473b-9244-4a8692f01ece_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recNmPVbtMXChNAby",
+            "airtable_id": 41130,
+            "uid": "98b6afda-02dd-4849-b8c1-1c3519377f10_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recCuPO9l87IcUXJ7",
+            "airtable_id": 41109,
+            "uid": "e2fd713b-6aa8-4700-bb96-4d7ac709d9d0_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recoqG6sFoXaG1Dzt",
+            "airtable_id": 41087,
+            "uid": "a31669a1-c86c-4fee-8a8c-b8cab296b08a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recIsZbsnXqbB7Wrj",
+            "airtable_id": 41071,
+            "uid": "6dd7fe8a-d684-4b62-9c87-f121d778201d_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recwSyoRrcilzGCsK",
+            "airtable_id": 40946,
+            "uid": "863ade87-67f9-4c0d-9047-ce2350d1acfd_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-05-30",
+        "checkout": "2025-06-02",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "rec7JBl1B3IX6PkpX",
+          "airtable_id": 40900,
+          "uid": "e0521cc2-4ff6-4ac8-b173-0904b98f249e_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:53.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recNgz4eZ6k8w9JHY",
+            "airtable_id": 40863,
+            "uid": "ed9d0aa7-98cb-4456-9e89-a42017c71c6c_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:43.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec3j8sIvZK6FjwZY",
+            "airtable_id": 41265,
+            "uid": "5660325a-4170-4596-ad76-afb963bfc3fd_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recMxN5YRkKb5PnTl",
+            "airtable_id": 41243,
+            "uid": "89c06d83-efc0-460f-9a18-719e51bcdedd_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recoEGWDcC6CDDLXV",
+            "airtable_id": 41223,
+            "uid": "2c5530bc-e043-4954-a834-0ef38b1d1eaa_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recBl90LTPTUBIdWK",
+            "airtable_id": 41203,
+            "uid": "5a398a82-6e5f-41f2-a01d-2838ca9216c5_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec9V4B8MVWYG3Bmi",
+            "airtable_id": 41183,
+            "uid": "8eb80007-98b3-4366-8c2f-7a51a3fb276c_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recsZfV3KYINAQFxH",
+            "airtable_id": 41163,
+            "uid": "04fa7885-99d8-4c43-b1d7-c3f026bb0010_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recGQXOhX1dzRaNgd",
+            "airtable_id": 41143,
+            "uid": "c1b9cb26-35f8-40d2-8aeb-326d8bd623f8_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recVXZjJi2Heoax8y",
+            "airtable_id": 41123,
+            "uid": "4c17e1e5-3621-4102-9cf6-591ac24616e4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recSf58jG6mZH9a2c",
+            "airtable_id": 41102,
+            "uid": "9b58893f-3129-48d2-934b-636c193479ae_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rechWtHrZbW2HETCQ",
+            "airtable_id": 41080,
+            "uid": "74db26f4-dc67-4a66-857e-0af2a3afbdd7_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec12LgEeU35hyrPm",
+            "airtable_id": 41064,
+            "uid": "58a501c4-0bd7-4002-9a35-b26167a8e923_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recTFXwJzw3HvJUoY",
+            "airtable_id": 40939,
+            "uid": "e0d1af2e-e55b-47ba-8ade-06e95ff73dbf_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-21",
+        "checkout": "2025-06-22",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "rec4RNavKAvr4SCSm",
+          "airtable_id": 40904,
+          "uid": "b08a0fe3-5c6c-449b-891f-a3623daa5a50_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:54.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec8yhIENvnqttHzk",
+            "airtable_id": 40867,
+            "uid": "0b4b5752-6a83-4d27-a67f-7f6140a2dab7_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:44.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recScEM4FIsWfVYHd",
+            "airtable_id": 41269,
+            "uid": "d42b8887-8e6d-47c6-8635-eef0703e64db_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec1HBHy35gtHN0Y3",
+            "airtable_id": 41247,
+            "uid": "b64274ea-ddd4-4860-a094-4664e95f59fc_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "reci4RWRsFXuN8FA2",
+            "airtable_id": 41227,
+            "uid": "9256b541-a13f-41ab-8f0e-325c3aa131d2_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec6InHzCI0JT2mga",
+            "airtable_id": 41207,
+            "uid": "590330a6-f078-443e-8625-74e9294347dd_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recoUGV0RoMDc01Zb",
+            "airtable_id": 41187,
+            "uid": "58726d21-2970-43f7-9dec-d0ecb57d4ce5_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recJYTGx4T0tWi5Bw",
+            "airtable_id": 41167,
+            "uid": "73b18e24-e25e-4250-b595-40fa5e8f333e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rechK5qUIIjMRINAh",
+            "airtable_id": 41147,
+            "uid": "e8a6ff84-8fa2-4afd-866f-d81fe5ecb824_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recd7DsC76WNRo0Hu",
+            "airtable_id": 41127,
+            "uid": "d85f99c8-9274-4ab3-bb1d-84058c9e681a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recUQyIo8DDReNTpY",
+            "airtable_id": 41106,
+            "uid": "d29d1962-a54b-4e6c-a0e7-d1d383970b95_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recAIsMYgsIDWTswb",
+            "airtable_id": 41084,
+            "uid": "0bfdbb53-c7fa-4335-84d8-1308eb19ce9e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recQQm7QFvIomrWzH",
+            "airtable_id": 41068,
+            "uid": "7d581b42-71e2-4dc3-9a99-24cfd7541dc4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recBdhapifmPvTJN1",
+            "airtable_id": 40943,
+            "uid": "fcccbb38-c0ad-4023-b5d8-03d611bd3894_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-05-22",
+        "checkout": "2025-05-25",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recO4QzR5CoXrxX7n",
+          "airtable_id": 40899,
+          "uid": "85671e6d-bc64-4ddc-815f-bdbb477b7002_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:52.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recTX6EQ3Bz73dnU0",
+            "airtable_id": 40862,
+            "uid": "76773d79-c111-49c1-add4-9d3bf02340d6_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:42.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recyyFmcqege0Xnzc",
+            "airtable_id": 41264,
+            "uid": "35b2f477-7507-4ef1-910b-702332efc0d4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec3GZ5UJPGAA6k0B",
+            "airtable_id": 41242,
+            "uid": "7f5b6008-85ce-4d58-8815-9efe9d8020a1_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recSZFFNnH99EFBCh",
+            "airtable_id": 41222,
+            "uid": "a8d47588-85a5-48c0-a909-d6794d7db5d2_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recL7pFqZJbxgDrtf",
+            "airtable_id": 41202,
+            "uid": "eb655c15-958b-473b-9b17-a9d36bceb587_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recqQnle9eRbNoBxI",
+            "airtable_id": 41182,
+            "uid": "e0ce81cb-a659-4e70-a467-60b6b6c5dbfe_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recyq08zqSqAQv5OB",
+            "airtable_id": 41162,
+            "uid": "c53d9a05-78a6-4963-b7b0-e2512bf853ca_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec1TF9tMXofjee0Z",
+            "airtable_id": 41142,
+            "uid": "9088db40-0b40-471b-a939-ecf35441b2df_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recYv0m1ueC5Iui3x",
+            "airtable_id": 41122,
+            "uid": "2c00e565-6074-45d6-a282-b9b10ce1fcd9_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec4OAv4sWp1WRw7T",
+            "airtable_id": 41101,
+            "uid": "b8744b1f-2396-48c5-ba9a-7f7ddd08c9bd_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recvwoQNbYbP0d1CM",
+            "airtable_id": 41079,
+            "uid": "333f8605-15d8-4621-9cc3-a71442878847_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recXOVVvNO4XHusHW",
+            "airtable_id": 41063,
+            "uid": "0ebac925-52f1-4d7b-8949-69f2b7b0b153_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recY3UCv1c8KBMca2",
+            "airtable_id": 40938,
+            "uid": "145e7545-e418-46b7-8119-403b863730db_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-05",
+        "checkout": "2025-07-07",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recM2xVJ2meJz2Zht",
+          "airtable_id": 40914,
+          "uid": "34e554cf-37ab-4820-97c0-e1f1de8db2f3_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:56.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recxjSx8imw56Sxpm",
+            "airtable_id": 40879,
+            "uid": "2d4ea91b-74c5-4e07-9a37-6e5afafb2569_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:49.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recg2mBNhNYtFOu59",
+            "airtable_id": 41274,
+            "uid": "1956e625-2ed8-4a1e-abc6-95f70204f181_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recHjsH42Ac2Q05Zm",
+            "airtable_id": 41252,
+            "uid": "0a98c48f-7c5f-4236-8133-0c80dbedcc81_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec1dgDhTVhOanWka",
+            "airtable_id": 41232,
+            "uid": "9ce2ef97-2345-4aca-b3e9-3fb296e0f2e6_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recQU2kGtNa9hNKT5",
+            "airtable_id": 41212,
+            "uid": "aebe9ae7-dddd-42a9-88f2-020dcffa64de_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recTmEuTW4gtNJqTM",
+            "airtable_id": 41192,
+            "uid": "41cf244a-d67f-45c9-9e10-9f9d48ca5113_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recLO454KptbKViPD",
+            "airtable_id": 41172,
+            "uid": "28602cb7-a1df-4ed6-9960-ef549b73aa86_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recXGjJidFSbXz2Lz",
+            "airtable_id": 41152,
+            "uid": "0676007d-a650-437c-a63a-32c467353636_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recIEV5lIdvCUnhvY",
+            "airtable_id": 41132,
+            "uid": "aa86a09a-08f4-4643-8223-0407be5020d0_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recoLCf7x0gO9JTog",
+            "airtable_id": 41111,
+            "uid": "508f85ab-987a-4c4a-b74b-e712422fbec8_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recdLuLo1u0Ln3pYo",
+            "airtable_id": 41089,
+            "uid": "a16f062e-ea1e-4295-b744-c7fa550fe0e9_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recYUmzlBtHI6nm0L",
+            "airtable_id": 41073,
+            "uid": "15c2eed6-8184-4871-a954-deb302d8c58d_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recJKwdl1jzyyY2qV",
+            "airtable_id": 40948,
+            "uid": "8cc02226-ecb4-4238-ad11-95b55c5d3469_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-08",
+        "checkout": "2025-06-09",
+        "entry_type": "Block",
+        "total_records": 14,
+        "keep": {
+          "id": "recC8nbc8P34o41EW",
+          "airtable_id": 40902,
+          "uid": "a9cf3d0b-0048-46c6-8d31-95ccaf0b80eb_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:53.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recBFHjv8DltdWaxz",
+            "airtable_id": 40865,
+            "uid": "583cabce-b367-4887-9e1c-7ea6ce9f8dcc_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:44.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recR2JAhn2GfkB6ct",
+            "airtable_id": 41267,
+            "uid": "2fd59dad-f5ba-4a77-809c-c1e05c7fbcb0_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recl2Vhz8TBZUvBgl",
+            "airtable_id": 41245,
+            "uid": "7cacc4d3-96e2-4590-bb96-9dc4c5afb73a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recUC55spdAw0oDRk",
+            "airtable_id": 41225,
+            "uid": "f644edbd-1c0b-4785-bf46-6ca57de75a05_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recR6DOxz7QzZkTbx",
+            "airtable_id": 41205,
+            "uid": "54d6f4d8-61e4-4572-8524-2cc82b362859_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recdWW234rO9qjTXQ",
+            "airtable_id": 41185,
+            "uid": "0a57c11d-8817-4276-b41e-9bb47305d84c_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recxoq2cXaS2VduJg",
+            "airtable_id": 41165,
+            "uid": "ebeb2ed3-0e5d-4189-a70e-101308d01d88_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recptBRGQz8VZmwbI",
+            "airtable_id": 41145,
+            "uid": "48940db2-f52c-4613-a5d7-641af55834ae_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recISj2cXzj5VBeus",
+            "airtable_id": 41125,
+            "uid": "ef47e7df-8ef5-481c-9f5b-aec42a82bdb4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec1ugnkKmF25QVCV",
+            "airtable_id": 41104,
+            "uid": "c978ac05-8550-4661-ba0f-c77399c5012b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recNK3szLpZYUjyYN",
+            "airtable_id": 41082,
+            "uid": "6c265b3b-4283-440e-af9f-f8fd04d10168_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recQ8uElxvnZ31lsC",
+            "airtable_id": 41066,
+            "uid": "b7538e52-1e64-43dc-acb8-34b43569f88a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recVdcos5ylUbo8fA",
+            "airtable_id": 40941,
+            "uid": "cf860219-70a3-4ab8-942c-405d29ddbc63_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-11",
+        "checkout": "2025-07-13",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recwiKXRIieZPJCaT",
+          "airtable_id": 40915,
+          "uid": "815436a4-3459-4abd-a4e4-eecd1d4f12f3_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:56.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recnw7Y1sQsBb8eQC",
+            "airtable_id": 40880,
+            "uid": "fa96061d-095c-4f0d-a43f-ffae559f1e29_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:49.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recRoj3s4aC5tTNdY",
+            "airtable_id": 41275,
+            "uid": "99e8bfce-ace2-4a7e-9121-441ac749265a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec9H5DNNEkBXZdn5",
+            "airtable_id": 41253,
+            "uid": "876216d9-fdbf-4668-a2bc-8e19e842b3ff_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recgOZdDjc6hrurIr",
+            "airtable_id": 41233,
+            "uid": "01afd7a0-2775-4608-9c2e-96fa36d3c979_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recw8DWP3DT2GyHLz",
+            "airtable_id": 41213,
+            "uid": "388d4bea-c043-4c32-a395-5025305d9695_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recDvV1frOA8heQpJ",
+            "airtable_id": 41193,
+            "uid": "0452a265-fa2c-491f-ac62-7cdb028c8b6e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recjwtYod90PIpfKZ",
+            "airtable_id": 41173,
+            "uid": "6808d340-d218-47be-b507-955424776ba5_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recpg9KyNRTQ88XfY",
+            "airtable_id": 41153,
+            "uid": "7f92b83f-530b-482c-b7e5-27b988583b6b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec8v9jiBkMQQlFZp",
+            "airtable_id": 41133,
+            "uid": "123628f5-39e7-425d-bd01-2df8468688a2_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "reckMCZHnNMCa0QqE",
+            "airtable_id": 41112,
+            "uid": "5efdeee0-e182-419e-87a0-5fba9042545d_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recBKLmriC7DG8m3L",
+            "airtable_id": 41090,
+            "uid": "bbe3bf29-7939-4d2c-9363-2d4a72f1d8c6_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec28RTzAp3meM4UA",
+            "airtable_id": 41074,
+            "uid": "3e9b0c62-aa62-493a-a09e-4a484a5cfd73_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recxo0FwYuIwbdL0u",
+            "airtable_id": 40949,
+            "uid": "de9e4bdf-10c3-48d5-8154-a308cb43f39e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-28",
+        "checkout": "2025-06-29",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recfFsSzjBpz3DMgh",
+          "airtable_id": 40911,
+          "uid": "1e103f83-8106-4eeb-bb6c-f88841e2fc6d_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:55.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec2eGD0w7RBjT9za",
+            "airtable_id": 40869,
+            "uid": "e1c5e4ea-aaa6-4080-8f43-e16a1e8949f9_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:46.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recDb44FLH9ZSMx5c",
+            "airtable_id": 41271,
+            "uid": "61917647-0084-4206-b636-6286aa52cf0c_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec8OdO6K8nGZ7StI",
+            "airtable_id": 41249,
+            "uid": "42239466-7df4-4139-8f4b-effe675d7af1_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recmRgPg9xWzRwgOD",
+            "airtable_id": 41229,
+            "uid": "ebea9801-8891-4c27-8401-c55221cbf5ca_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recooCCtDhcwizTsm",
+            "airtable_id": 41209,
+            "uid": "e4343608-43b0-4b46-a233-ab5244d01145_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec7V1q50sPaPj8aR",
+            "airtable_id": 41189,
+            "uid": "12f98934-2814-4103-9584-60471fd32ebf_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recO8nhxA6Ml4RMp5",
+            "airtable_id": 41169,
+            "uid": "4dd44ca8-7731-476f-850f-8bdad51d0843_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recFbvnFpWmWrXMWD",
+            "airtable_id": 41149,
+            "uid": "d74b1073-6b59-40e6-a72e-1ad76267162f_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec7LL5lAxRmWRX35",
+            "airtable_id": 41129,
+            "uid": "b1ada02f-9026-4b6f-8dce-0f074d6ebee4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "reczX66ZzuWSpVu1j",
+            "airtable_id": 41108,
+            "uid": "e986db9e-99e9-4598-9267-4bd9d88d0eb6_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "receGW3zWcOf7j6G3",
+            "airtable_id": 41086,
+            "uid": "a0c20b1e-72c9-4aa5-a2b1-5a88947ffec3_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recxoffVNRAc3ahAW",
+            "airtable_id": 41070,
+            "uid": "509f70b2-3763-4c3a-bddc-783a49203075_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recn6WmZOV0zg2DFj",
+            "airtable_id": 40945,
+            "uid": "882e7d75-0307-46cb-87b5-952723337c92_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-04",
+        "checkout": "2025-07-05",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recAop4J5nboQLHl1",
+          "airtable_id": 40913,
+          "uid": "600dd7c6-e016-41b2-8796-121738e76c76_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:56.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec2wlX8Howen7jWP",
+            "airtable_id": 40871,
+            "uid": "a835dabe-4b76-4b89-a469-d15fb082f241_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:47.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recwggw4X74XoEbVr",
+            "airtable_id": 41273,
+            "uid": "a2d1fcab-b1c1-49f1-adc6-8bc03a2ed4b9_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recoZI1CMaQMhZU4u",
+            "airtable_id": 41251,
+            "uid": "bf13dd49-5e0e-463a-b926-2058b0f3bb84_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recfd9XgfXW0yUToe",
+            "airtable_id": 41231,
+            "uid": "b36c7a0c-6e43-4a07-90e5-545e0e34df40_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec3BublzdGRLcKVm",
+            "airtable_id": 41211,
+            "uid": "4a56b62b-777d-4cbd-bbd7-bb16cd842c6b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recy6jEcHFZUwiyk8",
+            "airtable_id": 41191,
+            "uid": "8a146ac5-7530-4d71-a7da-116644860afd_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recTnQUpL13e4QfZy",
+            "airtable_id": 41171,
+            "uid": "c1f25fd1-a3b9-4321-af11-5cfbfdb3d5f7_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec434Nup0gDU4JHz",
+            "airtable_id": 41151,
+            "uid": "ebe1dd5b-27a5-4705-9d2f-1d2bd44cf18b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recXuMYvyZsFD7esb",
+            "airtable_id": 41131,
+            "uid": "6cb813b1-082d-40f5-8cb1-6a47cda02589_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recvB4y6ivOunqnfe",
+            "airtable_id": 41110,
+            "uid": "4ff13f18-d450-49cf-a66b-f82900162a13_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec5yqMTvBZ26p0l5",
+            "airtable_id": 41088,
+            "uid": "feaeaafb-8315-4f7f-8211-3d4ab9317011_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recSi13ys4vAjQwso",
+            "airtable_id": 41072,
+            "uid": "17b96238-feaa-418b-8ccf-1d7c32030038_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recG3SuGa8QvqfamP",
+            "airtable_id": 40947,
+            "uid": "7402b279-36ef-4ea9-bf12-e9d969d404e4_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-07",
+        "checkout": "2025-06-08",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recEcwBo7EEC6sOQx",
+          "airtable_id": 40901,
+          "uid": "eee0258b-2fa9-42b5-b585-ace414008408_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:53.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recZyGrAbu9POCvbx",
+            "airtable_id": 40864,
+            "uid": "1db263b9-1e4b-42b9-9859-404d92df44af_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:43.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec9rRGfRlvPFCTb7",
+            "airtable_id": 41266,
+            "uid": "a7310a98-81b5-4411-bdf3-327b3d90e250_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "reciFU7aCF6SYYJmK",
+            "airtable_id": 41244,
+            "uid": "844fe699-0c6c-4b08-a592-29528ba5c07e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recxJybtVCqR2sXqd",
+            "airtable_id": 41224,
+            "uid": "064fcbe9-5d73-4b51-a96b-4f40ca6a3036_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rechmSL3tziFnYDVm",
+            "airtable_id": 41204,
+            "uid": "798eaace-e2e5-4c78-83cc-14301118d41c_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recGim4UEwtgxdBtn",
+            "airtable_id": 41184,
+            "uid": "77da68dd-aff3-4870-afd6-d38308e366ed_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recrhHt3F9t52OiT4",
+            "airtable_id": 41164,
+            "uid": "506a4892-a81e-4d0d-9b35-47c4f6611520_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec6qFcVBgFxV3ohq",
+            "airtable_id": 41144,
+            "uid": "c6dda10c-a37f-4ee9-838b-5b098a4ae36b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recVOFezUb2mHGMuD",
+            "airtable_id": 41124,
+            "uid": "25141d4b-a933-4b63-bb59-161b3261c1f7_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recP8Hop8WAM3yakv",
+            "airtable_id": 41103,
+            "uid": "3320d2b9-eb5f-4261-835d-1c5f0454a8c0_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "reclD4z2YbuvQHwvq",
+            "airtable_id": 41081,
+            "uid": "91115901-ec53-485c-acac-c0125a724289_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recZRPMZkUEjcyvVX",
+            "airtable_id": 41065,
+            "uid": "985cdac8-2899-43b3-8fd5-5bbbfd16792f_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recqMhKKGVBE029r6",
+            "airtable_id": 40940,
+            "uid": "b940db97-5ec2-4615-8522-aa0adbfed60a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "rec7QndLhLdY82u1K",
+          "airtable_id": 40907,
+          "uid": "f149eddb-da9c-4b6d-8e91-127fbda729bb_recRQSv5kFaVKAXdj",
+          "status": "Modified",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:57.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recEJMftaB24ilnbB",
+            "airtable_id": 40916,
+            "uid": "53f9bb97-7ab8-4e2d-9a50-f644254a8d2e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T06:02:56.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-13",
+        "checkout": "2025-06-15",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "recHFC6MS073qaIKi",
+          "airtable_id": 40903,
+          "uid": "5d616f56-96b3-4812-a957-e0ad29c20c7d_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:54.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recIykwpZYu8kHfvr",
+            "airtable_id": 40866,
+            "uid": "01f239f0-af8a-4fb9-b111-bbbc7db75b9a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:44.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recuMzF93OiLiVNPB",
+            "airtable_id": 41268,
+            "uid": "5034618b-6b8d-4bdb-bba2-69d474bd5e4b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec7YkS3mPgcWOEcJ",
+            "airtable_id": 41246,
+            "uid": "2f5a13e0-31a6-4d93-9f0c-9ad02bd226f2_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recJEVX103nVyqVXL",
+            "airtable_id": 41226,
+            "uid": "145a1a61-d062-4ec2-aee3-286ff1cb75ba_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recK4veC95MaxTIuT",
+            "airtable_id": 41206,
+            "uid": "ab413d03-cdfa-4492-8bd6-7e0f6fcd7f56_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recUgNNo7sXQdVQx8",
+            "airtable_id": 41186,
+            "uid": "2627e85e-247c-446d-8893-6444ea3fbf7b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recoFSDsLHsn8EWQA",
+            "airtable_id": 41166,
+            "uid": "496a8c6c-4930-4fa0-87bc-1f2db649533f_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recSUsI5QnAeZOXkw",
+            "airtable_id": 41146,
+            "uid": "a7a23dda-b609-46be-9ba0-d442ecd9eb3e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recGbIu7fg4SrXkGg",
+            "airtable_id": 41126,
+            "uid": "745ae50f-7028-41a6-9b17-73724a029eb7_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recV4KevlF9pxR3EM",
+            "airtable_id": 41105,
+            "uid": "58d3391d-4e67-4ac0-b0d0-d83f02027a9d_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recRGnKZhjmLi2N0T",
+            "airtable_id": 41083,
+            "uid": "d982371c-aa38-4751-b043-7ae211dd75e9_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recVx1ZtS8CTkVnpE",
+            "airtable_id": 41067,
+            "uid": "26aff42f-8a4d-4926-a9be-2160b61ac1db_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recodfZZnHrTFO2Nl",
+            "airtable_id": 40942,
+            "uid": "f8f7d087-1e1d-4a6d-b125-b5e38730d4d8_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-27",
+        "checkout": "2025-06-28",
+        "entry_type": "Reservation",
+        "total_records": 14,
+        "keep": {
+          "id": "rec9T2PUSRYfetUxt",
+          "airtable_id": 40905,
+          "uid": "7c6f57ce-e1f5-4d87-93f2-a083e852c174_recRQSv5kFaVKAXdj",
+          "status": "New",
+          "source": "Lodgify",
+          "last_updated": "2025-07-18T06:02:54.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recISuCmqh4UilKI5",
+            "airtable_id": 40868,
+            "uid": "8ba85871-30d6-4fb1-a78e-a60dac916efc_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "2025-07-18T05:02:45.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recSHuvdNbiEhHv1T",
+            "airtable_id": 41270,
+            "uid": "9a5d3638-41a5-4eb5-93d1-f1de8db4ad3e_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recg2XPzOKQhgygJN",
+            "airtable_id": 41248,
+            "uid": "e65f6d05-df30-4770-b959-2b274b7d4fd0_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recCZr8BCtLZL5jW0",
+            "airtable_id": 41228,
+            "uid": "545a6811-55c9-424d-8c6d-727b0314834a_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recZS9rk8MVfnywyY",
+            "airtable_id": 41208,
+            "uid": "2798024c-2cb7-49b0-be8f-6d859525aa8b_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "reck3gIMaKdNBpGjV",
+            "airtable_id": 41188,
+            "uid": "0be5946b-a129-4b58-a9b6-23482fc518f8_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recFCzkPo8SgIiOxJ",
+            "airtable_id": 41168,
+            "uid": "6050140f-57aa-40fb-be2d-0cfac4c045ae_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec7l39qxLYR0AzhN",
+            "airtable_id": 41148,
+            "uid": "c364cf9d-fc59-4f98-8069-f754c57b74aa_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recqXPXGoZR2ESMXi",
+            "airtable_id": 41128,
+            "uid": "cf2106ea-d8f0-42df-8754-a096dddaaf93_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rectGYerrlBXQvru4",
+            "airtable_id": 41107,
+            "uid": "d87ef58a-6a4b-4a01-916d-e98b787c9985_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recWTeQayuqzmuh7k",
+            "airtable_id": 41085,
+            "uid": "3768911d-a527-4910-8961-58c39b7f9a50_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recthaEEg2vvrrQ3X",
+            "airtable_id": 41069,
+            "uid": "478695b6-294e-4e1f-aada-127357ea2e52_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recrEA4ju6Cf7PRms",
+            "airtable_id": 40944,
+            "uid": "a61f9465-43f6-44c9-a7f6-689409b76e69_recRQSv5kFaVKAXdj",
+            "status": "New",
+            "source": "Lodgify",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recrVNJMKAhroDwbp": {
+    "property_name": "Casey [Farwick] 8401 E Keim Scottsdale",
+    "duplicate_groups": 3,
+    "duplicates": [
+      {
+        "checkin": "2025-05-23",
+        "checkout": "2025-05-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recKOLvpMZvFRdLKP",
+          "airtable_id": 40896,
+          "uid": "817e2e0a-447a-46b8-8fba-39ff9293e583_recrVNJMKAhroDwbp",
+          "status": "New",
+          "source": "VRBO",
+          "last_updated": "2025-07-18T06:01:59.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "rec9KlwvLqHvaFur8",
+            "airtable_id": 40662,
+            "uid": "f674e54d-5c46-4e11-85f9-9364bfa22005@reservations.hospitable.com_recrVNJMKAhroDwbp",
+            "status": "New",
+            "source": "Hospitable",
+            "last_updated": "2025-07-17T15:03:33.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recYzF6ldi2PQfqwI",
+          "airtable_id": 40923,
+          "uid": "1418fb94e984-df97e1cf0984a6c6933be4381d0a1940@airbnb.com_recrVNJMKAhroDwbp",
+          "status": "New",
+          "source": "Airbnb",
+          "last_updated": "2025-07-18T06:05:31.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recsHwum3hmnUURwy",
+            "airtable_id": 40663,
+            "uid": "8d306830-cd38-4616-a72d-b31445ef5634@reservations.hospitable.com_recrVNJMKAhroDwbp",
+            "status": "New",
+            "source": "Hospitable",
+            "last_updated": "2025-07-17T15:03:33.000Z",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-08-29",
+        "checkout": "2025-09-01",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recya4ucAy3YUmFRv",
+          "airtable_id": 40918,
+          "uid": "48da902d-98fd-495e-92bd-59a7abb48ce0@reservations.hospitable.com_recrVNJMKAhroDwbp",
+          "status": "New",
+          "source": "Hospitable",
+          "last_updated": "2025-07-18T06:03:49.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recZuYlL0Hm1sVij5",
+            "airtable_id": 40667,
+            "uid": "1418fb94e984-3eb9b2a15e9a23d8c381bab50d586349@airbnb.com_recrVNJMKAhroDwbp",
+            "status": "New",
+            "source": "Airbnb",
+            "last_updated": "2025-07-17T15:04:16.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recwtSWdmnWlDVZVj": {
+    "property_name": "Luton [] 3101 N 81st Pl, Scottsdale",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-06-29",
+        "checkout": "2025-07-02",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recVLDETYYXCkUAeo",
+          "airtable_id": 41261,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "VRBO",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recS20Rpjna3AOLu7",
+            "airtable_id": 41219,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recWN7GVLFIGWfyr7",
+            "airtable_id": 41179,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec9vUycSRRzW8B9S",
+            "airtable_id": 41139,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "reccHBmi9LWIBR8do",
+            "airtable_id": 41098,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recIiGg3jg1mEAjSX",
+            "airtable_id": 40935,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-10-08",
+        "checkout": "2025-10-09",
+        "entry_type": "Block",
+        "total_records": 2,
+        "keep": {
+          "id": "recVgNUbTVRE5xgJw",
+          "airtable_id": 40897,
+          "uid": "ae79d59b-1441-4705-bc32-a751e14b69c4_recwtSWdmnWlDVZVj",
+          "status": "New",
+          "source": "VRBO",
+          "last_updated": "2025-07-18T06:02:36.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "rec9zR4oV3rwyql5M",
+            "airtable_id": 40666,
+            "uid": "7f662ec65913-cd149c1206f0967ef51542c2eb127925@airbnb.com_recwtSWdmnWlDVZVj",
+            "status": "New",
+            "source": "Airbnb",
+            "last_updated": "2025-07-17T15:04:15.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recInedJOoatL0fnN": {
+    "property_name": "390811",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-18",
+        "checkout": "2025-07-20",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recQGqFNjs7nECseT",
+          "airtable_id": 40984,
+          "uid": "14825992_recInedJOoatL0fnN",
+          "status": "New",
+          "source": "Evolve",
+          "last_updated": "2025-07-18T08:30:14.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recs7VHfSi7oAuBvU",
+            "airtable_id": 41054,
+            "uid": "14825992",
+            "status": "New",
+            "source": "Evolve",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recMAXXW1B2qKslRC": {
+    "property_name": "Myers [] 11367 N 122nd St, Scottsdale",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-10-02",
+        "checkout": "2025-10-05",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recTsMXKXbtwu7iAy",
+          "airtable_id": 41276,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "VRBO",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recBeDgpot8HAviye",
+            "airtable_id": 41234,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recQpPebFWECqdZf4",
+            "airtable_id": 41194,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recFNG1SUd8GFiBth",
+            "airtable_id": 41154,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recdEArUqasNQlSW5",
+            "airtable_id": 41113,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recPm2JT3XtLAMQWv",
+            "airtable_id": 40950,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "VRBO",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recL6AiK5pINSbcnu": {
+    "property_name": "453000",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-13",
+        "checkout": "2025-07-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "rec2VmLvp89zAWsYK",
+          "airtable_id": 40989,
+          "uid": "14826554_recL6AiK5pINSbcnu",
+          "status": "New",
+          "source": "Evolve",
+          "last_updated": "2025-07-18T08:30:14.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recsuvkIZtyHUuNG8",
+            "airtable_id": 41057,
+            "uid": "14826554",
+            "status": "New",
+            "source": "Evolve",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recemMGn3KhYJW07M": {
+    "property_name": "Frantzen [Regas] 10629 E Desert Cove Ave, Scottsdale",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-10-15",
+        "checkout": "2025-10-19",
+        "entry_type": "Block",
+        "total_records": 2,
+        "keep": {
+          "id": "recIRpdeUychnWFrd",
+          "airtable_id": 40919,
+          "uid": "7f662ec65913-0ba56a25feb4e4af025727aa3ebf1999@airbnb.com_recemMGn3KhYJW07M",
+          "status": "New",
+          "source": "Airbnb",
+          "last_updated": "2025-07-18T06:04:33.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recaYj7Iq9FseVi0S",
+            "airtable_id": 40665,
+            "uid": "016ac158-5ab4-4af8-b115-3cc72b1173f8_recemMGn3KhYJW07M",
+            "status": "New",
+            "source": "VRBO",
+            "last_updated": "2025-07-17T15:03:56.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-10-10",
+        "checkout": "2025-10-13",
+        "entry_type": "Block",
+        "total_records": 2,
+        "keep": {
+          "id": "recqPPgh4f0kRIEAv",
+          "airtable_id": 40920,
+          "uid": "18b14c95-84f4-4612-af23-abb48298191e_recemMGn3KhYJW07M",
+          "status": "New",
+          "source": "VRBO",
+          "last_updated": "2025-07-18T06:04:38.000Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recyG5zThbvZkDRk5",
+            "airtable_id": 40664,
+            "uid": "7f662ec65913-7a069585b29abd5694d24584aa5438d6@airbnb.com_recemMGn3KhYJW07M",
+            "status": "New",
+            "source": "Airbnb",
+            "last_updated": "2025-07-17T15:03:51.000Z",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recx135vsZ0uyxT2L": {
+    "property_name": "Kerry Ln Arrowhead #21467174",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recX5NbmUcIUHdBGE",
+          "airtable_id": 41017,
+          "uid": "4497422_recx135vsZ0uyxT2L",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec5BZcRyyng1AbHy",
+            "airtable_id": 41035,
+            "uid": "4497422",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recCsm6J5KSv4C7rm": {
+    "property_name": "Signature Condo #1119 #21464244",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-28",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recs4eMxYaZTJCpvB",
+          "airtable_id": 41031,
+          "uid": "4576617_recCsm6J5KSv4C7rm",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recP9DfqljhzZh7wO",
+            "airtable_id": 41052,
+            "uid": "4576617",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recsXjyUWy0EmtFlj": {
+    "property_name": "Harness [] 614 W Sierra Madre, Gilbert",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-06-16",
+        "checkout": "2025-08-15",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recUMmcUrElhKjyeM",
+          "airtable_id": 41259,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recO7xh3IC5yNqyNi",
+            "airtable_id": 41217,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recJtbV1XMPfdh65Y",
+            "airtable_id": 41177,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recFwJTJtAT4mXZKI",
+            "airtable_id": 41137,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "rec3gjxSWvqKVWIp2",
+            "airtable_id": 41096,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recAiT8ICN2PmK6H8",
+            "airtable_id": 40933,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-09-19",
+        "checkout": "2025-09-22",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recCOobV3e1aU61Je",
+          "airtable_id": 41260,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recRp3lXYCQZxBP1Q",
+            "airtable_id": 41218,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recS7uK4n7zzr7Arq",
+            "airtable_id": 41178,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recb2MgFJSdbPbQAi",
+            "airtable_id": 41138,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recDj2a3WIHf0QPMD",
+            "airtable_id": 41097,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recePCJyBZU5iI40X",
+            "airtable_id": 40934,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recw2j5cweaW7H2i6": {
+    "property_name": "453658",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-07-18",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recdrMdDIpyi8UMM0",
+          "airtable_id": 41002,
+          "uid": "14594403_recw2j5cweaW7H2i6",
+          "status": "New",
+          "source": "Evolve",
+          "last_updated": "2025-07-18T08:30:14.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec40cMQwzO2nWdCu",
+            "airtable_id": 41056,
+            "uid": "14594403",
+            "status": "New",
+            "source": "Evolve",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-24",
+        "checkout": "2025-07-28",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recbwz7h16ZMxqpsh",
+          "airtable_id": 40993,
+          "uid": "14612250_recw2j5cweaW7H2i6",
+          "status": "New",
+          "source": "Evolve",
+          "last_updated": "2025-07-18T08:30:14.000Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recTNXe46u2nEszAE",
+            "airtable_id": 41055,
+            "uid": "14612250",
+            "status": "New",
+            "source": "Evolve",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "rec46WPtsN5jcv1rO": {
+    "property_name": "Hartford Ave 52nd #21522157",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-20",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "rec4V1MXopRVOmtQG",
+          "airtable_id": 41024,
+          "uid": "4456287_rec46WPtsN5jcv1rO",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recpeky8qmKkslri8",
+            "airtable_id": 41033,
+            "uid": "4456287",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-24",
+        "checkout": "2025-07-27",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recbamOoool4ZFk3F",
+          "airtable_id": 41013,
+          "uid": "4607233_rec46WPtsN5jcv1rO",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec4dUWDOR9pSoM8j",
+            "airtable_id": 41048,
+            "uid": "4607233",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recee8qeETwXKRlYf": {
+    "property_name": "Eleven Palms Scottsdale Retreat #21479773",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-07-23",
+        "checkout": "2025-07-27",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recWtCMYOiuctemDu",
+          "airtable_id": 41016,
+          "uid": "4546648_recee8qeETwXKRlYf",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recHe7NwWwemLnMxu",
+            "airtable_id": 41046,
+            "uid": "4546648",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recu2rQhpeqCHtm3Z",
+          "airtable_id": 41012,
+          "uid": "4525852_recee8qeETwXKRlYf",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recczTMgbZpWj6SYI",
+            "airtable_id": 41037,
+            "uid": "4525852",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recr2OaMFYmfI7Eza": {
+    "property_name": "Cactus Grey [Gilkey] 9270 E Mission Ln #205, Scottsdale",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-09-10",
+        "checkout": "2025-10-10",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recNOAnW2cSBSElei",
+          "airtable_id": 41263,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recC7UqVCQHogzXrq",
+            "airtable_id": 41221,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recgXIBA5oa4IOWu8",
+            "airtable_id": 41181,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recBfWXTS0jyBlqAl",
+            "airtable_id": 41141,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recQsY021RouFUZFn",
+            "airtable_id": 41100,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec6uj4yS6gsqDQAn",
+            "airtable_id": 40937,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      },
+      {
+        "checkin": "2025-06-07",
+        "checkout": "2025-08-31",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recM6gXF3DTx26owJ",
+          "airtable_id": 41262,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recVe4rEaKIeIsyOG",
+            "airtable_id": 41220,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recUT4Mw9SQpSTaqM",
+            "airtable_id": 41180,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recLuVbh0t0CCFmAa",
+            "airtable_id": 41140,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "rec9y7Sh80Ger3pKL",
+            "airtable_id": 41099,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          },
+          {
+            "id": "recX05f860jqcSwTz",
+            "airtable_id": 40936,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recXMkHJ02pGKcbU3": {
+    "property_name": "Kierland 1078 #21545365",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-21",
+        "checkout": "2025-07-27",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "rec7xl997oNmQFhUO",
+          "airtable_id": 41023,
+          "uid": "4617954_recXMkHJ02pGKcbU3",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec9YZKTbva4CJ6Kn",
+            "airtable_id": 41050,
+            "uid": "4617954",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recWE5Fc8SGODAADs": {
+    "property_name": "Heatherbrae Home 87th #21562802",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-20",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recaRUpcd69dQFf7U",
+          "airtable_id": 41010,
+          "uid": "4546387_recWE5Fc8SGODAADs",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recMUeITRQgChJ1ko",
+            "airtable_id": 41034,
+            "uid": "4546387",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-24",
+        "checkout": "2025-07-27",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recY8JSwzr8corOB3",
+          "airtable_id": 41028,
+          "uid": "4608885_recWE5Fc8SGODAADs",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recNwC3oSCqAC2brr",
+            "airtable_id": 41049,
+            "uid": "4608885",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "rec2bdcf28lO7YAHU": {
+    "property_name": "Blazuk [] 2430 E Huntington Dr, Tempe",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-08-01",
+        "checkout": "2025-08-09",
+        "entry_type": "Reservation",
+        "total_records": 6,
+        "keep": {
+          "id": "recP0qRKA9rJL4YbY",
+          "airtable_id": 41277,
+          "uid": "NO_UID",
+          "status": "Modified",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recTfojKUjNjwMnmM",
+            "airtable_id": 41235,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recaNtg9tnsZl6Oyk",
+            "airtable_id": 41195,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recyD9y7jnmkppIOi",
+            "airtable_id": 41155,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recARJcgpUH2EgGhV",
+            "airtable_id": 41114,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          },
+          {
+            "id": "recsIqttxlSdYBnHW",
+            "airtable_id": 40951,
+            "uid": "NO_UID",
+            "status": "Modified",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recclzpd4KrBwr5yY": {
+    "property_name": "Villa Antigua 78th #21511414",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-09",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "reccv3cjVtfuDMUeg",
+          "airtable_id": 41018,
+          "uid": "4516696_recclzpd4KrBwr5yY",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "rec8WZICHH6KElhsb",
+            "airtable_id": 41036,
+            "uid": "4516696",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "rectE0OMFWMlil0ZL": {
+    "property_name": "Winchcomb Dr #21371246  003",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-11",
+        "checkout": "2025-07-18",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recdofCdB7frKDI06",
+          "airtable_id": 41025,
+          "uid": "4570013_rectE0OMFWMlil0ZL",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recBCuYiRxCcD3VLV",
+            "airtable_id": 41032,
+            "uid": "4570013",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "rec2o6ZVpqr63lazn": {
+    "property_name": "Chen [] 20260 N 69th Ln Glendale",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-18",
+        "checkout": "2025-07-19",
+        "entry_type": "Block",
+        "total_records": 2,
+        "keep": {
+          "id": "recEN6B8q6qke6ZNj",
+          "airtable_id": 41257,
+          "uid": "7f662ec65913-1d1938b579bf66dbb2c4e8293565abf1@airbnb.com_rec2o6ZVpqr63lazn",
+          "status": "New",
+          "source": "Airbnb",
+          "last_updated": "Unknown",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recBIoGU3Sr4SplsP",
+            "airtable_id": 40959,
+            "uid": "7f662ec65913-1d1938b579bf66dbb2c4e8293565abf1@airbnb.com_rec2o6ZVpqr63lazn",
+            "status": "New",
+            "source": "Airbnb",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recpTJPKx42J2QBQE": {
+    "property_name": "Scottsdale House 69th St #21271198",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-22",
+        "checkout": "2025-07-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recQ03a82xD5CFvLs",
+          "airtable_id": 41020,
+          "uid": "4530023_recpTJPKx42J2QBQE",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "reckQHNMujkvYfEBi",
+            "airtable_id": 41041,
+            "uid": "4530023",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recdoJZW5a3t34fBj": {
+    "property_name": "Tina Ln 69th 21518957",
+    "duplicate_groups": 2,
+    "duplicates": [
+      {
+        "checkin": "2025-07-17",
+        "checkout": "2025-07-21",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recFNsL3ArU7lCqUR",
+          "airtable_id": 41019,
+          "uid": "4529530_recdoJZW5a3t34fBj",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recfbrJGmgrL5ksq7",
+            "airtable_id": 41038,
+            "uid": "4529530",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      },
+      {
+        "checkin": "2025-07-22",
+        "checkout": "2025-07-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recRxnqzVV1gZolZS",
+          "airtable_id": 41029,
+          "uid": "4601020_recdoJZW5a3t34fBj",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "reclE9m4Gi2WUlZl2",
+            "airtable_id": 41045,
+            "uid": "4601020",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recdzm6UM2MQIm5F4": {
+    "property_name": "Kierland Commons 2144 #21514869",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-13",
+        "checkout": "2025-07-26",
+        "entry_type": "Block",
+        "total_records": 2,
+        "keep": {
+          "id": "recSlUfKc6cJhGXwl",
+          "airtable_id": 41011,
+          "uid": "4564051_recdzm6UM2MQIm5F4",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "reciIEtoJfXxpHDqQ",
+            "airtable_id": 41042,
+            "uid": "4564051",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recZBaV3gl4yPC15z": {
+    "property_name": "Whispering Wind #21233509",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-16",
+        "checkout": "2025-07-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "rectCawa6Tk2k5bFb",
+          "airtable_id": 41027,
+          "uid": "4496111_recZBaV3gl4yPC15z",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "reco1xIELry6c0Iaz",
+            "airtable_id": 41040,
+            "uid": "4496111",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "reclTU4QTBKADZjWg": {
+    "property_name": "Biltmore Condo 324 #21528120",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-12",
+        "checkout": "2025-07-26",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "reco2YUIUYmjKdPlx",
+          "airtable_id": 41015,
+          "uid": "4589173_reclTU4QTBKADZjWg",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recM1lC1V72TFsZUs",
+            "airtable_id": 41044,
+            "uid": "4589173",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recVbvR9IuLePF9O9": {
+    "property_name": "Campo Bello 60th St #21479614",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-16",
+        "checkout": "2025-07-28",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recVEyIvgzqHac0ou",
+          "airtable_id": 41014,
+          "uid": "4584581_recVbvR9IuLePF9O9",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": false
+        },
+        "remove": [
+          {
+            "id": "recLSBJ4fNB9EpIS6",
+            "airtable_id": 41053,
+            "uid": "4584581",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": false
+          }
+        ]
+      }
+    ]
+  },
+  "recs629NK2tBlJjxD": {
+    "property_name": "Hidden Jewel 86th St #21414331",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-20",
+        "checkout": "2025-07-27",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recPNZfmIHFdSFvtu",
+          "airtable_id": 41030,
+          "uid": "4621949_recs629NK2tBlJjxD",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.902Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "reca7JYQr1Xb2P5Se",
+            "airtable_id": 41051,
+            "uid": "4621949",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "rechN9sSzkQyBTrjc": {
+    "property_name": "Slice of Paradise #21550579",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-13",
+        "checkout": "2025-07-22",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "receNGKX5jvORf5MQ",
+          "airtable_id": 41022,
+          "uid": "4530367_rechN9sSzkQyBTrjc",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.904Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "reclCr996td1kaxQe",
+            "airtable_id": 41039,
+            "uid": "4530367",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  },
+  "recnrtR3zwbrPiBqu": {
+    "property_name": "Avalon Dr Scottsdale #21519706  002",
+    "duplicate_groups": 1,
+    "duplicates": [
+      {
+        "checkin": "2025-07-07",
+        "checkout": "2025-07-27",
+        "entry_type": "Reservation",
+        "total_records": 2,
+        "keep": {
+          "id": "recaFTYntYMTRnVL0",
+          "airtable_id": 41026,
+          "uid": "4606407_recnrtR3zwbrPiBqu",
+          "status": "New",
+          "source": "iTrip",
+          "last_updated": "2025-07-18T09:01:25.903Z",
+          "guest": "Unknown",
+          "has_job": true
+        },
+        "remove": [
+          {
+            "id": "recvOhavG3LnYZKQg",
+            "airtable_id": 41047,
+            "uid": "4606407",
+            "status": "New",
+            "source": "iTrip",
+            "last_updated": "Unknown",
+            "guest": "Unknown",
+            "has_job": true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,2 @@
+Checkin,Checkout,"Date Booked","Tenant Name","Tenant Phone","Property Name","Property Address","Property Owner",BR/BA,Size,"Next Booking","Next Tenant Name","Next Tenant Phone","Same Day?","Contractor Info","Reservation ID"
+2025-08-15,2025-08-20,"2025-07-20","Block Owner Arrival","555-555-5555","Whispering Wind #21233509","8334 E Whispering Wind Dr, Scottsdale, AZ 85255","Ashley Gross & Emily Piatz","2BR/2BA",1200,"","","","No","Owner arriving for maintenance",TEST_BLOCK_001
