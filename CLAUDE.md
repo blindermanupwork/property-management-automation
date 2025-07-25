@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Current Version: 2.2.10** - Enhanced sync reporting and iTrip next guest date support
 
+**📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
+
 ## 📁 Project Structure (as of July 21, 2025)
 
 ```
 /home/opc/automation/
-├── README.md                    # Project overview
+├── README.md                    # Project overview - Contains v2.2.10 features, quick start, architecture, and troubleshooting
 ├── CLAUDE.md                    # This file - AI instructions
 ├── CLAUDE.local.md              # Private AI instructions
 ├── TASK_TRACKER.md              # Active task tracking
