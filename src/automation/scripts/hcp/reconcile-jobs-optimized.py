@@ -438,19 +438,20 @@ class OptimizedHCPJobReconciler:
             # Filter by address
             candidate_jobs = [j for j in candidate_jobs if j.get('address', {}).get('id') == hcp_address_id]
         
-        # Find matching jobs by time
+        # Find matching jobs by date only (ignoring time)
         matches = []
         
         for job in candidate_jobs:
-            # Check time match (within 1 hour window)
+            # Check date match only
             job_start = job.get('schedule', {}).get('scheduled_start')
             if not job_start:
                 continue
                 
             job_datetime = datetime.fromisoformat(job_start.replace('Z', '+00:00'))
-            time_diff = abs((job_datetime - res_datetime).total_seconds())
             
-            if time_diff <= 3600:  # Within 1 hour
+            # Compare dates only (ignore time)
+            if job_datetime.date() == res_datetime.date():
+                time_diff = abs((job_datetime - res_datetime).total_seconds())
                 matches.append({
                     'job': job,
                     'time_diff': time_diff
@@ -459,13 +460,13 @@ class OptimizedHCPJobReconciler:
         if not matches:
             return None
             
-        # Return the closest time match
+        # Return the closest time match (in case there are multiple jobs on same date)
         matches.sort(key=lambda x: x['time_diff'])
         best_match = matches[0]['job']
         
         logger.info(f"  Found match: Job {best_match['id']} for reservation {reservation['id']}")
         logger.info(f"    Property: {prop_info['property_name']}")
-        logger.info(f"    Time diff: {matches[0]['time_diff']/60:.1f} minutes")
+        logger.info(f"    Date match: {job_datetime.date()} (time diff: {matches[0]['time_diff']/60:.1f} minutes)")
         
         return best_match
         
@@ -625,7 +626,11 @@ class OptimizedHCPJobReconciler:
         start_time = time.time()
         
         logger.info(f"Starting Optimized HCP job reconciliation for {self.environment.upper()} environment...")
-        logger.info(f"Mode: {'DRY RUN' if dry_run else 'EXECUTE'}") 
+        logger.info(f"Mode: {'DRY RUN' if dry_run else 'EXECUTE'}")
+        
+        # CRITICAL DEBUGGING: Log exactly when reconciliation starts
+        import datetime as dt
+        logger.info(f"🔍 DEBUGGING: Job reconciliation starting at {dt.datetime.now().strftime('%H:%M:%S.%f')[:12]}") 
         if force:
             logger.info("FORCE MODE: Will process records with Wrong Time status")
         if offset is not None:

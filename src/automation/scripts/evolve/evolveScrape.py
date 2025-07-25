@@ -595,7 +595,7 @@ def cleanup_old_evolve_csvs():
     else:
         log.info("No old Evolve CSV files found to clean up")
 
-def write_evolve_status(tab1_success: bool, tab2_success: bool):
+def write_evolve_status(tab1_success: bool, tab2_success: bool, tab1_rows: int = 0, tab2_rows: int = 0):
     """Write Evolve scraping status to a JSON file for CSV processor to read
     
     Args:
@@ -607,6 +607,8 @@ def write_evolve_status(tab1_success: bool, tab2_success: bool):
         "timestamp": datetime.now(pytz.timezone('America/Phoenix')).isoformat(),
         "tab1_success": tab1_success,
         "tab2_success": tab2_success,
+        "tab1_rows": tab1_rows,
+        "tab2_rows": tab2_rows,
         "overall_success": tab1_success or tab2_success,  # At least one tab succeeded
         "message": ""
     }
@@ -686,8 +688,30 @@ def main():
                 log.error(f"Error in Tab 2 export: {e}")
                 tab2_success = False
     
+    # Count CSV files that were downloaded
+    evolve_pattern = "[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]--[0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.csv"
+    csv_files = list(DOWNLOAD_DIR.glob(evolve_pattern))
+    
+    # Count rows in each file type
+    tab1_rows = 0
+    tab2_rows = 0
+    
+    for csv_file in csv_files:
+        try:
+            with open(csv_file, 'r', encoding='utf-8-sig') as f:
+                row_count = sum(1 for line in f) - 1  # Subtract header
+                if '_tab2' in csv_file.name:
+                    tab2_rows = row_count
+                else:
+                    tab1_rows = row_count
+        except:
+            pass
+    
     # Write status file for CSV processor to check
-    write_evolve_status(tab1_success, tab2_success)
+    write_evolve_status(tab1_success, tab2_success, tab1_rows, tab2_rows)
+    
+    # Output structured summary for automation controller
+    print(f"EVOLVE_SUMMARY: Tab1Success={tab1_success}, Tab2Success={tab2_success}, Tab1Rows={tab1_rows}, Tab2Rows={tab2_rows}")
     
     # Exit with appropriate code
     if tab1_success or tab2_success:

@@ -13,6 +13,7 @@ const rateLimit = require('express-rate-limit');
 // Import route handlers
 const jobRoutes = require('./routes/jobs');
 const scheduleRoutes = require('./routes/schedules');
+const automationRoutes = require('./routes/automation');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -66,6 +67,10 @@ app.use('/api/prod/schedules', (req, res, next) => { req.forceEnvironment = 'pro
 // Reconciliation endpoints
 app.post('/api/dev/reconcile-jobs', (req, res, next) => { req.body.environment = 'dev'; next(); }, handleReconcileJobs);
 app.post('/api/prod/reconcile-jobs', (req, res, next) => { req.body.environment = 'prod'; next(); }, handleReconcileJobs);
+
+// Automation endpoints - Run Now functionality
+app.use('/api/dev/automation', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, automationRoutes);
+app.use('/api/prod/automation', (req, res, next) => { req.forceEnvironment = 'production'; next(); }, automationRoutes);
 
 // Catch-all for legacy routes - return error
 app.use('/api/jobs', (req, res) => {

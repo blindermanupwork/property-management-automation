@@ -16,7 +16,7 @@ let table = base.getTable("Reservations");
 // In Airtable automations, we need to query all records and find the one we want
 // This is the standard pattern for automation scripts
 let query = await table.selectRecordsAsync({
-    fields: ["Check-out Date", "Check-in Date", "Property ID", "Entry Type", "Status", "Reservation UID", "Same-day Turnover", "Next Guest Date", "Next Entry Is Block"]
+    fields: ["Check-out Date", "Check-in Date", "Property ID", "Entry Type", "Status", "Reservation UID", "Same-day Turnover", "Next Guest Date", "Next Entry Is Block", "iTrip Next Guest Date", "Entry Source"]
 });
 
 // Find our trigger record
@@ -65,6 +65,53 @@ if (!propertyLinkedRecords || propertyLinkedRecords.length === 0) {
 
 let propertyRecordId = propertyLinkedRecords[0].id;
 console.log("Property record ID:", propertyRecordId);
+
+// Check if this is an iTrip reservation with next guest date
+let iTripNextGuestDate = triggerRecord.getCellValue("iTrip Next Guest Date");
+let entrySource = triggerRecord.getCellValue("Entry Source");
+
+// If this is an iTrip reservation with next guest date, use it directly
+if (entrySource && entrySource.name === "iTrip" && iTripNextGuestDate) {
+    // Use iTrip's provided date
+    let nextGuestDate = iTripNextGuestDate;
+    
+    // Still calculate same-day turnover
+    const checkOutDateObj = new Date(checkOutDate);
+    const nextCheckInDateObj = new Date(iTripNextGuestDate);
+    
+    checkOutDateObj.setHours(0, 0, 0, 0);
+    nextCheckInDateObj.setHours(0, 0, 0, 0);
+    
+    let isSameDayTurnover = checkOutDateObj.getTime() === nextCheckInDateObj.getTime();
+    
+    console.log("Using iTrip provided next guest date:", iTripNextGuestDate);
+    console.log("Same-day turnover:", isSameDayTurnover);
+    
+    // Update the record with iTrip data
+    try {
+        await table.updateRecordAsync(recordId, {
+            "Next Guest Date": nextGuestDate,
+            "Same-day Turnover": isSameDayTurnover,
+            "Next Entry Is Block": false,  // iTrip next booking is always a guest
+            "Owner Arriving": false
+        });
+    } catch (e) {
+        // If that fails, try without new fields
+        console.log("Failed to update with new fields, trying without:", e.message);
+        await table.updateRecordAsync(recordId, {
+            "Next Guest Date": nextGuestDate,
+            "Same-day Turnover": isSameDayTurnover
+        });
+    }
+    
+    output.set('success', true);
+    output.set('nextGuestDate', nextGuestDate);
+    output.set('isLongTermGuest', isLongTermGuest);
+    output.set('stayDurationDays', stayDurationDays);
+    output.set('isSameDayTurnover', isSameDayTurnover);
+    output.set('isNextEntryBlock', false);
+    return;  // Exit early since we used iTrip data
+}
 
 // Query ALL records
 query = await table.selectRecordsAsync({

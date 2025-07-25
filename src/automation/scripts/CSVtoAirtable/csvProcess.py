@@ -398,6 +398,21 @@ def parse_row(row, hdr_map):
                 itrip_same_day = False
             break
     
+    # Get iTrip Next Booking date if available
+    itrip_next_booking = None
+    next_booking_keys = ["Next Booking", "next booking", "Next booking"]
+    for key in next_booking_keys:
+        if key in row:
+            next_booking_str = row[key].strip()
+            if next_booking_str:
+                try:
+                    # Parse the date (format: "2025-07-16 16:00:00")
+                    next_booking_date = parse(next_booking_str).date()
+                    itrip_next_booking = next_booking_date.isoformat()
+                except Exception as e:
+                    logging.warning(f"Failed to parse Next Booking date '{next_booking_str}': {e}")
+            break
+    
     # Skip blank filler lines
     if not (uid_raw and cin_raw and cout_raw):
         return None
@@ -471,6 +486,7 @@ def parse_row(row, hdr_map):
         "overlapping": False,
         "same_day_turnover": False,
         "itrip_same_day": itrip_same_day,  # Store iTrip's Same Day? value
+        "itrip_next_booking": itrip_next_booking,  # Store iTrip's Next Booking date
         "feed_url": None,
         "property_id": None,
         "entry_source": None,
@@ -1115,6 +1131,10 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 # Add iTrip Report Info if from iTrip and has contractor info
                 if res["entry_source"] == "iTrip" and res.get("contractor_info"):
                     new_fields["iTrip Report Info"] = res["contractor_info"]
+                # Add iTrip Next Guest Date if from iTrip and has next booking
+                if res["entry_source"] == "iTrip" and res.get("itrip_next_booking"):
+                    new_fields["iTrip Next Guest Date"] = res["itrip_next_booking"]
+                    logging.info(f"📅 iTrip Next Guest Date set to: {res['itrip_next_booking']} for {uid}")
                 # Add Block Type if it exists
                 if res.get("block_type"):
                     new_fields["Block Type"] = res["block_type"]
@@ -1236,6 +1256,10 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 # Add iTrip Report Info if from iTrip and has contractor info
                 if res["entry_source"] == "iTrip" and res.get("contractor_info"):
                     new_fields["iTrip Report Info"] = res["contractor_info"]
+                # Add iTrip Next Guest Date if from iTrip and has next booking
+                if res["entry_source"] == "iTrip" and res.get("itrip_next_booking"):
+                    new_fields["iTrip Next Guest Date"] = res["itrip_next_booking"]
+                    logging.info(f"📅 iTrip Next Guest Date set to: {res['itrip_next_booking']} for {uid}")
                 # Add Block Type if it exists
                 if res.get("block_type"):
                     new_fields["Block Type"] = res["block_type"]
@@ -1367,6 +1391,9 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
             # Add iTrip Report Info if from iTrip and has contractor info
             if res["entry_source"] == "iTrip" and res.get("contractor_info"):
                 new_fields["iTrip Report Info"] = res["contractor_info"]
+            # Add iTrip Next Guest Date if from iTrip and has next booking
+            if res["entry_source"] == "iTrip" and res.get("itrip_next_booking"):
+                new_fields["iTrip Next Guest Date"] = res["itrip_next_booking"]
             # Add Block Type if it exists
             if res.get("block_type"):
                 new_fields["Block Type"] = res["block_type"]
@@ -2139,9 +2166,22 @@ def main():
 
         logging.info(f"Moved {success_count} of {len(processed_paths)} processed files")
         
-        # Log final completion message
-        logging.info(f"Sync complete * created {results['created']} * updated {results['updated']} * "
-                    f"unchanged {results['unchanged']} * removed {results['removed']}")
+        # Calculate breakdowns for sync summary
+        created_res = itrip_reserv['new'] + evolve_reserv['new']
+        created_blocks = itrip_blocks['new'] + tab2_global['new']
+        
+        updated_res = itrip_reserv['modified'] + evolve_reserv['modified']
+        updated_blocks = itrip_blocks['modified'] + tab2_global['modified']
+        
+        removed_res = itrip_reserv['removed'] + evolve_reserv['removed']
+        removed_blocks = itrip_blocks['removed'] + tab2_global['removed']
+        
+        # Log final completion message with breakdowns
+        logging.info(f"CSV_SYNC_SUMMARY: Files={len(processed_paths)}, "
+                    f"New={results['created']} ({created_res} res, {created_blocks} block), "
+                    f"Modified={results['updated']} ({updated_res} res, {updated_blocks} block), "
+                    f"Removed={results['removed']} ({removed_res} res, {removed_blocks} block), "
+                    f"Unchanged={results['unchanged']}")
         
     except Exception as e:
         logging.error(f"Fatal error in main process: {e}", exc_info=True)

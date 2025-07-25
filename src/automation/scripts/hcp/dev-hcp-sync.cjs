@@ -687,6 +687,9 @@ async function syncMultipleJobs() {
     console.log(`❌ Errors: ${errorCount}`);
     console.log(`📋 Total records in view: ${allRecords.length}`);
     
+    // Output structured summary for automation controller
+    console.log(`HCP_SYNC_SUMMARY: Created=${successCount}, Verified=${verifyCount}, Total=${allRecords.length}, Errors=${errorCount}`);
+    
   } catch (error) {
     console.error('❌ Fatal error:', error);
     process.exit(1);

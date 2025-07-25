@@ -185,7 +185,17 @@ class HCPServiceLineUpdater:
         custom_instructions = record.get('Custom Service Line Instructions', '').strip()
         check_in_date = record.get('Check-in Date')
         check_out_date = record.get('Check-out Date')
-        next_guest_date = record.get('Next Guest Date')
+        
+        # Check for iTrip Next Guest Date first
+        itrip_next_guest_date = record.get('iTrip Next Guest Date')
+        entry_source = record.get('Entry Source')
+        
+        # Use iTrip Next Guest Date if it's an iTrip reservation and the field is populated
+        if entry_source == 'iTrip' and itrip_next_guest_date:
+            next_guest_date = itrip_next_guest_date
+            print(f"   📅 Using iTrip Next Guest Date: {itrip_next_guest_date}")
+        else:
+            next_guest_date = record.get('Next Guest Date')
         
         # Calculate if long-term guest
         is_long_term_guest = False
@@ -267,6 +277,8 @@ class HCPServiceLineUpdater:
             'Check-in Date',
             'Check-out Date',
             'Next Guest Date',
+            'iTrip Next Guest Date',
+            'Entry Source',
             'Property ID',
             'Service Line Description',
             'Entry Type'
@@ -363,6 +375,10 @@ class HCPServiceLineUpdater:
         print(f"\n✅ Service line update complete!")
         print(f"   - Updated {len(owner_arrival_updates)} Owner Arriving fields")
         print(f"   - Updated {len(updates_needed)} service line descriptions")
+        
+        # Output structured summary for automation controller
+        total_count = len(records)  # Total jobs checked
+        print(f"SERVICE_LINE_SUMMARY: OwnerArriving={len(owner_arrival_updates)}, ServiceLines={len(updates_needed)}, Total={total_count}")
 
 async def main():
     parser = argparse.ArgumentParser(description='Update HCP service line descriptions with owner detection')
