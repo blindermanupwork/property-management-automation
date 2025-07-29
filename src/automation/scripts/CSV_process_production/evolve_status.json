@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-07-28T20:52:32.475936-07:00",
+  "tab1_success": true,
+  "tab2_success": true,
+  "tab1_rows": 5,
+  "tab2_rows": 65,
+  "overall_success": true,
+  "message": "Both tabs exported successfully"
+}
