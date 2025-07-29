@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.12] - 2025-07-29
+
+### Added
+- **Safe ICS Removal System**
+  - Prevents false removals when reservations temporarily disappear from ICS feeds
+  - Requires 3 consecutive missing syncs before marking as "Removed" (configurable)
+  - 12-hour grace period provides additional safety buffer
+  - Automatic protection for:
+    - Active HCP jobs (Scheduled/In Progress status)
+    - Recent check-ins (within 7 days)
+    - Imminent checkouts (today/tomorrow)
+  - Automatic recovery: resets tracking when reservation reappears
+  - New Airtable fields for tracking:
+    - `Missing Count`: Number of consecutive syncs where missing (0-3)
+    - `Missing Since`: Timestamp when first detected missing
+    - `Last Seen`: Last timestamp when found in ICS feed
+  - Comprehensive logging for monitoring removal decisions
+  - Test framework and documentation included
+  - Currently implemented but NOT ACTIVE (requires enabling `removal_safety.py`)
+
+### Fixed
+- **Record 45425 Restoration**
+  - Fixed incorrectly removed reservation that was still active in ICS feed
+  - Restored from "Removed" to "Modified" status
+  - Added audit trail note to Service Sync Details
+
 ## [2.2.11] - 2025-07-29
 
 ### Fixed

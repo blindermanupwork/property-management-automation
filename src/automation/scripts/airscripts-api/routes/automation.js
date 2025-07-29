@@ -311,6 +311,14 @@ function extractErrorDetails(output) {
         return '❌ HTTP request failed';
     }
     
+    // Check for concurrent run issues
+    if (output.includes('Resource temporarily unavailable') || output.includes('EAGAIN')) {
+        return '❌ Resource conflict - another automation may be running';
+    }
+    if (output.includes('Cannot acquire lock') || output.includes('locked')) {
+        return '❌ Database locked - another process is running';
+    }
+    
     // Python traceback
     if (output.includes('Traceback')) {
         const lines = output.split('\n');
@@ -319,6 +327,11 @@ function extractErrorDetails(output) {
                 return `❌ ${lines[i].trim()}`;
             }
         }
+    }
+    
+    // If no output at all
+    if (!output || output.trim().length === 0) {
+        return '❌ Automation failed to start or produce output';
     }
     
     return `❌ Automation failed - check logs for details`;
@@ -362,11 +375,23 @@ router.post('/run/:automation', async (req, res) => {
         const result = await runAutomationScript(automationName, env);
         
         // Update the record with results
-        if (result.success || result.message) {
-            await base('Automation').update(automationRecordId, {
-                'Last Ran Time': new Date().toISOString(),
-                'Sync Details': result.message
+        try {
+            console.log(`Updating Airtable record ${automationRecordId} with results:`, {
+                success: result.success,
+                message: result.message
             });
+            
+            if (result.success || result.message) {
+                await base('Automation').update(automationRecordId, {
+                    'Last Ran Time': new Date().toISOString(),
+                    'Sync Details': result.message
+                });
+                console.log(`Successfully updated Airtable for ${automationName}`);
+            }
+        } catch (updateError) {
+            console.error(`Failed to update Airtable for ${automationName}:`, updateError);
+            // Don't fail the whole request, just log the error
+            result.airtableUpdateError = updateError.message;
         }
         
         res.json({

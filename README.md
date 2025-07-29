@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.11** - Fixed iTrip Same-Day Turnover Detection
+**Version 2.2.12** - Safe ICS Removal System (3-Sync Confirmation)
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -53,7 +53,7 @@ This system provides complete isolation between development and production:
 automation/                                 # Project root
 ├── 📄 Core System Files
 │   ├── README.md                           # This comprehensive guide
-│   ├── VERSION                             # Current version (2.2.10)
+│   ├── VERSION                             # Current version (2.2.12)
 │   ├── CHANGELOG.md                        # Version history
 │   ├── setup.py                           # Package installation config
 │   ├── requirements.txt                   # Python dependencies
@@ -180,6 +180,13 @@ nano config/environments/prod/.env
 - Synchronizes calendar data from property management systems
 - Real-time availability updates
 - Conflict detection and resolution
+- **Safe Removal System** (v2.2.12):
+  - Prevents false removals from temporary feed issues
+  - Requires 3 consecutive missing syncs before marking as "Removed"
+  - 12-hour grace period for additional safety
+  - Protects active HCP jobs, recent check-ins, imminent checkouts
+  - Automatic recovery when reservation reappears
+  - Tracking fields: `Missing Count`, `Missing Since`, `Last Seen`
 
 ### **5. Service Job Management**
 - HousecallPro integration for service scheduling

@@ -196,35 +196,42 @@ def run_csv_automation(config):
                     if "CSV_SYNC_SUMMARY:" in line:
                         # Parse the new structured summary format
                         summary_text = line.split("CSV_SYNC_SUMMARY:")[1].strip()
-                        # Parse key=value pairs
-                        parts = summary_text.split(", ")
+                        
+                        # Use regex to parse key=value pairs properly, handling parentheses
+                        import re
+                        # Match key=value where value can contain parentheses with commas inside
+                        pattern = r'(\w+)=((?:[^,(]|\([^)]*\))*)'
+                        matches = re.findall(pattern, summary_text)
+                        
                         files = new_count = mod_count = rem_count = 0
                         new_detail = mod_detail = rem_detail = ""
                         
-                        for part in parts:
-                            if "=" in part:
-                                key, value = part.split("=", 1)
-                                if key == "Files":
-                                    files = int(value)
-                                elif key == "New":
-                                    # Extract count and detail
-                                    if "(" in value:
-                                        new_count = int(value.split(" ")[0])
-                                        new_detail = value
-                                    else:
-                                        new_count = int(value)
-                                elif key == "Modified":
-                                    if "(" in value:
-                                        mod_count = int(value.split(" ")[0])
-                                        mod_detail = value
-                                    else:
-                                        mod_count = int(value)
-                                elif key == "Removed":
-                                    if "(" in value:
-                                        rem_count = int(value.split(" ")[0])
-                                        rem_detail = value
-                                    else:
-                                        rem_count = int(value)
+                        for key, value in matches:
+                            value = value.strip()
+                            if key == "Files":
+                                files = int(value)
+                            elif key == "New":
+                                # Extract count and detail
+                                if "(" in value:
+                                    new_count = int(value.split(" ")[0])
+                                    new_detail = value
+                                else:
+                                    new_count = int(value)
+                                    new_detail = value
+                            elif key == "Modified":
+                                if "(" in value:
+                                    mod_count = int(value.split(" ")[0])
+                                    mod_detail = value
+                                else:
+                                    mod_count = int(value)
+                                    mod_detail = value
+                            elif key == "Removed":
+                                if "(" in value:
+                                    rem_count = int(value.split(" ")[0])
+                                    rem_detail = value
+                                else:
+                                    rem_count = int(value)
+                                    rem_detail = value
                         
                         # Build formatted message
                         sync_summary = f"{files} files — new {new_detail} — modified {mod_detail} — removed {rem_detail}"

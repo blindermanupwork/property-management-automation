@@ -26,6 +26,21 @@ from pyairtable import Api
 from pathlib import Path
 import pytz
 
+# Import safe removal logic
+try:
+    from .removal_safety import (
+        should_mark_as_removed,
+        check_removal_exceptions,
+        MISSING_SYNC_THRESHOLD,
+        GRACE_PERIOD_HOURS
+    )
+    SAFE_REMOVAL_ENABLED = True
+except ImportError:
+    # Fallback if removal_safety module not available
+    SAFE_REMOVAL_ENABLED = False
+    MISSING_SYNC_THRESHOLD = 3
+    GRACE_PERIOD_HOURS = 12
+
 # Import the automation config
 script_dir = Path(__file__).parent.absolute()
 project_root = script_dir.parent.parent.parent.parent
@@ -1283,9 +1298,13 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             stats[status] += 1
     
     # Process removed events (in Airtable but not in feed anymore)
-    now_iso = datetime.now(arizona_tz).isoformat(sep=" ", timespec="seconds")
+    now = datetime.now(arizona_tz)
+    now_iso = now.isoformat(sep=" ", timespec="seconds")
     today_iso = date.today().isoformat()
     removed_count = 0
+    tracked_count = 0
+    reset_count = 0
+    exception_count = 0
     
     # Get all UIDs for this feed URL
     feed_keys = [(uid, feed_url) for uid, feed_url in existing_records.keys() if feed_url == url]
@@ -1322,19 +1341,68 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                 if duplicate_key in duplicate_detected_dates:
                     logging.info(f"Skipping removal of {uid} - same reservation detected with different UID")
                     continue
+            
+            # SAFE REMOVAL LOGIC
+            if SAFE_REMOVAL_ENABLED:
+                # Check for removal exceptions (active jobs, recent check-ins, etc.)
+                exception_reason = check_removal_exceptions(fields)
+                if exception_reason:
+                    logging.info(f"Record {record_id} exempted from removal: {exception_reason}")
+                    exception_count += 1
+                    continue
                 
-            # Mark this record as Removed through mark_all_as_old_and_clone
-            logging.info(f"🔍 DEBUG: About to call mark_all_as_old_and_clone for record {rec['fields'].get('ID')} (UID: {uid})")
-            logging.info(f"🔍 DEBUG: Records passed to function: {len(records)} records")
-            result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
-            logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
-            removed_count += 1
+                # Check if should be removed based on missing count
+                should_remove, updates = should_mark_as_removed(rec, now, is_missing_from_feed=True)
+                
+                if should_remove:
+                    # Threshold reached - mark as removed
+                    logging.warning(f"🚨 Record {record_id} missing {updates.get('Missing Count', 0)} consecutive times - marking as REMOVED")
+                    result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
+                    logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
+                    removed_count += 1
+                elif updates:
+                    # Update tracking fields
+                    logging.info(f"📊 Updating tracking for record {record_id}: Missing Count = {updates.get('Missing Count', 0)}")
+                    table.update(rec["id"], updates)
+                    tracked_count += 1
+            else:
+                # Original immediate removal logic (fallback)
+                logging.info(f"🔍 DEBUG: About to call mark_all_as_old_and_clone for record {rec['fields'].get('ID')} (UID: {uid})")
+                logging.info(f"🔍 DEBUG: Records passed to function: {len(records)} records")
+                result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
+                logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
+                removed_count += 1
     
-    # Return stats including removals
+    # Reset tracking for records that were found in this sync
+    if SAFE_REMOVAL_ENABLED:
+        found_keys = [pair for pair in feed_keys if pair in processed_uid_url_pairs]
+        for uid, feed_url in found_keys:
+            records = existing_records.get((uid, feed_url), [])
+            active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
+            
+            for rec in active_records:
+                if rec["fields"].get("Missing Count", 0) > 0:
+                    _, updates = should_mark_as_removed(rec, now, is_missing_from_feed=False)
+                    if updates:
+                        logging.info(f"✅ Record {rec['fields'].get('ID')} found again - resetting tracking")
+                        table.update(rec["id"], updates)
+                        reset_count += 1
+    
+    # Return stats including removals and tracking
     stats["Removed"] = removed_count
-    logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
-                f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
-                f"{stats['Duplicate_Ignored']} duplicates ignored")
+    if SAFE_REMOVAL_ENABLED:
+        stats["Tracked"] = tracked_count
+        stats["Reset"] = reset_count
+        stats["Exceptions"] = exception_count
+        logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
+                    f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
+                    f"{stats['Duplicate_Ignored']} duplicates ignored, "
+                    f"{tracked_count} tracked, {reset_count} reset, {exception_count} exceptions")
+        logging.info(f"🛡️ Removal safety: {MISSING_SYNC_THRESHOLD} consecutive syncs required, {GRACE_PERIOD_HOURS}h grace period")
+    else:
+        logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
+                    f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
+                    f"{stats['Duplicate_Ignored']} duplicates ignored")
     
     return stats
 
@@ -1490,6 +1558,18 @@ def generate_report(overall_stats, id_to_name):
 # ---------------------------------------------------------------------------
 async def main_async():
     logging.info("Starting ICS sync run...")
+    
+    # Log removal safety information
+    if SAFE_REMOVAL_ENABLED:
+        logging.info("=" * 70)
+        logging.info("🛡️  REMOVAL SAFETY ENABLED")
+        logging.info(f"   • Consecutive missing syncs required: {MISSING_SYNC_THRESHOLD}")
+        logging.info(f"   • Grace period: {GRACE_PERIOD_HOURS} hours")
+        logging.info("   • Exceptions: Active HCP jobs, recent check-ins, imminent checkouts")
+        logging.info("=" * 70)
+    else:
+        logging.info("⚠️  Removal safety module not available - using immediate removal")
+    
     try:
         # Declare globals
         global today, lookback_threshold, future_start_threshold, future_end_threshold

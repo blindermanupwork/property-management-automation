@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.11** - Fixed iTrip same-day turnover detection
+**Current Version: 2.2.12** - Safe ICS Removal System (3-Sync Confirmation)
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 

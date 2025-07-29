@@ -18,7 +18,7 @@ let table = base.getTable("Reservations");
 // Query with the fields we need
 let query = await table.selectRecordsAsync({
     fields: ["Service Type", "Same-day Turnover", "Next Entry Is Block", "Custom Service Line Instructions", 
-             "Check-in Date", "Check-out Date", "Next Guest Date", "Property ID", "Entry Type", "Status", "Reservation UID"]
+             "Check-in Date", "Check-out Date", "Next Guest Date", "iTrip Next Guest Date", "Property ID", "Entry Type", "Status", "Reservation UID", "Entry Source"]
 });
 
 // Find our trigger record
@@ -101,11 +101,19 @@ if (sameDayTurnover) {
     baseSvcName = `SAME DAY ${serviceType} STR`;
     console.log("Same-day turnover detected");
 } else {
-    // Check if we have Next Guest Date already calculated
+    // Check if we have Next Guest Date already calculated OR iTrip Next Guest Date
     let nextGuestDate = triggerRecord.getCellValue("Next Guest Date");
+    let iTripNextGuestDate = triggerRecord.getCellValue("iTrip Next Guest Date");
+    let entrySource = triggerRecord.getCellValue("Entry Source");
+    
+    // For iTrip reservations, prefer the iTrip Next Guest Date if available
+    if (entrySource && entrySource.name === "iTrip" && iTripNextGuestDate) {
+        nextGuestDate = iTripNextGuestDate;
+        console.log("Using iTrip Next Guest Date instead of regular Next Guest Date");
+    }
     
     if (nextGuestDate) {
-        // Use the pre-calculated Next Guest Date
+        // Use the pre-calculated Next Guest Date (or iTrip Next Guest Date)
         let date = new Date(nextGuestDate);
         let month = date.toLocaleString('en-US', { month: 'long' });
         let day = date.getDate();
@@ -116,7 +124,7 @@ if (sameDayTurnover) {
         } else {
             baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
         }
-        console.log("Using pre-calculated next guest date:", month, day);
+        console.log("Using next guest date:", month, day, "(source:", entrySource?.name || "calculated", ")");
     } else {
         // Fallback: find next guest manually (shouldn't happen if first script runs properly)
         if (!checkOutDate) {
