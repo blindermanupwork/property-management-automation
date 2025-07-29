@@ -966,7 +966,17 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 record_id = r["fields"].get("ID", 0)
                 return (last_updated, -status_priority, record_id)
             
-            latest = max(records, key=sort_key)
+            # v2.2.12 Fix: Use active record for comparison to prevent hourly duplicates
+            # when same-day turnover flag changes. Only use "Old" records if no active record exists.
+            active_records = [r for r in records if r["fields"].get("Status") != "Old"]
+            if active_records:
+                # Use the most recent active record for comparison
+                latest = max(active_records, key=sort_key)
+            else:
+                # No active records - use the most recent record (could be "Old")
+                # This preserves self-healing and historical tracking
+                latest = max(records, key=sort_key)
+            
             airtable_map[key] = latest
             
             # IMPORTANT: Also map by base UID if this is a composite UID

@@ -1,5 +1,30 @@
 # CSV Processing - Version History
 
+## Version 1.2.0 (July 29, 2025)
+
+### Hourly Duplicate Prevention Fix (v2.2.12)
+- **Fixed by**: Claude AI Assistant
+- **Requested by**: Boris
+- **Issue**: Hourly duplicate record creation when same-day turnover flag changes
+- **Root Cause**: System comparing against "Old" records with outdated same-day values
+- **Solution**: Modified airtable_map to use active records for comparison
+
+### Technical Details
+- Problem: When same-day turnover changes on checkout day, system creates duplicates hourly
+- Fix: Lines 969-980 in csvProcess.py now prioritize active records over "Old" ones
+- Preserves: Self-healing, duplicate detection, and historical tracking still work
+- Impact: Prevents unnecessary database growth and cleanup work
+
+### Code Changes
+```python
+# Now uses active records for comparison when available
+active_records = [r for r in records if r["fields"].get("Status") != "Old"]
+if active_records:
+    latest = max(active_records, key=sort_key)
+else:
+    latest = max(records, key=sort_key)
+```
+
 ## Version 1.1.0 (July 29, 2025)
 
 ### iTrip Next Guest Date Integration
