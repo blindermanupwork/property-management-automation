@@ -340,12 +340,27 @@ PROD_HCP_TOKEN=...
 
 ### **Webhook Configuration**
 ```bash
-# Webhook endpoint
+# HCP Status Webhook
 https://servativ.themomentcatchers.com/webhooks/hcp
+
+# Service Line Update Webhook (NEW v2.2.13)
+https://servativ.themomentcatchers.com/api/prod/automation/update-service-line
 
 # Forwarding authentication header
 X-Internal-Auth: [SERVATIV_WEBHOOK_SECRET from environment]
 ```
+
+### **Service Line Auto-Update** (NEW v2.2.13)
+- Real-time synchronization of service line descriptions to HCP
+- Webhook-triggered when "Service Line Description" changes in Airtable
+- Pipe-separated format preserves manual notes: `"Manual notes | Auto-generated"` 
+- Smart logic:
+  - Only updates when content changes
+  - Preserves existing manual notes before pipe
+  - Auto-adds pipe separator if missing
+  - Handles 200-char HCP limit
+- Currently limited to test property for safety
+- See `/docs_v2/service-line-auto-update.md` for full details
 
 ## 📊 Operations & Monitoring
 
@@ -460,6 +475,11 @@ print('Prod errors:', ProdConfig().validate_config())
 3. **Import Errors**: Verify Python path and package installation
 4. **Airtable 403 Errors**: Check API keys and base IDs
 5. **Cron Job Failures**: Verify paths and Python executable
+6. **Airtable Shows Failures Despite Successful Runs**: 
+   - Check for duplicate Airtable native automations running at X:06-X:07
+   - These fail and overwrite successful cron results
+   - Access Airtable web interface → Automations tab to disable/fix them
+   - See CHANGELOG v2.2.12 for details
 
 ### **Debug Commands**
 ```bash
