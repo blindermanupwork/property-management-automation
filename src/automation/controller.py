@@ -69,6 +69,11 @@ class AutomationController:
     
     def update_automation_status(self, automation_name, success=True, details="", start_time=None):
         """Update automation run status in Airtable"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"📝 Updating automation status for '{automation_name}': success={success}, details='{details}'")
+        
         # First, get the record ID
         url = f"https://api.airtable.com/v0/{self.base_id}/{self.automation_table}"
         params = {
@@ -76,6 +81,7 @@ class AutomationController:
         }
         
         try:
+            logger.debug(f"Fetching record ID for '{automation_name}'")
             response = requests.get(url, headers=self.get_headers(), params=params)
             response.raise_for_status()
             
@@ -83,17 +89,26 @@ class AutomationController:
             records = data.get("records", [])
             
             if not records:
+                logger.warning(f"⚠️  Cannot update - automation '{automation_name}' not found in Airtable")
                 print(f"⚠️  Cannot update - automation '{automation_name}' not found in Airtable")
                 return False
             
             record_id = records[0]["id"]
+            logger.debug(f"Found record ID: {record_id}")
             
             # Prepare update data
             # Use Arizona timezone for Airtable data
             arizona_tz = pytz.timezone('America/Phoenix')
             run_time = start_time.isoformat() if start_time else datetime.now(arizona_tz).isoformat()
-            status_icon = "✅" if success else "❌"
-            sync_details = f"{status_icon} {details}"
+            
+            # Check if details already contains a status icon to avoid double icons
+            if details and (details.startswith("❌") or details.startswith("✅")):
+                sync_details = details
+                logger.debug(f"Details already contains status icon, using as-is: '{sync_details}'")
+            else:
+                status_icon = "✅" if success else "❌"
+                sync_details = f"{status_icon} {details}" if details else status_icon
+                logger.debug(f"Adding status icon: '{sync_details}'")
             
             update_data = {
                 "fields": {
@@ -104,32 +119,47 @@ class AutomationController:
             
             # Update the record
             update_url = f"https://api.airtable.com/v0/{self.base_id}/{self.automation_table}/{record_id}"
+            logger.debug(f"Updating Airtable record at: {update_url}")
+            logger.debug(f"Update data: {update_data}")
+            
             response = requests.patch(update_url, headers=self.get_headers(), json=update_data)
             response.raise_for_status()
             
+            logger.info(f"✅ Successfully updated status for '{automation_name}': {sync_details}")
             print(f"📝 Updated status for '{automation_name}': {sync_details}")
             return True
             
         except requests.exceptions.RequestException as e:
+            logger.error(f"❌ Error updating automation status: {e}")
+            logger.error(f"Response status code: {getattr(e.response, 'status_code', 'N/A')}")
+            logger.error(f"Response text: {getattr(e.response, 'text', 'N/A')}")
             print(f"❌ Error updating automation status for '{automation_name}': {e}")
             return False
     
     def run_automation(self, automation_name, automation_func, *args, **kwargs):
         """Run an automation with status tracking"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"🔍 Starting automation: '{automation_name}'")
         print(f"\n🔍 Checking status for '{automation_name}'...")
         
         # Check if automation is active
         if not self.get_automation_status(automation_name):
+            logger.info(f"Skipping '{automation_name}' - marked as inactive")
             print(f"⏭️  Skipping '{automation_name}' - not active")
             return False
         
         arizona_tz = pytz.timezone('America/Phoenix')
         start_time = datetime.now(arizona_tz)
+        logger.info(f"▶️  Executing '{automation_name}' at {start_time}")
         print(f"🚀 Starting '{automation_name}' at {start_time.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
         try:
             # Run the automation function
             result = automation_func(*args, **kwargs)
+            
+            logger.debug(f"Automation '{automation_name}' returned: {result}")
             
             end_time = datetime.now(arizona_tz)
             duration = end_time - start_time
@@ -141,9 +171,11 @@ class AutomationController:
             elif isinstance(result, dict) and "success" in result:
                 success = result["success"]
                 details = result.get("message", f"Completed in {duration.total_seconds():.1f}s")
+                logger.info(f"Automation '{automation_name}' result: success={success}, details='{details}'")
             else:
                 success = True
                 details = f"Completed in {duration.total_seconds():.1f}s"
+                logger.info(f"Automation '{automation_name}' completed with default success")
             
             if success:
                 print(f"✅ '{automation_name}' completed successfully in {duration.total_seconds():.1f}s")
@@ -151,7 +183,10 @@ class AutomationController:
                 print(f"❌ '{automation_name}' failed: {details}")
             
             # Update status in Airtable
-            self.update_automation_status(automation_name, success, details, start_time)
+            logger.info(f"Updating Airtable status for '{automation_name}'")
+            update_result = self.update_automation_status(automation_name, success, details, start_time)
+            if not update_result:
+                logger.error(f"Failed to update Airtable status for '{automation_name}'")
             
             return success
             
@@ -160,11 +195,17 @@ class AutomationController:
             duration = end_time - start_time
             error_details = f"Error after {duration.total_seconds():.1f}s: {str(e)}"
             
+            logger.error(f"❌ Automation '{automation_name}' failed with exception: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
             print(f"❌ '{automation_name}' failed with error: {e}")
             print(f"📝 Traceback: {traceback.format_exc()}")
             
             # Update status in Airtable
-            self.update_automation_status(automation_name, False, error_details, start_time)
+            logger.info(f"Updating Airtable status for failed automation '{automation_name}'")
+            update_result = self.update_automation_status(automation_name, False, error_details, start_time)
+            if not update_result:
+                logger.error(f"Failed to update Airtable status for failed automation '{automation_name}'")
             
             return False
     
