@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.12** - Safe ICS Removal System (3-Sync Confirmation)
+**Current Version: 2.2.13** - Owner Arrival Same-Day Fix
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -110,7 +110,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.10)
+### Current System State (v2.2.13)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
@@ -136,6 +136,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **iTrip Next Guest Date Support**: Service lines now use iTrip-provided next guest dates when available (v2.2.10)
 - ✅ **Single Error Symbol Display**: Fixed double ❌ issue in error messages (v2.2.10)
 - ✅ **iTrip Same-Day Detection Fix**: Python script now correctly detects and updates same-day turnovers when using iTrip Next Guest Date (v2.2.11)
+- ✅ **Owner Arrival Same-Day Fix**: Owner arrivals NOT marked as same-day to prevent sync conflicts, should get 10:00 AM service time (v2.2.13)
 
 
 ## HCP Sync Script Locations

@@ -27,6 +27,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Uses standard API authentication
   - Solves the critical problem of stale next guest dates in HCP
 
+### Fixed
+- **Owner Arrival Same-Day Logic**
+  - Owner arrivals (blocks checking in same/next day) are NO LONGER marked as same-day turnovers
+  - Prevents creating false "modified" records due to same-day field mismatches
+  - Service time should be set to 10:00 AM for owner arrivals (vs 10:15 AM default) via Airtable formula
+  - Updated scripts:
+    - `find-next-guest-date.js`: Special handling for owner blocks
+    - `update-service-line-description.js`: Verified compatibility
+  - Benefits:
+    - Eliminates sync conflicts between ICS/CSV sources
+    - Maintains accurate owner arrival detection
+    - Preserves "OWNER ARRIVING" service line labeling
+  - Test script: `test-owner-arrival-logic.js`
+  - Documentation: `docs_v2/owner-arrival-logic.md`
+
 ## [2.2.12] - 2025-07-29
 
 ### Added
