@@ -6,6 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
+## ⚠️ Critical Finding: Duplicate Airtable Automations (July 28, 2025)
+
+**Issue**: Airtable native automations are running at X:06-X:07 every hour, failing, and overwriting successful cron job results.
+
+**Pattern Discovered**:
+- X:00 - Cron job runs successfully ✅
+- X:06-X:07 - Airtable automation runs and fails ❌
+- Result: Airtable shows failure despite successful scheduled run
+
+**Evidence**: 
+- ICS Calendar history shows success/failure pairs with mangled sync details
+- Failures show generic "Unknown error - check logs for details" (Airtable script error)
+- All failures occur at X:06-X:07 timestamps
+
+**Resolution**: Check Airtable web interface → Automations tab for hourly scheduled automations that may be:
+- Using obsolete webhook URLs
+- Running scripts that timeout
+- Duplicating the work of cron jobs
+
+**Impact**: This explains why Airtable shows failures when logs show successes. The actual automations work fine via cron.
+
 ## 📁 Project Structure (as of July 21, 2025)
 
 ```

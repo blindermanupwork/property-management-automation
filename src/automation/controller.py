@@ -117,6 +117,25 @@ class AutomationController:
                 }
             }
             
+            # Log trigger source
+            import inspect
+            import traceback
+            caller_info = inspect.stack()
+            
+            # Special logging for X:06-X:07 triggers
+            current_minute = datetime.now().minute
+            if 6 <= current_minute <= 8:
+                logger.warning(f"\n=== SUSPICIOUS TIMING DETECTED ===")
+                logger.warning(f"Automation: {automation_name}")
+                logger.warning(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                logger.warning(f"Success: {success}, Details: {details}")
+                logger.warning(f"Call stack:")
+                for i, frame in enumerate(caller_info[:10]):
+                    logger.warning(f"  {i}: {frame.filename}:{frame.lineno} in {frame.function}")
+                logger.warning(f"Full traceback:")
+                logger.warning(''.join(traceback.format_stack()))
+                logger.warning(f"===================================")
+            
             # Update the record
             update_url = f"https://api.airtable.com/v0/{self.base_id}/{self.automation_table}/{record_id}"
             logger.debug(f"Updating Airtable record at: {update_url}")

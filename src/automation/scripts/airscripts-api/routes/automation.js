@@ -343,6 +343,32 @@ router.post('/run/:automation', async (req, res) => {
     // Use forceEnvironment from the middleware
     const env = req.forceEnvironment === 'development' ? 'dev' : 'prod';
     
+    // Enhanced logging to find trigger source
+    const triggerInfo = {
+        timestamp: new Date().toISOString(),
+        automation: automation,
+        environment: env,
+        method: req.method,
+        path: req.path,
+        fullUrl: req.originalUrl,
+        headers: req.headers,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        referer: req.headers['referer'],
+        origin: req.headers['origin'],
+        apiKey: req.headers['x-api-key'] ? 'present' : 'missing',
+        body: req.body
+    };
+    
+    console.log('=== AUTOMATION TRIGGER DETECTED ===');
+    console.log(JSON.stringify(triggerInfo, null, 2));
+    console.log('===================================');
+    
+    // Log to a special file for trigger analysis
+    const fs = require('fs');
+    const triggerLogPath = '/home/opc/automation/src/automation/logs/automation_triggers.json';
+    fs.appendFileSync(triggerLogPath, JSON.stringify(triggerInfo) + '\n');
+    
     console.log(`Received request to run automation: ${automation} in ${env} environment`);
     
     try {
@@ -451,6 +477,135 @@ router.get('/status/:automation', async (req, res) => {
         res.status(500).json({
             success: false,
             message: `Failed to get automation status: ${error.message}`,
+            error: error.message
+        });
+    }
+});
+
+// Service line update webhook endpoint - simplified version
+router.post('/update-service-line', async (req, res) => {
+    try {
+        const { recordId, propertyName, jobId, serviceLineDescription, lastSyncedServiceLine } = req.body;
+        
+        console.log(`Service line update webhook - Property: ${propertyName}, Job: ${jobId}`);
+        
+        // Safety check - only process test property
+        if (propertyName !== 'Boris Blinderman Test Property') {
+            return res.json({ 
+                success: true, 
+                message: 'Not test property - skipping',
+                skipped: true
+            });
+        }
+        
+        if (!jobId) {
+            return res.json({ 
+                success: true, 
+                message: 'No HCP job ID - skipping',
+                skipped: true
+            });
+        }
+        
+        // Get HCP token
+        const HCP_TOKEN = process.env.PROD_HCP_TOKEN;
+        const axios = require('axios');
+        
+        // Get line items separately (HCP API doesn't always include them in job response)
+        console.log(`Fetching line items for job ${jobId}`);
+        const lineItemsResponse = await axios.get(
+            `https://api.housecallpro.com/jobs/${jobId}/line_items`,
+            {
+                headers: {
+                    'Authorization': `Token ${HCP_TOKEN}`,
+                    'Accept': 'application/json'
+                }
+            }
+        );
+        console.log('Raw line items response status:', lineItemsResponse.status);
+        console.log('Raw line items response data type:', typeof lineItemsResponse.data);
+        console.log('Raw line items response data:', JSON.stringify(lineItemsResponse.data).substring(0, 500));
+        
+        // Handle HCP API response format - it returns {object: "list", data: [...]}
+        let lineItems = lineItemsResponse.data;
+        
+        // If response has a data property (HCP API format), use that
+        if (lineItems && lineItems.data && Array.isArray(lineItems.data)) {
+            lineItems = lineItems.data;
+        }
+        // If response has an items property, use that
+        else if (lineItems && lineItems.items && Array.isArray(lineItems.items)) {
+            lineItems = lineItems.items;
+        }
+        // If response has a line_items property, use that
+        else if (lineItems && lineItems.line_items && Array.isArray(lineItems.line_items)) {
+            lineItems = lineItems.line_items;
+        }
+        
+        if (!Array.isArray(lineItems) || lineItems.length === 0) {
+            console.error('Line items structure:', JSON.stringify(lineItemsResponse.data));
+            throw new Error('No line items found or unexpected response structure');
+        }
+        
+        const lineItem = lineItems[0];
+        if (!lineItem) {
+            throw new Error('First line item is undefined');
+        }
+        
+        const currentName = lineItem.name || '';
+        
+        // Build new name with pipe separator
+        let finalName;
+        const pipeIndex = currentName.indexOf(' | ');
+        
+        if (pipeIndex !== -1) {
+            // Preserve manual notes
+            const manualNotes = currentName.substring(0, pipeIndex);
+            finalName = `${manualNotes} | ${serviceLineDescription}`;
+        } else if (currentName.trim()) {
+            // Add pipe separator
+            finalName = `${currentName} | ${serviceLineDescription}`;
+        } else {
+            // Empty - just use service line
+            finalName = serviceLineDescription;
+        }
+        
+        // Truncate to 200 chars if needed
+        if (finalName.length > 200) {
+            finalName = finalName.substring(0, 197) + '...';
+        }
+        
+        // Update line item
+        await axios.put(
+            `https://api.housecallpro.com/jobs/${jobId}/line_items/${lineItem.id}`,
+            {
+                name: finalName,
+                description: lineItem.description,
+                unit_price: lineItem.unit_price,
+                quantity: lineItem.quantity,
+                kind: lineItem.kind
+            },
+            {
+                headers: {
+                    'Authorization': `Token ${HCP_TOKEN}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }
+        );
+        
+        console.log(`Service line updated successfully for job ${jobId}`);
+        
+        return res.json({
+            success: true,
+            message: 'Service line updated',
+            previousName: currentName,
+            newName: finalName
+        });
+        
+    } catch (error) {
+        console.error('Service line update error:', error.message);
+        return res.status(500).json({
+            success: false,
             error: error.message
         });
     }

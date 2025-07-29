@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.13] - 2025-07-29
+
+### Added
+- **Automated Service Line Updates via Webhook**
+  - Real-time synchronization of service line descriptions from Airtable to HCP
+  - Webhook-triggered updates when "Service Line Description" changes
+  - Pipe-separated format preserves manual notes: `"Manual notes | Auto-generated service line"`
+  - Smart update logic:
+    - Only updates when content actually changes
+    - Preserves existing manual notes before pipe separator
+    - Adds pipe separator automatically if none exists
+    - Handles 200-character HCP limit with intelligent truncation
+  - Safety features:
+    - Currently limited to "Boris Blinderman Test Property" for testing
+    - Comprehensive error handling and logging
+    - Updates "Last Synced Service Line" field for tracking
+  - Implementation:
+    - Airtable automation script: `update-hcp-service-line.js`
+    - API endpoint: `/api/prod/automation/update-service-line`
+    - Uses standard API authentication
+  - Solves the critical problem of stale next guest dates in HCP
+
 ## [2.2.12] - 2025-07-29
 
 ### Added
@@ -30,6 +52,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed incorrectly removed reservation that was still active in ICS feed
   - Restored from "Removed" to "Modified" status
   - Added audit trail note to Service Sync Details
+
+### Discovered
+- **Duplicate Airtable Automations Issue** (July 28, 2025)
+  - Identified that Airtable native automations are running at X:06-X:07 every hour
+  - These automations fail and overwrite successful cron job results
+  - Pattern: Cron runs successfully at X:00, Airtable automation fails at X:06-X:07
+  - Symptoms:
+    - Sync details show mangled success/failure combinations
+    - Generic "Unknown error - check logs for details" messages
+    - Airtable shows failures despite logs showing successful runs
+  - Root cause: Likely obsolete Airtable automations using old webhook URLs or timing out
+  - Resolution: Check Airtable web interface → Automations tab for hourly scheduled automations
+  - Impact: Explains discrepancy between successful logs and failed Airtable status
 
 ## [2.2.11] - 2025-07-29
 
