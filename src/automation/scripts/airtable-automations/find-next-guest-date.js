@@ -2,7 +2,11 @@
 // Purpose: Finds the next guest checking in at the same property and determines if it's a same-day turnover
 // Updates: Next Guest Date field and Same-day Turnover checkbox
 // Author: Automation System
-// Last Updated: June 2025
+// Last Updated: July 2025
+//
+// Note: When an owner is arriving (block checking in same/next day), we do NOT mark it as
+// same-day turnover to prevent creating modified records when syncing. The Final Service Time
+// should be set to 10:00 AM for owner arrivals (vs 10:15 AM default) via an Airtable formula.
 
 // Get trigger record data
 let inputConfig = input.config();
@@ -170,7 +174,12 @@ if (nextEntries.length > 0) {
     checkOutDateObj.setHours(0, 0, 0, 0);
     nextCheckInDateObj.setHours(0, 0, 0, 0);
     
-    isSameDayTurnover = checkOutDateObj.getTime() === nextCheckInDateObj.getTime();
+    // Check if dates are the same
+    const datesAreSame = checkOutDateObj.getTime() === nextCheckInDateObj.getTime();
+    
+    // Only mark as same-day turnover if it's NOT an owner arrival
+    // Owner arrivals should not be marked as same-day to avoid creating modified records
+    isSameDayTurnover = datesAreSame && !isBlock;
     
     // Calculate days between checkout and next checkin
     const daysBetween = Math.floor((nextCheckInDateObj - checkOutDateObj) / (1000 * 60 * 60 * 24));

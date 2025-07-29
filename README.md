@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.12** - Safe ICS Removal System (3-Sync Confirmation)
+**Version 2.2.13** - Owner Arrival Same-Day Fix
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -53,7 +53,7 @@ This system provides complete isolation between development and production:
 automation/                                 # Project root
 ├── 📄 Core System Files
 │   ├── README.md                           # This comprehensive guide
-│   ├── VERSION                             # Current version (2.2.12)
+│   ├── VERSION                             # Current version (2.2.13)
 │   ├── CHANGELOG.md                        # Version history
 │   ├── setup.py                           # Package installation config
 │   ├── requirements.txt                   # Python dependencies
@@ -219,7 +219,7 @@ Enhanced service line update script that automatically detects owner arrivals:
 
 #### **Service Line Description Hierarchy**:
 1. Custom Instructions (max 200 chars)
-2. **OWNER ARRIVING** (if owner is arriving)
+2. **OWNER ARRIVING** (if owner is arriving) - NEW v2.2.13: Not marked as same-day turnover
 3. LONG TERM GUEST DEPARTING (if 14+ day stay)
 4. Base service name (e.g., "Turnover STR Next Guest July 3")
 
@@ -495,11 +495,21 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 
 ## 📝 Version History
 
-### **Version 2.2.10** (Current)
+### **Version 2.2.13** (Current)
+- ✅ **Owner Arrival Same-Day Fix** - Owner arrivals no longer marked as same-day turnovers to prevent sync conflicts
+- ✅ **Service Time Logic** - Owner arrivals should get 10:00 AM service time (vs 10:15 AM default)
+- ✅ **Prevents Modified Records** - Eliminates false "modified" records from same-day field mismatches
+
+### **Version 2.2.12**
+- ✅ **Safe ICS Removal System** - 3-sync confirmation before marking feeds as removed
+- ✅ **12-Hour Grace Period** - Additional safety for temporary feed issues
+- ✅ **Automatic Recovery** - Reservations reappear when feeds come back online
+
+### **Version 2.2.10-2.2.11**
 - ✅ **Enhanced Sync Status Reporting** - Detailed breakdowns of new/modified/removed with reservation/block counts
 - ✅ **iTrip Next Guest Date Override** - Field now takes precedence over calculated dates
 - ✅ **Fixed Double Error Symbols** - Removed duplicate ❌ in sync failure messages
-- ✅ **Cleaned Up Duplicate Detection Tests** - Removed test records from Airtable automation table
+- ✅ **iTrip Same-Day Detection Fix** - Python script correctly detects same-day turnovers with iTrip dates
 
 ### **Version 2.2.8-2.2.9**
 - ✅ **Enhanced Service Line Updates with Owner Detection**
