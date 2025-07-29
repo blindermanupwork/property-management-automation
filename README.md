@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.10** - Enhanced Sync Status Reporting & iTrip Next Guest Date Override
+**Version 2.2.11** - Fixed iTrip Same-Day Turnover Detection
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 

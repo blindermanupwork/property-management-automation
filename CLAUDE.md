@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.10** - Enhanced sync reporting and iTrip next guest date support
+**Current Version: 2.2.11** - Fixed iTrip same-day turnover detection
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -114,6 +114,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Enhanced Sync Reporting**: Detailed breakdowns showing new/modified/removed counts for both reservations and blocks (v2.2.10)
 - ✅ **iTrip Next Guest Date Support**: Service lines now use iTrip-provided next guest dates when available (v2.2.10)
 - ✅ **Single Error Symbol Display**: Fixed double ❌ issue in error messages (v2.2.10)
+- ✅ **iTrip Same-Day Detection Fix**: Python script now correctly detects and updates same-day turnovers when using iTrip Next Guest Date (v2.2.11)
 
 
 ## HCP Sync Script Locations

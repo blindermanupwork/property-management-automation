@@ -194,6 +194,30 @@ class HCPServiceLineUpdater:
         if entry_source == 'iTrip' and itrip_next_guest_date:
             next_guest_date = itrip_next_guest_date
             print(f"   📅 Using iTrip Next Guest Date: {itrip_next_guest_date}")
+            
+            # Calculate if it's same-day turnover based on iTrip dates
+            if check_out_date:
+                try:
+                    checkout = datetime.fromisoformat(check_out_date.replace('Z', '+00:00'))
+                    next_checkin = datetime.fromisoformat(itrip_next_guest_date.replace('Z', '+00:00'))
+                    
+                    # Compare dates only (ignore time)
+                    checkout_date_only = checkout.date()
+                    next_checkin_date_only = next_checkin.date()
+                    
+                    if checkout_date_only == next_checkin_date_only:
+                        same_day = True
+                        print(f"   🔄 Detected SAME DAY turnover from iTrip dates")
+                        
+                        # Update Airtable if the field wasn't already set
+                        if not record.get('Same-day Turnover', False):
+                            try:
+                                self.table.update(record['id'], {'Same-day Turnover': True})
+                                print(f"   ✅ Updated Same-day Turnover checkbox in Airtable")
+                            except Exception as e:
+                                print(f"   ⚠️ Failed to update Same-day Turnover: {e}")
+                except Exception as e:
+                    print(f"   ⚠️ Error calculating same-day from iTrip dates: {e}")
         else:
             next_guest_date = record.get('Next Guest Date')
         
