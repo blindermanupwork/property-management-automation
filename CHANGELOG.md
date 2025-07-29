@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.11] - 2025-07-29
+
+### Fixed
+- **iTrip Same-Day Turnover Detection**
+  - Fixed `update-service-lines-enhanced.py` to correctly detect same-day turnovers when using iTrip Next Guest Date
+  - Script now compares checkout date with iTrip Next Guest Date to determine if it's a same-day turnover
+  - Automatically updates the "Same-day Turnover" checkbox in Airtable when detected
+  - Service lines now correctly show "SAME DAY Turnover STR" instead of "Turnover STR Next Guest Unknown"
+  - Handles long-term guests properly: "LONG TERM GUEST DEPARTING - SAME DAY Turnover STR"
+  - Fix applies to both development and production environments
+  - Verified with comprehensive testing: 17 production records correctly updated
+
+## [2.2.10] - 2025-07-21
+
+### Added
+- **Enhanced Sync Status Reporting**
+  - Detailed breakdown of sync operations showing new/modified/removed counts
+  - Separate counts for reservations and blocks in sync reports
+  
+### Fixed
+- **iTrip Next Guest Date Override**
+  - Service lines now correctly use iTrip-provided next guest dates when available
+  - Prevents "Next Guest Unknown" when iTrip provides the next guest date
+  
+- **Single Error Symbol Display**
+  - Fixed double ❌ display issue in error messages
+  - Error messages now show single, clean error indicator
+
+## [2.2.9] - 2025-07-01
+
+### Added
+- **Hybrid UID + Property/Dates/Type Duplicate Detection**
+  - Implemented comprehensive duplicate detection combining UID and property/dates/type matching
+  - Handles Lodgify's UID changes gracefully - new UIDs for same property/dates are ignored
+  - Preserves data integrity while allowing legitimate UID updates
+  - Test framework validates all duplicate detection scenarios automatically
+
 ## [2.2.8] - 2025-06-27
 
 ### Added
