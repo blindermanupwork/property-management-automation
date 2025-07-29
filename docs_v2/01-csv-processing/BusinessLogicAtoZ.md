@@ -306,6 +306,36 @@ def generate_uid(source, property_name, checkin, checkout, guest_name):
            # Alert admin
    ```
 
+### 9. iTrip Next Guest Date Integration (v2.2.11)
+
+#### **Field Processing and Storage**
+**Business Logic**:
+1. **CSV Field Extraction**:
+   - iTrip CSV includes "Next Guest Date" column
+   - Parsed and stored in Airtable "iTrip Next Guest Date" field
+   - Format: MM/DD/YYYY converted to YYYY-MM-DD
+
+2. **Same-Day Turnover Detection**:
+   ```python
+   # In update-service-lines-enhanced.py
+   if itrip_next_guest_date and check_out_date:
+       checkout = datetime.fromisoformat(check_out_date)
+       next_checkin = datetime.fromisoformat(itrip_next_guest_date)
+       
+       # Compare dates only (ignore time)
+       if checkout.date() == next_checkin.date():
+           same_day = True
+           # Update Airtable checkbox if not already set
+           if not record.get('Same-day Turnover', False):
+               table.update(record['id'], {'Same-day Turnover': True})
+   ```
+
+3. **Service Line Generation Priority**:
+   - iTrip Next Guest Date takes precedence over calculated dates
+   - Used for "Next Guest {date}" in service descriptions
+   - Enables accurate same-day turnover detection
+   - Example: "SAME DAY Turnover STR" vs "Turnover STR Next Guest July 3"
+
 ## Environment-Specific Configuration
 
 ### Development Environment
@@ -336,6 +366,9 @@ def generate_uid(source, property_name, checkin, checkout, guest_name):
 
 ### Format-Specific Rules
 1. **iTrip**: MM/DD/YYYY dates, single guest name field
+   - **iTrip Next Guest Date**: Special field for next arrival date
+   - Used for service line generation and same-day turnover detection
+   - When present, overrides calculated next guest dates
 2. **Evolve**: YYYY-MM-DD dates, may include owner blocks
 3. **Unknown**: Best-effort parsing with warnings
 
@@ -355,7 +388,8 @@ def generate_uid(source, property_name, checkin, checkout, guest_name):
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: July 11, 2025
-**Scope**: Complete CSV processing business logic
+**Document Version**: 1.1.0
+**Last Updated**: July 29, 2025
+**Scope**: Complete CSV processing business logic including iTrip Next Guest Date integration
 **Primary Code**: `/src/automation/scripts/CSVtoAirtable/csvProcess.py`
+**Related Scripts**: `/src/automation/scripts/hcp/update-service-lines-enhanced.py`
