@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.14** - Error Handling Improvements
+**Current Version: 2.2.15** - Service Line Description Fix
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -118,6 +118,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **iTrip Same-Day Detection Fix**: Python script now correctly detects and updates same-day turnovers when using iTrip Next Guest Date (v2.2.11)
 - ✅ **Owner Arrival Same-Day Fix**: Owner arrivals NOT marked as same-day to prevent sync conflicts, should get 10:00 AM service time (v2.2.13)
 - ✅ **Error Handling Improvements**: Fixed double ❌❌ status icons, improved error messages with specific context instead of generic "Unknown error" (v2.2.14)
+- ✅ **Service Line Description Fix**: All flags now independent - OWNER ARRIVING, LONG TERM GUEST DEPARTING, and SAME DAY work correctly in all combinations (v2.2.15)
 
 
 ## HCP Sync Script Locations
