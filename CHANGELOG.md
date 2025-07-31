@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.15] - 2025-07-31
+
+### Fixed
+- **Service Line Description Logic - All Flags Now Independent**
+  - Fixed Airtable automation script to match expected behavior
+  - All service line flags are now independent and shown when applicable:
+    - Custom Instructions (if present)
+    - OWNER ARRIVING (if owner is arriving - works for both same-day and regular)
+    - LONG TERM GUEST DEPARTING (if stay >= 14 days)
+    - Base service name (SAME DAY format or regular format)
+  - Previous issues fixed:
+    - ❌ "OWNER ARRIVING" was embedded in base name for non-same-day
+    - ❌ "LONG TERM GUEST DEPARTING" was skipped when owner in base name
+    - ❌ Same-day turnovers didn't check for owner arriving
+  - Example outputs:
+    - Same-day + all flags: `Check hot tub - OWNER ARRIVING - LONG TERM GUEST DEPARTING - SAME DAY Turnover STR`
+    - Regular + owner + long-term: `OWNER ARRIVING - LONG TERM GUEST DEPARTING - Turnover STR Next Guest July 3`
+    - Simple same-day: `SAME DAY Turnover STR`
+  - Updated file: `src/automation/scripts/airtable-automations/update-service-line-description.js`
+
 ## [2.2.14] - 2025-07-30
 
 ### Fixed

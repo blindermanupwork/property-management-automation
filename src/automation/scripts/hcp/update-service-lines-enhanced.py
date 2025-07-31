@@ -196,7 +196,10 @@ class HCPServiceLineUpdater:
             print(f"   📅 Using iTrip Next Guest Date: {itrip_next_guest_date}")
             
             # Calculate if it's same-day turnover based on iTrip dates
-            if check_out_date:
+            # BUT ONLY if next entry is NOT a block (per business rule: same-day is only for reservation-to-reservation)
+            next_entry_is_block = record.get('Next Entry Is Block', False) or is_owner_arriving
+            
+            if check_out_date and not next_entry_is_block:
                 try:
                     checkout = datetime.fromisoformat(check_out_date.replace('Z', '+00:00'))
                     next_checkin = datetime.fromisoformat(itrip_next_guest_date.replace('Z', '+00:00'))
@@ -207,7 +210,7 @@ class HCPServiceLineUpdater:
                     
                     if checkout_date_only == next_checkin_date_only:
                         same_day = True
-                        print(f"   🔄 Detected SAME DAY turnover from iTrip dates")
+                        print(f"   🔄 Detected SAME DAY turnover from iTrip dates (next entry is a reservation)")
                         
                         # Update Airtable if the field wasn't already set
                         if not record.get('Same-day Turnover', False):
@@ -218,6 +221,8 @@ class HCPServiceLineUpdater:
                                 print(f"   ⚠️ Failed to update Same-day Turnover: {e}")
                 except Exception as e:
                     print(f"   ⚠️ Error calculating same-day from iTrip dates: {e}")
+            elif check_out_date and next_entry_is_block:
+                print(f"   🏠 Next entry is a block/owner arrival - NOT marking as same-day turnover")
         else:
             next_guest_date = record.get('Next Guest Date')
         

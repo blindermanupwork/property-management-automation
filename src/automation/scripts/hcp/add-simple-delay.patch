@@ -1,0 +1,22 @@
+--- a/prod-hcp-sync.cjs
++++ b/prod-hcp-sync.cjs
+@@ -275,6 +275,9 @@
+         
+         await base('Reservations').update(rec.id, updateFields);
+         
++        // Small delay to prevent Airtable automation cascade
++        await new Promise(resolve => setTimeout(resolve, 200));
++        
+         console.log(`   ✅ Updated sync status: ${syncStatus}`);
+         if (syncStatus !== 'Synced') {
+           console.log(`      Expected: ${azDate(schedExpected)} at ${azTime(schedExpected)}`);
+@@ -413,6 +416,9 @@
+         
+         await base('Reservations').update(rec.id, updateFields);
+         
++        // Small delay to prevent Airtable automation cascade
++        await new Promise(resolve => setTimeout(resolve, 200));
++        
+         console.log(`   ✅ Updated Airtable record`);
+         successCount++;
+         
