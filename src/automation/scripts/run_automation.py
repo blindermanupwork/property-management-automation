@@ -99,7 +99,8 @@ def run_evolve_automation(config):
                             tab2_rows = int(value)
                 
                 if tab1_success or tab2_success:
-                    message = f"2 files — {tab1_rows} reservations, {tab2_rows} blocks"
+                    # Match CSV/ICS format exactly - Evolve only downloads, so no new/modified/removed tracking
+                    message = f"2 files — new {tab1_rows + tab2_rows} ({tab1_rows} res, {tab2_rows} block) — modified 0 (0 res, 0 block) — removed 0 (0 res, 0 block)"
                     return {"success": True, "message": message}
                 else:
                     return {"success": False, "message": "Both tab exports failed"}
@@ -121,7 +122,8 @@ def run_evolve_automation(config):
                 tab2_rows = status.get("tab2_rows", 0)
                 
                 if status.get("overall_success", False):
-                    message = f"2 files — {tab1_rows} reservations, {tab2_rows} blocks"
+                    # Match CSV/ICS format exactly - Evolve only downloads, so no new/modified/removed tracking
+                    message = f"2 files — new {tab1_rows + tab2_rows} ({tab1_rows} res, {tab2_rows} block) — modified 0 (0 res, 0 block) — removed 0 (0 res, 0 block)"
                     return {"success": True, "message": message}
                 else:
                     message = status.get("message", "Evolve scraping failed")
