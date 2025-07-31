@@ -2,30 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.13** - Owner Arrival Same-Day Fix
+**Current Version: 2.2.14** - Error Handling Improvements
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
-## ⚠️ Critical Finding: Duplicate Airtable Automations (July 28, 2025)
-
-**Issue**: Airtable native automations are running at X:06-X:07 every hour, failing, and overwriting successful cron job results.
-
-**Pattern Discovered**:
-- X:00 - Cron job runs successfully ✅
-- X:06-X:07 - Airtable automation runs and fails ❌
-- Result: Airtable shows failure despite successful scheduled run
-
-**Evidence**: 
-- ICS Calendar history shows success/failure pairs with mangled sync details
-- Failures show generic "Unknown error - check logs for details" (Airtable script error)
-- All failures occur at X:06-X:07 timestamps
-
-**Resolution**: Check Airtable web interface → Automations tab for hourly scheduled automations that may be:
-- Using obsolete webhook URLs
-- Running scripts that timeout
-- Duplicating the work of cron jobs
-
-**Impact**: This explains why Airtable shows failures when logs show successes. The actual automations work fine via cron.
 
 ## 📁 Project Structure (as of July 21, 2025)
 
@@ -137,6 +117,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Single Error Symbol Display**: Fixed double ❌ issue in error messages (v2.2.10)
 - ✅ **iTrip Same-Day Detection Fix**: Python script now correctly detects and updates same-day turnovers when using iTrip Next Guest Date (v2.2.11)
 - ✅ **Owner Arrival Same-Day Fix**: Owner arrivals NOT marked as same-day to prevent sync conflicts, should get 10:00 AM service time (v2.2.13)
+- ✅ **Error Handling Improvements**: Fixed double ❌❌ status icons, improved error messages with specific context instead of generic "Unknown error" (v2.2.14)
 
 
 ## HCP Sync Script Locations

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.14] - 2025-07-30
+
+### Fixed
+- **Error Handling Improvements**
+  - Fixed double status icon issue (❌❌) in sync details
+    - Controller now strips existing status icons before adding new ones
+    - Ensures all messages have exactly one status icon
+  - Improved error messages with specific context
+    - Replaced generic "Unknown error" with exit codes and output info
+    - Better error details for troubleshooting
+  - Changes applied to both development and production environments
+  - Affected files:
+    - `controller.py`: Status icon handling logic
+    - `run_automation.py`: Error message formatting
+
 ## [2.2.13] - 2025-07-29
 
 ### Added
