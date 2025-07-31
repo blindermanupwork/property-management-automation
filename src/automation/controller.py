@@ -101,14 +101,16 @@ class AutomationController:
             arizona_tz = pytz.timezone('America/Phoenix')
             run_time = start_time.isoformat() if start_time else datetime.now(arizona_tz).isoformat()
             
-            # Check if details already contains a status icon to avoid double icons
-            if details and (details.startswith("❌") or details.startswith("✅")):
-                sync_details = details
-                logger.debug(f"Details already contains status icon, using as-is: '{sync_details}'")
-            else:
+            # Fix double status icon issue by stripping existing icons first
+            if details:
+                # Remove any existing status icons and extra spaces
+                clean_details = details.lstrip("❌✅ ")
+                logger.debug(f"Cleaned details from '{details}' to '{clean_details}'")
                 status_icon = "✅" if success else "❌"
-                sync_details = f"{status_icon} {details}" if details else status_icon
-                logger.debug(f"Adding status icon: '{sync_details}'")
+                sync_details = f"{status_icon} {clean_details}"
+            else:
+                sync_details = "✅" if success else "❌"
+            logger.debug(f"Final sync_details: '{sync_details}'")
             
             update_data = {
                 "fields": {
@@ -122,9 +124,9 @@ class AutomationController:
             import traceback
             caller_info = inspect.stack()
             
-            # Special logging for X:06-X:07 triggers
+            # Special logging for X:06-X:09 triggers
             current_minute = datetime.now().minute
-            if 6 <= current_minute <= 8:
+            if 6 <= current_minute <= 9:
                 logger.warning(f"\n=== SUSPICIOUS TIMING DETECTED ===")
                 logger.warning(f"Automation: {automation_name}")
                 logger.warning(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

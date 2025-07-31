@@ -629,7 +629,8 @@ def run_add_jobs_automation(config):
         print("🔧 Running HCP service job creation...")
         
         # Run the environment-specific HCP sync script in add-only mode
-        script_name = "dev-hcp-sync.cjs" if not config.is_production else "prod-hcp-sync.cjs"
+        # Using batched version to prevent Airtable automation cascade
+        script_name = "dev-hcp-sync-batched.cjs" if not config.is_production else "prod-hcp-sync-batched.cjs"
         hcp_script = config.get_script_path("hcp", script_name)
         if not hcp_script.exists():
             return {"success": False, "message": f"HCP sync script not found: {script_name}"}
@@ -757,7 +758,8 @@ def run_hcp_automation(config):
         print("🔧 Running HCP service job sync (legacy mode)...")
         
         # Run the environment-specific HCP sync script
-        script_name = "dev-hcp-sync.cjs" if not config.is_production else "prod-hcp-sync.cjs"
+        # Using batched version to prevent Airtable automation cascade
+        script_name = "dev-hcp-sync-batched.cjs" if not config.is_production else "prod-hcp-sync-batched.cjs"
         hcp_script = config.get_script_path("hcp", script_name)
         if not hcp_script.exists():
             return {"success": False, "message": f"HCP sync script not found: {script_name}"}
@@ -882,7 +884,13 @@ def run_service_line_updates(config):
             else:
                 return {"success": True, "message": "Service line update completed"}
         else:
-            error_msg = result.stderr.strip() if result.stderr else "Unknown error"
+            # Provide more context for errors
+            if result.stderr:
+                error_msg = result.stderr.strip()
+            elif result.returncode:
+                error_msg = f"Process failed with exit code {result.returncode}"
+            else:
+                error_msg = "Process failed with no error output"
             return {"success": False, "message": f"Service line update failed: {error_msg}"}
             
     except Exception as e:
@@ -958,7 +966,13 @@ def run_job_reconciliation(config, execute=False):
                 # Fallback to text output
                 return {"success": True, "message": f"Reconciliation completed (output: {result.stdout.strip()})"}
         else:
-            error_msg = result.stderr.strip() if result.stderr else "Unknown error"
+            # Provide more context for errors
+            if result.stderr:
+                error_msg = result.stderr.strip()
+            elif result.returncode:
+                error_msg = f"Process failed with exit code {result.returncode}"
+            else:
+                error_msg = "Process failed with no error output"
             return {"success": False, "message": f"Reconciliation failed: {error_msg}"}
             
     except Exception as e:

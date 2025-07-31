@@ -969,6 +969,17 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
             # v2.2.12 Fix: Use active record for comparison to prevent hourly duplicates
             # when same-day turnover flag changes. Only use "Old" records if no active record exists.
             active_records = [r for r in records if r["fields"].get("Status") != "Old"]
+            
+            # DEBUG: Special logging for problematic reservation
+            res_uid, _ = key  # Extract UID from key tuple
+            if res_uid == "14612250":
+                logging.info(f"🔍 DEBUG 14612250: Found {len(records)} total records, {len(active_records)} active")
+                for r in records:
+                    status = r["fields"].get("Status", "")
+                    same_day = r["fields"].get("Same-day Turnover", "")
+                    last_updated = r["fields"].get("Last Updated", "")
+                    logging.info(f"  - Record {r['id']}: Status={status}, Same-day={same_day}, Updated={last_updated}")
+            
             if active_records:
                 # Use the most recent active record for comparison
                 latest = max(active_records, key=sort_key)
@@ -978,6 +989,14 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                 latest = max(records, key=sort_key)
             
             airtable_map[key] = latest
+            
+            # DEBUG: Log what we're using for comparison
+            if res_uid == "14612250":
+                logging.info(f"🔍 DEBUG 14612250: Using record {latest['id']} for comparison")
+                logging.info(f"  - Status: {latest['fields'].get('Status', '')}")
+                logging.info(f"  - Same-day Turnover: {latest['fields'].get('Same-day Turnover', '')}")
+                logging.info(f"  - Next Guest Date: {latest['fields'].get('Next Guest Date', '')}")
+                logging.info(f"  - Owner Arriving: {latest['fields'].get('Owner Arriving', '')}")
             
             # IMPORTANT: Also map by base UID if this is a composite UID
             # This ensures we find records regardless of how they're looked up
@@ -1100,6 +1119,15 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
         if composite_key and key != composite_key:
             processed_uids.add(composite_key)
             logging.debug(f"🛡️ Also tracking composite UID to prevent false removal: {composite_key}")
+        
+        # DEBUG: Log CSV data for problematic reservation
+        if uid == "14612250":
+            logging.info(f"🔍 DEBUG 14612250 CSV DATA:")
+            logging.info(f"  - UID: {uid}")
+            logging.info(f"  - Dates: {res['dtstart']} to {res['dtend']}")
+            logging.info(f"  - Same-day turnover: {res['same_day_turnover']}")
+            logging.info(f"  - Entry source: {res['entry_source']}")
+            logging.info(f"  - Property: {res.get('property_address', 'Unknown')}")
         
         # DEBUG: Log what we're checking
         if uid in ["4542727", "4597648", "4580971"]:
@@ -1224,6 +1252,19 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
             property_changed = (at_property_id != res["property_id"])
             flags_changed = (at_overlap != res["overlapping"] or at_sameday != res["same_day_turnover"])
             entry_type_changed = (at_entry_type != res["entry_type"])
+            
+            # DEBUG: Log detailed comparison for problematic reservation
+            if uid == "14612250":
+                logging.info(f"🔍 DEBUG 14612250 COMPARISON:")
+                logging.info(f"  - Airtable record ID: {airtable_record['id']}")
+                logging.info(f"  - Dates: AT({at_checkin} to {at_checkout}) vs CSV({res['dtstart']} to {res['dtend']})")
+                logging.info(f"  - Same-day: AT({at_sameday}) vs CSV({res['same_day_turnover']})")
+                logging.info(f"  - Overlap: AT({at_overlap}) vs CSV({res['overlapping']})")
+                logging.info(f"  - Entry Type: AT({at_entry_type}) vs CSV({res['entry_type']})")
+                logging.info(f"  - Service Type: AT({at_service_type}) vs CSV({res['service_type']})")
+                logging.info(f"  - Next Guest Date in AT: {at_fields.get('Next Guest Date', 'NOT SET')}")
+                logging.info(f"  - Owner Arriving in AT: {at_fields.get('Owner Arriving', 'NOT SET')}")
+                logging.info(f"  - flags_changed = {flags_changed}")
             
             # Service Type preservation logic
             # If the existing Service Type is not a default value (Turnover, Needs Review, Owner Arrival)
