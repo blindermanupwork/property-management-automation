@@ -8,12 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.16] - 2025-08-04
 
 ### Fixed
-- **ICS Processor Same-Day Turnover Bug for Owner Arrivals**
+- **ICS Processor Same-Day Turnover Bug for Owner Arrivals (Updated Fix)**
   - Fixed hourly duplicate record creation for properties with owner arrivals
   - Issue: When "Owner Arriving" = true and owner block starts on checkout day:
     - Airtable automation correctly sets "Same-day Turnover" = true
     - ICS processor calculated same_day_turnover = false (only checks reservations)
     - Every hour, ICS detected flag change (true → false) and created duplicate "Modified" records
+  - Initial fix location was incorrect - moved to sync_ics_event() where it can access existing records
   - Solution: ICS processor now preserves existing same-day turnover value when "Owner Arriving" = true
   - Affected 3 properties that were being marked as modified every hour:
     - 11367 N 122nd St, Scottsdale, AZ

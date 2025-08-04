@@ -1011,15 +1011,6 @@ def has_changes(event, airtable_record):
     at_overlap = convert_flag_value(at_fields.get("Overlapping Dates"))
     at_sameday = convert_flag_value(at_fields.get("Same-day Turnover"))
     
-    # v2.2.16 Fix: Preserve same-day turnover value for owner arrivals
-    # When "Owner Arriving" is true, the same-day calculation might differ because
-    # Airtable considers owner blocks but ICS processing doesn't. To prevent hourly
-    # modifications, preserve the existing same-day value for owner arrivals.
-    if at_fields.get("Owner Arriving") == True:
-        # Use the existing Airtable value instead of the calculated one
-        event["same_day_turnover"] = at_sameday
-        logging.info(f"Preserving same-day turnover value ({at_sameday}) for owner arrival: {event['uid']}")
-    
     if at_overlap != event["overlapping"] or at_sameday != event["same_day_turnover"]:
         logging.info(f"Flags changed for {event['uid']}: "
                     f"Overlap: {at_overlap} -> {event['overlapping']}, "
@@ -1124,6 +1115,15 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
     
     # Filter for active records (New or Modified)
     active_records = [r for r in all_records if r["fields"].get("Status") in ("New", "Modified")]
+    
+    # v2.2.16 Fix: If this is an owner arrival, preserve the existing same-day turnover value
+    if active_records and event["entry_type"] == "Reservation":
+        latest_active = max(active_records, key=lambda r: r["fields"].get("Last Updated", ""))
+        if latest_active["fields"].get("Owner Arriving") == True:
+            # Preserve the existing same-day value instead of the calculated one
+            existing_sameday = convert_flag_value(latest_active["fields"].get("Same-day Turnover"))
+            logging.info(f"v2.2.16: Preserving same-day turnover value ({existing_sameday}) for owner arrival: {event['uid']}")
+            event["same_day_turnover"] = existing_sameday
     
     # ALWAYS check for duplicates first, regardless of whether we have records with this UID
     # This prevents creating duplicates when the ICS feed provides different UIDs for the same reservation
