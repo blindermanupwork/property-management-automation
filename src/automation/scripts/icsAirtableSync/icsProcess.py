@@ -1011,6 +1011,15 @@ def has_changes(event, airtable_record):
     at_overlap = convert_flag_value(at_fields.get("Overlapping Dates"))
     at_sameday = convert_flag_value(at_fields.get("Same-day Turnover"))
     
+    # v2.2.16 Fix: Preserve same-day turnover value for owner arrivals
+    # When "Owner Arriving" is true, the same-day calculation might differ because
+    # Airtable considers owner blocks but ICS processing doesn't. To prevent hourly
+    # modifications, preserve the existing same-day value for owner arrivals.
+    if at_fields.get("Owner Arriving") == True:
+        # Use the existing Airtable value instead of the calculated one
+        event["same_day_turnover"] = at_sameday
+        logging.info(f"Preserving same-day turnover value ({at_sameday}) for owner arrival: {event['uid']}")
+    
     if at_overlap != event["overlapping"] or at_sameday != event["same_day_turnover"]:
         logging.info(f"Flags changed for {event['uid']}: "
                     f"Overlap: {at_overlap} -> {event['overlapping']}, "

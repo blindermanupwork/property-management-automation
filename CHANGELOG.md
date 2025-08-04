@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.16] - 2025-08-04
+
+### Fixed
+- **ICS Processor Same-Day Turnover Bug for Owner Arrivals**
+  - Fixed hourly duplicate record creation for properties with owner arrivals
+  - Issue: When "Owner Arriving" = true and owner block starts on checkout day:
+    - Airtable automation correctly sets "Same-day Turnover" = true
+    - ICS processor calculated same_day_turnover = false (only checks reservations)
+    - Every hour, ICS detected flag change (true → false) and created duplicate "Modified" records
+  - Solution: ICS processor now preserves existing same-day turnover value when "Owner Arriving" = true
+  - Affected 3 properties that were being marked as modified every hour:
+    - 11367 N 122nd St, Scottsdale, AZ
+    - 825 W Monterey Pl, Chandler, AZ  
+    - 1057 E Butler Dr, 1D, Phoenix, AZ
+  - Result: These properties now correctly show as "unchanged" instead of "modified" each sync
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py`
+
 ## [2.2.15] - 2025-07-31
 
 ### Fixed
