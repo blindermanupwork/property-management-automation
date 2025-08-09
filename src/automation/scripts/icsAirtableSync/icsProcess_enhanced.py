@@ -11,9 +11,9 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 
 def main():
-    """Main entry point - just call the best version."""
-    from src.automation.scripts.icsAirtableSync.icsProcess_best import main as best_main
-    best_main()
+    """Main entry point - just call the main version."""
+    from src.automation.scripts.icsAirtableSync.icsProcess import main as main_ics
+    main_ics()
 
 if __name__ == "__main__":
     main()

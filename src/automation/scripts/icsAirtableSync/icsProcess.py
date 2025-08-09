@@ -36,10 +36,95 @@ try:
     )
     SAFE_REMOVAL_ENABLED = True
 except ImportError:
-    # Fallback if removal_safety module not available
-    SAFE_REMOVAL_ENABLED = False
+    # Fallback if removal_safety module not available - define inline
+    SAFE_REMOVAL_ENABLED = True  # Enable the feature with inline functions
     MISSING_SYNC_THRESHOLD = 3
     GRACE_PERIOD_HOURS = 12
+    
+    def should_mark_as_removed(record, current_time, is_missing_from_feed):
+        """
+        Fallback implementation of removal safety logic.
+        v2.2.17 Fix: Only update Last Seen when necessary to prevent unnecessary Last Updated changes.
+        """
+        fields = record.get("fields", {})
+        record_id = fields.get("ID")
+        missing_count = fields.get("Missing Count", 0)
+        missing_since = fields.get("Missing Since")
+        
+        updates = {}
+        
+        if is_missing_from_feed:
+            # Record is missing from current sync
+            if missing_count == 0:
+                # First time missing - start tracking
+                logging.info(f"Record {record_id} missing for first time, starting tracking")
+                updates["Missing Since"] = current_time.isoformat()
+                updates["Missing Count"] = 1
+                updates["Last Seen"] = None  # Clear last seen when starting to track as missing
+                return False, updates
+            else:
+                # Already being tracked
+                if isinstance(missing_since, str):
+                    missing_since = datetime.fromisoformat(missing_since.replace('Z', '+00:00'))
+                time_missing = current_time - missing_since if missing_since else timedelta(0)
+                
+                # Check if grace period has passed
+                if time_missing.total_seconds() < GRACE_PERIOD_HOURS * 3600:
+                    logging.info(f"Record {record_id} in grace period ({time_missing.total_seconds()/3600:.1f} hours)")
+                    return False, {}
+                
+                # Increment missing count
+                new_count = missing_count + 1
+                updates["Missing Count"] = new_count
+                
+                if new_count >= MISSING_SYNC_THRESHOLD:
+                    # Threshold reached - mark for removal
+                    logging.warning(f"Record {record_id} missing {new_count} times - marking as removed")
+                    return True, updates
+                else:
+                    logging.info(f"Record {record_id} missing {new_count} times (threshold: {MISSING_SYNC_THRESHOLD})")
+                    return False, updates
+        else:
+            # Record found in feed - only update if it was previously missing
+            if missing_count > 0:
+                # Was missing, now found - reset tracking
+                logging.info(f"Record {record_id} found again after being missing {missing_count} times")
+                updates["Missing Count"] = 0
+                updates["Missing Since"] = None
+                updates["Last Seen"] = current_time.isoformat()
+                return False, updates
+            else:
+                # v2.2.17 Fix: Don't update anything if record was never missing
+                # This prevents unnecessary "Last Updated" field changes
+                return False, {}
+    
+    def check_removal_exceptions(fields):
+        """
+        Fallback implementation to check if a record should never be removed.
+        Returns reason if removal should be blocked, None otherwise.
+        """
+        # Don't remove if there's an active HCP job
+        if fields.get("Service Job ID") and fields.get("Job Status") in ["Scheduled", "In Progress"]:
+            return "Active HCP job exists"
+        
+        # Don't remove recent reservations (checked in within last 7 days)
+        checkin_date = fields.get("Check-in Date")
+        if checkin_date:
+            from dateutil.parser import parse
+            checkin = parse(checkin_date)
+            if (datetime.now() - checkin).days < 7:
+                return "Recent check-in (within 7 days)"
+        
+        # Don't remove if checkout is today or tomorrow
+        checkout_date = fields.get("Check-out Date")
+        if checkout_date:
+            from dateutil.parser import parse
+            checkout = parse(checkout_date)
+            days_until_checkout = (checkout - datetime.now()).days
+            if 0 <= days_until_checkout <= 1:
+                return "Checkout is imminent"
+        
+        return None
 
 # Import the automation config
 script_dir = Path(__file__).parent.absolute()

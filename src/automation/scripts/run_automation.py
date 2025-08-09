@@ -205,8 +205,8 @@ def run_csv_automation(config):
                         pattern = r'(\w+)=((?:[^,(]|\([^)]*\))*)'
                         matches = re.findall(pattern, summary_text)
                         
-                        files = new_count = mod_count = rem_count = 0
-                        new_detail = mod_detail = rem_detail = ""
+                        files = new_count = mod_count = rem_count = unch_count = 0
+                        new_detail = mod_detail = rem_detail = unch_detail = ""
                         
                         for key, value in matches:
                             value = value.strip()
@@ -234,9 +234,16 @@ def run_csv_automation(config):
                                 else:
                                     rem_count = int(value)
                                     rem_detail = value
+                            elif key == "Unchanged":
+                                if "(" in value:
+                                    unch_count = int(value.split(" ")[0])
+                                    unch_detail = value
+                                else:
+                                    unch_count = int(value)
+                                    unch_detail = value
                         
                         # Build formatted message
-                        sync_summary = f"{files} files — new {new_detail} — modified {mod_detail} — removed {rem_detail}"
+                        sync_summary = f"{files} files — new {new_detail} — modified {mod_detail} — removed {rem_detail} — unchanged {unch_detail}"
                         break
                     elif "Sync complete * created" in line:
                         # Legacy format fallback
@@ -425,44 +432,56 @@ def extract_ics_stats(output):
         'errors': 0,
         'new_detail': '',
         'modified_detail': '',
-        'removed_detail': ''
+        'removed_detail': '',
+        'unchanged_detail': ''
     }
     
     # Look for summary line
     for line in output.split('\n'):
         if "ICS_SUMMARY:" in line:
-            # Parse structured summary - handle commas inside parentheses
+            # Parse structured summary - handle commas inside parentheses (same logic as CSV)
             import re
             summary_text = line.split("ICS_SUMMARY:")[1].strip()
             
-            # First extract all key=value pairs, being careful with parentheses
-            # Split by comma, but not commas inside parentheses
-            # Use a simpler approach - split on commas followed by a space and a letter
-            parts = re.split(r',\s*(?=[A-Z])', summary_text)
+            # Use same pattern as CSV parsing to handle parenthetical content
+            pattern = r'(\w+)=((?:[^,(]|\([^)]*\))*)'
+            matches = re.findall(pattern, summary_text)
             
-            for part in parts:
-                if "=" in part:
-                    key, value = part.split("=", 1)
-                    key = key.strip().lower()
-                    value = value.strip()
-                    if key == 'feeds':
-                        stats['feeds'] = int(value)
-                    elif key == 'new':
-                        stats['new'] = int(value)
-                    elif key == 'modified':
-                        stats['modified'] = int(value)
-                    elif key == 'removed':
-                        stats['removed'] = int(value)
-                    elif key == 'unchanged':
-                        stats['unchanged'] = int(value)
-                    elif key == 'errors':
-                        stats['errors'] = int(value)
-                    elif key == 'newdetail':
+            for key, value in matches:
+                key = key.strip().lower()
+                value = value.strip()
+                if key == 'feeds':
+                    stats['feeds'] = int(value)
+                elif key == 'new':
+                    # Extract number and detailed format
+                    if '(' in value:
+                        stats['new'] = int(value.split(' ')[0])
                         stats['new_detail'] = value
-                    elif key == 'modifieddetail':
+                    else:
+                        stats['new'] = int(value)
+                elif key == 'modified':
+                    # Extract number and detailed format
+                    if '(' in value:
+                        stats['modified'] = int(value.split(' ')[0])
                         stats['modified_detail'] = value
-                    elif key == 'removeddetail':
+                    else:
+                        stats['modified'] = int(value)
+                elif key == 'removed':
+                    # Extract number and detailed format
+                    if '(' in value:
+                        stats['removed'] = int(value.split(' ')[0])
                         stats['removed_detail'] = value
+                    else:
+                        stats['removed'] = int(value)
+                elif key == 'unchanged':
+                    # Extract number and detailed format
+                    if '(' in value:
+                        stats['unchanged'] = int(value.split(' ')[0])
+                        stats['unchanged_detail'] = value
+                    else:
+                        stats['unchanged'] = int(value)
+                elif key == 'errors':
+                    stats['errors'] = int(value)
         
         # Also look for legacy format and optimized format
         elif "ICS Sync complete" in line:
@@ -605,11 +624,16 @@ def run_ics_automation(config):
                     removed_text = stats['removed_detail']
                 else:
                     removed_text = str(stats['removed'])
+                    
+                if 'unchanged_detail' in stats:
+                    unchanged_text = stats['unchanged_detail']
+                else:
+                    unchanged_text = str(stats['unchanged'])
                 
                 return {
                     "success": True,
                     "message": f"{stats['feeds']} feeds — new {new_text} — "
-                              f"modified {modified_text} — removed {removed_text}"
+                              f"modified {modified_text} — removed {removed_text} — unchanged {unchanged_text}"
                 }
             else:
                 # No feeds processed (might be intentional)

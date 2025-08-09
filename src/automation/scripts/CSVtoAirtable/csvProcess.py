@@ -2227,12 +2227,15 @@ def main():
         removed_res = itrip_reserv['removed'] + evolve_reserv['removed']
         removed_blocks = itrip_blocks['removed'] + tab2_global['removed']
         
+        unchanged_res = itrip_reserv['unchanged'] + evolve_reserv['unchanged']
+        unchanged_blocks = itrip_blocks['unchanged'] + tab2_global['unchanged']
+        
         # Log final completion message with breakdowns
         logging.info(f"CSV_SYNC_SUMMARY: Files={len(processed_paths)}, "
                     f"New={results['created']} ({created_res} res, {created_blocks} block), "
                     f"Modified={results['updated']} ({updated_res} res, {updated_blocks} block), "
                     f"Removed={results['removed']} ({removed_res} res, {removed_blocks} block), "
-                    f"Unchanged={results['unchanged']}")
+                    f"Unchanged={results['unchanged']} ({unchanged_res} res, {unchanged_blocks} block)")
         
     except Exception as e:
         logging.error(f"Fatal error in main process: {e}", exc_info=True)

@@ -8,14 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.17] - 2025-08-09
 
 ### Fixed
-- **ICS Overlap Detection Fix**
-  - Fixed false overlap detection between reservations with the same UID
-  - Issue: When ICS processor runs, it compares ALL events including duplicate records (Old + Modified status)
-  - Problem: A reservation updating from Old → Modified was being compared against itself, causing false overlaps
-  - Example: Airbnb reservations 47166, 47167, 47168 were incorrectly marked as overlapping despite non-overlapping dates
-  - Solution: Added UID comparison check - skip overlap detection between events with same UID
-  - Result: Only truly overlapping reservations (different UIDs with overlapping dates) are now marked as overlapping
-  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - lines 948-950
+- **Fix Unnecessary Last Updated Changes**
+  - Fixed issue where ICS processor was unnecessarily updating "Last Updated" field in Airtable
+  - Issue: Every ICS sync was updating "Last Seen" field for ALL active records, even those never missing
+  - Problem: Airtable automatically updates "Last Updated" system field when ANY field changes via API
+  - Impact: Records like 44723, 46082, etc. showed recent "Last Updated" with no actual data changes
+  - Root Cause: `should_mark_as_removed()` function was always returning updates with "Last Seen" timestamp
+  - Solution: Only update "Last Seen" field when record was previously missing (Missing Count > 0)
+  - Result: "Last Updated" field now only changes when actual data modifications occur
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - inline removal safety functions
 
 ## [2.2.16] - 2025-08-09
 
