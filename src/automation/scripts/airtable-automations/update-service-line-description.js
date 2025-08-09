@@ -3,7 +3,7 @@
 // Updates: Service Line Description field
 // Dependencies: Should run after find-next-guest-date.js
 // Author: Automation System
-// Last Updated: July 2025 - Fixed to match codebase logic
+// Last Updated: August 2025 - Added iTrip Next Guest Date priority
 
 // Get trigger record data
 let inputConfig = input.config();
@@ -18,7 +18,8 @@ let table = base.getTable("Reservations");
 // Query with the fields we need
 let query = await table.selectRecordsAsync({
     fields: ["Service Type", "Same-day Turnover", "Next Entry Is Block", "Custom Service Line Instructions", 
-             "Check-in Date", "Check-out Date", "Next Guest Date", "Property ID", "Entry Type", "Status", "Reservation UID"]
+             "Check-in Date", "Check-out Date", "Next Guest Date", "iTrip Next Guest Date", "Property ID", 
+             "Entry Type", "Status", "Reservation UID", "Owner Arriving"]
 });
 
 // Find our trigger record
@@ -34,7 +35,24 @@ if (!triggerRecord) {
 
 // Get service type - use whatever is in the field, default to "Turnover" only if empty
 let serviceTypeField = triggerRecord.getCellValue("Service Type");
-let serviceType = serviceTypeField?.name || "Turnover";
+console.log("Record ID being processed:", recordId);
+console.log("Reservation UID:", triggerRecord.getCellValue("Reservation UID"));
+console.log("Service Type Field raw value:", serviceTypeField);
+console.log("Service Type Field type:", typeof serviceTypeField);
+console.log("Service Type Field stringified:", JSON.stringify(serviceTypeField));
+
+// Handle different field structures - single select returns {id, name, color}
+let serviceType = "Turnover"; // default
+if (serviceTypeField) {
+    if (typeof serviceTypeField === 'string') {
+        serviceType = serviceTypeField;
+    } else if (serviceTypeField.name) {
+        serviceType = serviceTypeField.name;
+    } else if (serviceTypeField.value) {
+        serviceType = serviceTypeField.value;
+    }
+}
+console.log("Final Service Type extracted:", serviceType);
 
 // Check if it's same-day turnover
 let sameDayTurnover = triggerRecord.getCellValue("Same-day Turnover");
@@ -80,22 +98,46 @@ if (checkInDate && checkOutDate) {
 let baseSvcName;
 
 if (sameDayTurnover) {
-    // Same day format - "SAME DAY" comes first
+    // Same day format
     baseSvcName = `SAME DAY ${serviceType} STR`;
     console.log("Same-day turnover detected");
 } else {
-    // Check if we have Next Guest Date already calculated
-    let nextGuestDate = triggerRecord.getCellValue("Next Guest Date");
+    // PRIORITY: Check for iTrip Next Guest Date FIRST
+    let nextGuestDate = null;
+    let dateSource = "none";
+    
+    try {
+        nextGuestDate = triggerRecord.getCellValue("iTrip Next Guest Date");
+        if (nextGuestDate) {
+            dateSource = "iTrip";
+            console.log("Using iTrip Next Guest Date:", nextGuestDate);
+        }
+    } catch (e) {
+        console.log("iTrip Next Guest Date field not found or empty");
+    }
+    
+    // Fall back to calculated Next Guest Date if iTrip date not available
+    if (!nextGuestDate) {
+        nextGuestDate = triggerRecord.getCellValue("Next Guest Date");
+        if (nextGuestDate) {
+            dateSource = "calculated";
+            console.log("Using calculated Next Guest Date:", nextGuestDate);
+        }
+    }
     
     if (nextGuestDate) {
-        // Use the pre-calculated Next Guest Date
+        // Use whichever date we found (iTrip or calculated)
         let date = new Date(nextGuestDate);
         let month = date.toLocaleString('en-US', { month: 'long' });
         let day = date.getDate();
         
-        // Always use standard format - OWNER ARRIVING will be added separately
-        baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
-        console.log("Using pre-calculated next guest date:", month, day);
+        if (isOwnerArriving) {
+            baseSvcName = `OWNER ARRIVING ${serviceType} STR ${month} ${day}`;
+            console.log("Owner arriving on:", month, day, "(source:", dateSource, ")");
+        } else {
+            baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+            console.log("Next guest on:", month, day, "(source:", dateSource, ")");
+        }
     } else {
         // Fallback: find next guest manually (shouldn't happen if first script runs properly)
         if (!checkOutDate) {
@@ -144,15 +186,15 @@ if (sameDayTurnover) {
                 let month = date.toLocaleString('en-US', { month: 'long' });
                 let day = date.getDate();
                 
-                // Always use standard format - track owner arriving separately
-                baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
-                
+                // Build base name based on whether next entry is a block
                 if (isBlock) {
+                    baseSvcName = `OWNER ARRIVING ${serviceType} STR ${month} ${day}`;
                     console.log("Next entry is a block (owner arriving)");
                     // Set isOwnerArriving for use later in building parts
                     isOwnerArriving = true;
                 } else {
-                    console.log("Next guest found:", month, day);
+                    baseSvcName = `${serviceType} STR Next Guest ${month} ${day}`;
+                    console.log("Next guest found manually:", month, day);
                 }
             } else {
                 baseSvcName = `${serviceType} STR Next Guest Unknown`;
@@ -225,3 +267,5 @@ output.set('success', true);
 output.set('serviceLineDescription', serviceLineDescription);
 output.set('isLongTermGuest', isLongTermGuest);
 output.set('stayDurationDays', stayDurationDays);
+output.set('serviceType', serviceType);
+output.set('baseSvcName', baseSvcName);
