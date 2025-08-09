@@ -945,6 +945,10 @@ def calculate_flags(events, url_to_prop):
         
         # Find overlaps (only between reservations)
         for a, b in combinations(reservation_events, 2):
+            # Skip if same UID (same reservation appearing multiple times)
+            if a.get("uid") == b.get("uid"):
+                continue
+                
             a_start = parse(a["dtstart"]).date()
             a_end = parse(a["dtend"]).date()
             b_start = parse(b["dtstart"]).date()
@@ -1113,6 +1117,69 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
     # Use composite UID for lookups
     all_records = existing_records.get((composite_uid, feed_url), [])
     
+    # Check if we have any Removed records that should be resurrected
+    removed_records = [r for r in all_records if r["fields"].get("Status") == "Removed"]
+    if removed_records:
+        # This UID is back in the feed - resurrect it!
+        latest_removed = max(removed_records, key=lambda r: r["fields"].get("Last Updated", ""))
+        logging.info(f"🔄 Resurrecting removed reservation: {original_uid} (ID: {latest_removed['fields'].get('ID')})")
+        
+        # Start with event data from the ICS feed
+        new_fields = {
+            "Check-in Date": event["dtstart"],
+            "Check-out Date": event["dtend"],
+            "Entry Type": event["entry_type"],
+            "Service Type": event["service_type"],
+            "Entry Source": event["entry_source"],
+            "Overlapping Dates": event["overlapping"],
+            "Same-day Turnover": event["same_day_turnover"],
+            "Reservation UID": composite_uid,
+            "ICS URL": feed_url,
+            "Property ID": [property_id] if property_id else [],
+        }
+        
+        # Preserve important fields from the removed record
+        fields_to_preserve = [
+            "Custom Service Time",
+            "Custom Service Line Instructions",
+            "iTrip Next Guest Date",
+            "iTrip Report Information",
+            "Service Job ID",
+            "Job Creation Time",
+            "Sync Status",
+            "Scheduled Service Time",
+            "Sync Date and Time",
+            "Service Sync Details",
+            "Job Status",
+            "Service Appointment ID",
+            "Assignee",
+            "On My Way Time",
+            "Job Started Time",
+            "Job Completed Time",
+            "Next Entry Is Block",
+            "Owner Arriving",
+            "Service Line Description",
+            "HCP Service Line Description",
+            "Schedule Sync Details"
+        ]
+        
+        # Copy preserved fields if they exist and have values
+        for field in fields_to_preserve:
+            if field in latest_removed["fields"] and latest_removed["fields"][field]:
+                new_fields[field] = latest_removed["fields"][field]
+        
+        # Add Block Type if it exists
+        if event["block_type"]:
+            new_fields["Block Type"] = event["block_type"]
+        
+        # Reset removal tracking fields
+        new_fields["Missing Count"] = 0
+        new_fields["Missing Since"] = None
+        new_fields["Last Seen"] = now_iso
+        
+        mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
+        return "Resurrected"
+    
     # Filter for active records (New or Modified)
     active_records = [r for r in all_records if r["fields"].get("Status") in ("New", "Modified")]
     
@@ -1152,6 +1219,36 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                         "Overlapping Dates": event["overlapping"],
                         "Same-day Turnover": event["same_day_turnover"],
                     }
+                    
+                    # Preserve important fields from existing record
+                    fields_to_preserve = [
+                        "Custom Service Time",
+                        "Custom Service Line Instructions",
+                        "iTrip Next Guest Date",
+                        "iTrip Report Information",
+                        "Service Job ID",
+                        "Job Creation Time",
+                        "Sync Status",
+                        "Scheduled Service Time",
+                        "Sync Date and Time",
+                        "Service Sync Details",
+                        "Job Status",
+                        "Service Appointment ID",
+                        "Assignee",
+                        "On My Way Time",
+                        "Job Started Time",
+                        "Job Completed Time",
+                        "Next Entry Is Block",
+                        "Owner Arriving",
+                        "Service Line Description",
+                        "HCP Service Line Description",
+                        "Schedule Sync Details"
+                    ]
+                    
+                    # Copy preserved fields if they exist and have values
+                    for field in fields_to_preserve:
+                        if field in latest_active["fields"] and latest_active["fields"][field]:
+                            new_fields[field] = latest_active["fields"][field]
                     
                     # Add Block Type if it exists
                     if event["block_type"]:
@@ -1194,6 +1291,36 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                 "Overlapping Dates": event["overlapping"],
                 "Same-day Turnover": event["same_day_turnover"],
             }
+            
+            # Preserve important fields from existing record
+            fields_to_preserve = [
+                "Custom Service Time",
+                "Custom Service Line Instructions",
+                "iTrip Next Guest Date",
+                "iTrip Report Information",
+                "Service Job ID",
+                "Job Creation Time",
+                "Sync Status",
+                "Scheduled Service Time",
+                "Sync Date and Time",
+                "Service Sync Details",
+                "Job Status",
+                "Service Appointment ID",
+                "Assignee",
+                "On My Way Time",
+                "Job Started Time",
+                "Job Completed Time",
+                "Next Entry Is Block",
+                "Owner Arriving",
+                "Service Line Description",
+                "HCP Service Line Description",
+                "Schedule Sync Details"
+            ]
+            
+            # Copy preserved fields if they exist and have values
+            for field in fields_to_preserve:
+                if field in latest_active["fields"] and latest_active["fields"][field]:
+                    new_fields[field] = latest_active["fields"][field]
             
             # Add Block Type if it exists
             if event["block_type"]:
@@ -1265,12 +1392,12 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     """
     if not events:
         logging.info(f"Feed {url} has 0 events within the date filter range. Skipping.")
-        return {"New": 0, "Modified": 0, "Unchanged": 0, "Removed": 0, "Duplicate_Ignored": 0}
+        return {"New": 0, "Modified": 0, "Unchanged": 0, "Removed": 0, "Duplicate_Ignored": 0, "Resurrected": 0}
     
     logging.info(f"Processing feed: {url} with {len(events)} events")
     
     # Track status counts and processed (UID, URL) pairs
-    stats = {"New": 0, "Modified": 0, "Unchanged": 0, "Duplicate_Ignored": 0}
+    stats = {"New": 0, "Modified": 0, "Unchanged": 0, "Duplicate_Ignored": 0, "Resurrected": 0}
     processed_uid_url_pairs = set()
     duplicate_detected_dates = set()  # Track property/date combinations that had duplicates
     
@@ -1405,13 +1532,13 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
         stats["Exceptions"] = exception_count
         logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
                     f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
-                    f"{stats['Duplicate_Ignored']} duplicates ignored, "
+                    f"{stats.get('Resurrected', 0)} resurrected, {stats['Duplicate_Ignored']} duplicates ignored, "
                     f"{tracked_count} tracked, {reset_count} reset, {exception_count} exceptions")
         logging.info(f"🛡️ Removal safety: {MISSING_SYNC_THRESHOLD} consecutive syncs required, {GRACE_PERIOD_HOURS}h grace period")
     else:
         logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
                     f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
-                    f"{stats['Duplicate_Ignored']} duplicates ignored")
+                    f"{stats.get('Resurrected', 0)} resurrected, {stats['Duplicate_Ignored']} duplicates ignored")
     
     return stats
 

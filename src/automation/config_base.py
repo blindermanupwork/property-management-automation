@@ -123,7 +123,7 @@ class ConfigBase:
     # Date filtering configuration methods
     def get_fetch_months_before(self) -> int:
         """Get number of months to look back for reservations"""
-        return int(self.get('FETCH_RESERVATIONS_MONTHS_BEFORE', 2))
+        return int(self.get('FETCH_RESERVATIONS_MONTHS_BEFORE', 6))
         
     def get_ignore_blocks_months_away(self) -> int:
         """Get number of months ahead to ignore blocked events"""
