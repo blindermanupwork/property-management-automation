@@ -2,7 +2,10 @@
 // Purpose: Finds the next guest checking in at the same property and determines if it's a same-day turnover
 // Updates: Next Guest Date field and Same-day Turnover checkbox
 // Author: Automation System
-// Last Updated: July 2025
+// Last Updated: August 2025
+//
+// IMPORTANT: For iTrip reservations, we ONLY use the iTrip Next Guest Date field and do NOT
+// search for other reservations in the database, as iTrip doesn't provide future booking data.
 //
 // Note: When an owner is arriving (block checking in same/next day), we do NOT mark it as
 // same-day turnover to prevent creating modified records when syncing. The Final Service Time
@@ -70,51 +73,25 @@ if (!propertyLinkedRecords || propertyLinkedRecords.length === 0) {
 let propertyRecordId = propertyLinkedRecords[0].id;
 console.log("Property record ID:", propertyRecordId);
 
-// Check if this is an iTrip reservation with next guest date
-let iTripNextGuestDate = triggerRecord.getCellValue("iTrip Next Guest Date");
+// Check if this is an iTrip reservation - if so, skip entirely
 let entrySource = triggerRecord.getCellValue("Entry Source");
+let isITrip = entrySource && entrySource.name === "iTrip";
 
-// If this is an iTrip reservation with next guest date, use it directly
-if (entrySource && entrySource.name === "iTrip" && iTripNextGuestDate) {
-    // Use iTrip's provided date
-    let nextGuestDate = iTripNextGuestDate;
+if (isITrip) {
+    console.log("iTrip reservation detected - skipping entirely (handled by CSV processor)");
     
-    // Still calculate same-day turnover
-    const checkOutDateObj = new Date(checkOutDate);
-    const nextCheckInDateObj = new Date(iTripNextGuestDate);
-    
-    checkOutDateObj.setHours(0, 0, 0, 0);
-    nextCheckInDateObj.setHours(0, 0, 0, 0);
-    
-    let isSameDayTurnover = checkOutDateObj.getTime() === nextCheckInDateObj.getTime();
-    
-    console.log("Using iTrip provided next guest date:", iTripNextGuestDate);
-    console.log("Same-day turnover:", isSameDayTurnover);
-    
-    // Update the record with iTrip data
-    try {
-        await table.updateRecordAsync(recordId, {
-            "Next Guest Date": nextGuestDate,
-            "Same-day Turnover": isSameDayTurnover,
-            "Next Entry Is Block": false,  // iTrip next booking is always a guest
-            "Owner Arriving": false
-        });
-    } catch (e) {
-        // If that fails, try without new fields
-        console.log("Failed to update with new fields, trying without:", e.message);
-        await table.updateRecordAsync(recordId, {
-            "Next Guest Date": nextGuestDate,
-            "Same-day Turnover": isSameDayTurnover
-        });
-    }
+    // Don't modify ANY fields for iTrip reservations
+    // The CSV processor handles all iTrip logic including:
+    // - iTrip Next Guest Date
+    // - Same-day Turnover detection
+    // - All other fields
     
     output.set('success', true);
-    output.set('nextGuestDate', nextGuestDate);
-    output.set('isLongTermGuest', isLongTermGuest);
-    output.set('stayDurationDays', stayDurationDays);
-    output.set('isSameDayTurnover', isSameDayTurnover);
-    output.set('isNextEntryBlock', false);
-    return;  // Exit early since we used iTrip data
+    output.set('skipped', true);
+    output.set('reason', 'iTrip reservations handled by CSV processor');
+    
+    // Exit without making any changes
+    return;
 }
 
 // Query ALL records

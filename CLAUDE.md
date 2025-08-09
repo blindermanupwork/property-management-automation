@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.15** - Service Line Description Fix
+**Current Version: 2.2.16** - iTrip Automation Fix
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -90,7 +90,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.13)
+### Current System State (v2.2.16)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
@@ -119,6 +119,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Owner Arrival Same-Day Fix**: Owner arrivals NOT marked as same-day to prevent sync conflicts, should get 10:00 AM service time (v2.2.13)
 - ✅ **Error Handling Improvements**: Fixed double ❌❌ status icons, improved error messages with specific context instead of generic "Unknown error" (v2.2.14)
 - ✅ **Service Line Description Fix**: All flags now independent - OWNER ARRIVING, LONG TERM GUEST DEPARTING, and SAME DAY work correctly in all combinations (v2.2.15)
+- ✅ **iTrip Automation Fix**: find-next-guest-date.js now completely skips iTrip reservations - all iTrip fields handled exclusively by CSV processor (v2.2.16)
 
 
 ## HCP Sync Script Locations
@@ -464,6 +465,17 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
   - Consistent property identification across all log entries
 - **Implementation**: Comprehensive property mapping loaded at initialization using Property Name and Address fields
 - **Coverage**: All property references in logging statements
+
+### **Airtable Automation Scripts (v2.2.16)**
+- **Location**: `/home/opc/automation/src/automation/scripts/airtable-automations/`
+- **find-next-guest-date.js**:
+  - **iTrip Handling**: Completely skips iTrip reservations (Entry Source = "iTrip")
+  - **Why**: iTrip fields (Next Guest Date, Same-day Turnover) are set exclusively by CSV processor
+  - **Other Sources**: Searches database for next guest/owner arrivals (Airbnb, VRBO, etc.)
+- **update-service-line-description.js**:
+  - **Priority**: Uses iTrip Next Guest Date first, falls back to calculated Next Guest Date
+  - **Works for ALL**: Processes both iTrip and non-iTrip reservations correctly
+  - **Reads fields**: Same-day Turnover, Owner Arriving, Long Term Guest flags
 
 ### **Enhanced Service Line Updates with Owner Detection**
 - **Feature**: Automatically detect when property owners are arriving

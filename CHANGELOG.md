@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.16] - 2025-08-04
+## [2.2.16] - 2025-08-09
 
 ### Fixed
-- **ICS Processor Same-Day Turnover Bug for Owner Arrivals (Updated Fix)**
+- **iTrip Automation Fix - Airtable Automation Scripts**
+  - Fixed issue where Airtable automation was overwriting iTrip fields set by CSV processor
+  - Issue: find-next-guest-date.js was searching database for iTrip reservations and clearing fields
+  - Solution: Script now completely skips iTrip reservations (Entry Source = "iTrip")
+  - iTrip fields (Next Guest Date, Same-day Turnover) now handled exclusively by CSV processor
+  - update-service-line-description.js continues to work correctly for all reservations
+  - Updated file: `src/automation/scripts/airtable-automations/find-next-guest-date.js`
+
+- **ICS Processor Same-Day Turnover Bug for Owner Arrivals (Previous v2.2.16 fix from Aug 4)**
   - Fixed hourly duplicate record creation for properties with owner arrivals
   - Issue: When "Owner Arriving" = true and owner block starts on checkout day:
     - Airtable automation correctly sets "Same-day Turnover" = true

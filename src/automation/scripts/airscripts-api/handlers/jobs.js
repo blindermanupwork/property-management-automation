@@ -198,12 +198,22 @@ async function createJob(req, res) {
     } else {
       const checkOutDate = reservation.get('Check-out Date');
       if (serviceType === 'Turnover' && checkOutDate) {
-        // First check if Next Guest Date is already populated in Airtable
+        // Check both Next Guest Date fields - prioritize iTrip if available
         const nextGuestDate = reservation.get('Next Guest Date');
+        const iTripNextGuestDate = reservation.get('iTrip Next Guest Date');
+        const entrySource = reservation.get('Entry Source');
         
-        if (nextGuestDate) {
-          // Use the pre-populated Next Guest Date from Airtable
-          const nextCheckIn = new Date(nextGuestDate + 'T12:00:00-07:00'); // Force Arizona time at noon
+        console.log(`DEBUG: Checking Next Guest Date fields for record ${recordId}:`);
+        console.log(`  - Next Guest Date: ${nextGuestDate || 'null/undefined'}`);
+        console.log(`  - iTrip Next Guest Date: ${iTripNextGuestDate || 'null/undefined'}`);
+        console.log(`  - Entry Source: ${entrySource ? entrySource.name : 'null/undefined'}`);
+        
+        // Use iTrip Next Guest Date first if available, otherwise fall back to general Next Guest Date
+        const effectiveNextGuestDate = iTripNextGuestDate || nextGuestDate;
+        
+        if (effectiveNextGuestDate) {
+          // Use the next guest date (either iTrip or general)
+          const nextCheckIn = new Date(effectiveNextGuestDate + 'T12:00:00-07:00'); // Force Arizona time at noon
           const month = nextCheckIn.toLocaleString('en-US', { month: 'long', timeZone: 'America/Phoenix' });
           const day = parseInt(nextCheckIn.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/Phoenix' }));
           
@@ -213,7 +223,7 @@ async function createJob(req, res) {
           } else {
             serviceName = `${serviceType} STR Next Guest ${month} ${day}`;
           }
-          console.log(`Using Next Guest Date from Airtable: ${nextGuestDate}`);
+          console.log(`Using ${iTripNextGuestDate ? 'iTrip' : 'general'} Next Guest Date: ${effectiveNextGuestDate}`);
         } else {
           // Fall back to searching for next reservation
           const nextReservation = await findNextReservation(base, propertyLinks[0], checkOutDate);
