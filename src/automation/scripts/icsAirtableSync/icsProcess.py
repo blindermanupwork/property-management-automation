@@ -1474,15 +1474,29 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     Process all events from a single ICS feed.
     MODIFIED: Tracks duplicate_ignored status and prevents false removals.
     Now includes session_tracker to prevent race condition duplicates.
+    Also tracks reservation vs block breakdown for detailed reporting.
     """
     if not events:
         logging.info(f"Feed {url} has 0 events within the date filter range. Skipping.")
-        return {"New": 0, "Modified": 0, "Unchanged": 0, "Removed": 0, "Duplicate_Ignored": 0, "Resurrected": 0}
+        return {
+            "New": 0, "Modified": 0, "Unchanged": 0, "Removed": 0, 
+            "Duplicate_Ignored": 0, "Resurrected": 0,
+            "New_res": 0, "New_block": 0,
+            "Modified_res": 0, "Modified_block": 0,
+            "Unchanged_res": 0, "Unchanged_block": 0,
+            "Removed_res": 0, "Removed_block": 0
+        }
     
     logging.info(f"Processing feed: {url} with {len(events)} events")
     
     # Track status counts and processed (UID, URL) pairs
-    stats = {"New": 0, "Modified": 0, "Unchanged": 0, "Duplicate_Ignored": 0, "Resurrected": 0}
+    stats = {
+        "New": 0, "Modified": 0, "Unchanged": 0, "Duplicate_Ignored": 0, "Resurrected": 0,
+        "New_res": 0, "New_block": 0,
+        "Modified_res": 0, "Modified_block": 0,
+        "Unchanged_res": 0, "Unchanged_block": 0,
+        "Removed_res": 0, "Removed_block": 0
+    }
     processed_uid_url_pairs = set()
     duplicate_detected_dates = set()  # Track property/date combinations that had duplicates
     
@@ -1514,15 +1528,25 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             duplicate_key = (property_id, event["dtstart"], event["dtend"], event["entry_type"])
             duplicate_detected_dates.add(duplicate_key)
         
-        # Update stats
+        # Update stats - both overall and by entry type
         if status in stats:
             stats[status] += 1
+            # Also track by entry type (reservation vs block)
+            entry_type = event.get("entry_type", "Reservation")
+            if entry_type == "Block":
+                type_key = f"{status}_block"
+            else:
+                type_key = f"{status}_res"
+            if type_key in stats:
+                stats[type_key] += 1
     
     # Process removed events (in Airtable but not in feed anymore)
     now = datetime.now(arizona_tz)
     now_iso = now.isoformat(sep=" ", timespec="seconds")
     today_iso = date.today().isoformat()
     removed_count = 0
+    removed_res_count = 0
+    removed_block_count = 0
     tracked_count = 0
     reset_count = 0
     exception_count = 0
@@ -1581,6 +1605,12 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                     result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
                     logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
                     removed_count += 1
+                    # Track by entry type
+                    entry_type = fields.get("Entry Type", "Reservation")
+                    if entry_type == "Block":
+                        removed_block_count += 1
+                    else:
+                        removed_res_count += 1
                 elif updates:
                     # Update tracking fields
                     logging.info(f"📊 Updating tracking for record {record_id}: Missing Count = {updates.get('Missing Count', 0)}")
@@ -1593,6 +1623,12 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                 result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
                 logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
                 removed_count += 1
+                # Track by entry type
+                entry_type = fields.get("Entry Type", "Reservation")
+                if entry_type == "Block":
+                    removed_block_count += 1
+                else:
+                    removed_res_count += 1
     
     # Reset tracking for records that were found in this sync
     if SAFE_REMOVAL_ENABLED:
@@ -1611,6 +1647,8 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     
     # Return stats including removals and tracking
     stats["Removed"] = removed_count
+    stats["Removed_res"] = removed_res_count
+    stats["Removed_block"] = removed_block_count
     if SAFE_REMOVAL_ENABLED:
         stats["Tracked"] = tracked_count
         stats["Reset"] = reset_count
@@ -2047,23 +2085,45 @@ async def main_async():
         # 9. Generate report
         generate_report(overall_stats, id_to_name)
         
-        # Log final completion message
+        # Log final completion message with breakdowns
         total_new = sum(stats.get("New", 0) for stats in overall_stats.values())
         total_modified = sum(stats.get("Modified", 0) for stats in overall_stats.values())
         total_unchanged = sum(stats.get("Unchanged", 0) for stats in overall_stats.values())
         total_removed = sum(stats.get("Removed", 0) for stats in overall_stats.values())
         
-        logging.info(f"ICS Sync complete * created {total_new} * modified {total_modified} * "
-                    f"unchanged {total_unchanged} * removed {total_removed}")
+        # Calculate reservation/block breakdowns
+        new_res = sum(stats.get("New_res", 0) for stats in overall_stats.values())
+        new_block = sum(stats.get("New_block", 0) for stats in overall_stats.values())
+        modified_res = sum(stats.get("Modified_res", 0) for stats in overall_stats.values())
+        modified_block = sum(stats.get("Modified_block", 0) for stats in overall_stats.values())
+        unchanged_res = sum(stats.get("Unchanged_res", 0) for stats in overall_stats.values())
+        unchanged_block = sum(stats.get("Unchanged_block", 0) for stats in overall_stats.values())
+        removed_res = sum(stats.get("Removed_res", 0) for stats in overall_stats.values())
+        removed_block = sum(stats.get("Removed_block", 0) for stats in overall_stats.values())
         
-        # Print summary for automation capture
+        logging.info(f"ICS Sync complete * created {total_new} ({new_res} res, {new_block} block) * "
+                    f"modified {total_modified} ({modified_res} res, {modified_block} block) * "
+                    f"unchanged {total_unchanged} ({unchanged_res} res, {unchanged_block} block) * "
+                    f"removed {total_removed} ({removed_res} res, {removed_block} block)")
+        
+        # Print summary for automation capture with breakdown format
         total_feeds = len(feed_results)
         success_feeds = sum(1 for r in feed_results.values() if r["success"])
         failed_feeds = total_feeds - success_feeds
         
+        # Output format that automation.js expects
+        print(f"ICS Sync complete — new {total_new} ({new_res} res, {new_block} block) — "
+              f"modified {total_modified} ({modified_res} res, {modified_block} block) — "
+              f"unchanged {total_unchanged} — "
+              f"removed {total_removed} ({removed_res} res, {removed_block} block)")
+        
+        # Also output the ICS_SUMMARY for backward compatibility
         print(f"ICS_SUMMARY: Feeds={total_feeds}, Success={success_feeds}, "
-              f"Failed={failed_feeds}, New={total_new}, Modified={total_modified}, "
-              f"Removed={total_removed}, Errors={failed_feeds}")
+              f"Failed={failed_feeds}, New={total_new} ({new_res} res, {new_block} block), "
+              f"Modified={total_modified} ({modified_res} res, {modified_block} block), "
+              f"Removed={total_removed} ({removed_res} res, {removed_block} block), "
+              f"Unchanged={total_unchanged} ({unchanged_res} res, {unchanged_block} block), "
+              f"Errors={failed_feeds}")
         
     except Exception as e:
         logging.critical(f"Unhandled exception: {e}", exc_info=True)

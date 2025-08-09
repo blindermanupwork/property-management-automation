@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.17** - Fix Unnecessary Last Updated Changes
+**Current Version: 2.2.17** - Fix Unnecessary Last Updated Changes & ICS Sync Format
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 

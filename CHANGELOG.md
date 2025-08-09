@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Result: "Last Updated" field now only changes when actual data modifications occur
   - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - inline removal safety functions
 
+- **ICS Sync Details Format - Reservation/Block Breakdown**
+  - Fixed ICS sync details display to show reservation/block breakdown like CSV processor
+  - Issue: ICS showing "✅ 340 feeds — new — modified — removed" instead of detailed breakdown
+  - Solution: Added reservation/block tracking throughout ICS processor and proper output format
+  - New format: "new 0 (0 res, 0 block) — modified 1 (1 res, 0 block) — removed 0 (0 res, 0 block)"
+  - Outputs "ICS Sync complete" format that automation.js expects for proper Airtable display
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py`
+
 ## [2.2.16] - 2025-08-09
 
 ### Fixed
