@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.17** - ICS Overlap Detection Fix
+**Current Version: 2.2.17** - Fix Unnecessary Last Updated Changes
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -90,7 +90,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.16)
+### Current System State (v2.2.17)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
@@ -120,11 +120,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Error Handling Improvements**: Fixed double ❌❌ status icons, improved error messages with specific context instead of generic "Unknown error" (v2.2.14)
 - ✅ **Service Line Description Fix**: All flags now independent - OWNER ARRIVING, LONG TERM GUEST DEPARTING, and SAME DAY work correctly in all combinations (v2.2.15)
 - ✅ **iTrip Automation Fix**: find-next-guest-date.js now completely skips iTrip reservations - all iTrip fields handled exclusively by CSV processor (v2.2.16)
-- ✅ **ICS Overlap Detection Fix**: Fixed false overlap detection caused by same UID comparisons - prevents duplicate reservations from being marked as overlapping (v2.2.17)
-- ✅ **ICS Lookback Window Extended**: Changed from 2 months to 6 months in config_base.py to capture longer-term reservations (v2.2.17)
-- ✅ **ICS Resurrection Logic**: Added automatic resurrection of "Removed" records when they reappear in active feeds with field preservation (v2.2.17)
-- ✅ **Configuration Consolidated**: Removed FETCH_RESERVATIONS_MONTHS_BEFORE from .env - now single source of truth in config_base.py (default: 6 months) (v2.2.18)
-- ✅ **icsProcess_enhanced Fixed**: Changed wrapper to call main icsProcess.py instead of buggy icsProcess_best.py (v2.2.18)
+- ✅ **Fix Unnecessary Last Updated Changes**: ICS processor no longer updates "Last Seen" field for records that were never missing, preventing unnecessary "Last Updated" field changes in Airtable (v2.2.17)
 
 
 ## HCP Sync Script Locations

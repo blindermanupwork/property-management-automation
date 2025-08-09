@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.17** - ICS Overlap Detection Fix
+**Version 2.2.17** - Fix Unnecessary Last Updated Changes
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -495,7 +495,22 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 
 ## 📝 Version History
 
-### **Version 2.2.13** (Current)
+### **Version 2.2.17** (Current)
+- ✅ **Fix Unnecessary Last Updated Changes** - ICS processor no longer updates "Last Seen" field for records that were never missing
+- ✅ **Prevents Phantom Updates** - Eliminates unnecessary Airtable API calls that were updating "Last Updated" field
+- ✅ **Better Change Tracking** - "Last Updated" now only changes when actual data modifications occur
+
+### **Version 2.2.16**
+- ✅ **iTrip Automation Fix** - find-next-guest-date.js completely skips iTrip reservations
+- ✅ **All iTrip Fields CSV-Exclusive** - Next Guest Date and Same-day Turnover handled only by CSV processor
+
+### **Version 2.2.15**
+- ✅ **Service Line Description Fix** - All flags (OWNER ARRIVING, LONG TERM GUEST, SAME DAY) work independently
+
+### **Version 2.2.14**
+- ✅ **Error Handling Improvements** - Fixed double ❌❌ status icons, better error messages
+
+### **Version 2.2.13**
 - ✅ **Owner Arrival Same-Day Fix** - Owner arrivals no longer marked as same-day turnovers to prevent sync conflicts
 - ✅ **Service Time Logic** - Owner arrivals should get 10:00 AM service time (vs 10:15 AM default)
 - ✅ **Prevents Modified Records** - Eliminates false "modified" records from same-day field mismatches
