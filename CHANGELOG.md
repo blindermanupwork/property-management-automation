@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.17] - 2025-08-09
+
+### Fixed
+- **ICS Overlap Detection Fix**
+  - Fixed false overlap detection between reservations with the same UID
+  - Issue: When ICS processor runs, it compares ALL events including duplicate records (Old + Modified status)
+  - Problem: A reservation updating from Old → Modified was being compared against itself, causing false overlaps
+  - Example: Airbnb reservations 47166, 47167, 47168 were incorrectly marked as overlapping despite non-overlapping dates
+  - Solution: Added UID comparison check - skip overlap detection between events with same UID
+  - Result: Only truly overlapping reservations (different UIDs with overlapping dates) are now marked as overlapping
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - lines 948-950
+
 ## [2.2.16] - 2025-08-09
 
 ### Fixed
