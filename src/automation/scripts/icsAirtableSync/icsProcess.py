@@ -107,14 +107,6 @@ except ImportError:
         if fields.get("Service Job ID") and fields.get("Job Status") in ["Scheduled", "In Progress"]:
             return "Active HCP job exists"
         
-        # Don't remove recent reservations (checked in within last 7 days)
-        checkin_date = fields.get("Check-in Date")
-        if checkin_date:
-            from dateutil.parser import parse
-            checkin = parse(checkin_date)
-            if (datetime.now() - checkin).days < 7:
-                return "Recent check-in (within 7 days)"
-        
         # Don't remove if checkout is today or tomorrow
         checkout_date = fields.get("Check-out Date")
         if checkout_date:
@@ -425,13 +417,21 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
     old_f = latest["fields"]
     logging.info(f"🔍 DEBUG: Using record ID {latest['id']} as template (status: {old_f.get('Status')})")
     
-    # Mark ALL records as Old
+    # Mark ALL records as Old (but only update Last Updated for non-Old records)
     logging.info(f"🔍 DEBUG: Marking {len(records)} records as Old")
     for record in records:
-        update_batch.add({
-            "id": record["id"],
-            "fields": {"Status": "Old", "Last Updated": now_iso}
-        })
+        if record["fields"].get("Status") != "Old":
+            # Only update Last Updated if not already Old
+            update_batch.add({
+                "id": record["id"],
+                "fields": {"Status": "Old", "Last Updated": now_iso}
+            })
+        else:
+            # Already Old - just update Status (no Last Updated change)
+            update_batch.add({
+                "id": record["id"],
+                "fields": {"Status": "Old"}
+            })
     
     # Flush updates
     logging.info(f"🔍 DEBUG: Flushing batch updates to mark records as Old")
@@ -1100,7 +1100,17 @@ def has_changes(event, airtable_record):
     at_overlap = convert_flag_value(at_fields.get("Overlapping Dates"))
     at_sameday = convert_flag_value(at_fields.get("Same-day Turnover"))
     
-    if at_overlap != event["overlapping"] or at_sameday != event["same_day_turnover"]:
+    # v2.2.18 Fix: For reservations with Next Guest Date set (likely from CSV processor),
+    # trust the existing same-day turnover value if Next Guest Date exists
+    # This prevents hourly updates when ICS can't detect same-day turnovers
+    if (at_fields.get("Next Guest Date") and 
+        event["entry_type"] == "Reservation" and 
+        at_sameday != event["same_day_turnover"]):
+        # If Next Guest Date is set, preserve existing same-day value
+        logging.info(f"v2.2.18: Preserving same-day value ({at_sameday}) for {event['uid']} with Next Guest Date")
+        event["same_day_turnover"] = at_sameday
+        # Now they match, so no change
+    elif at_overlap != event["overlapping"] or at_sameday != event["same_day_turnover"]:
         logging.info(f"Flags changed for {event['uid']}: "
                     f"Overlap: {at_overlap} -> {event['overlapping']}, "
                     f"Same-day: {at_sameday} -> {event['same_day_turnover']}")
@@ -1589,7 +1599,7 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             
             # SAFE REMOVAL LOGIC
             if SAFE_REMOVAL_ENABLED:
-                # Check for removal exceptions (active jobs, recent check-ins, etc.)
+                # Check for removal exceptions (active jobs, imminent checkouts)
                 exception_reason = check_removal_exceptions(fields)
                 if exception_reason:
                     logging.info(f"Record {record_id} exempted from removal: {exception_reason}")
@@ -1824,7 +1834,7 @@ async def main_async():
         logging.info("🛡️  REMOVAL SAFETY ENABLED")
         logging.info(f"   • Consecutive missing syncs required: {MISSING_SYNC_THRESHOLD}")
         logging.info(f"   • Grace period: {GRACE_PERIOD_HOURS} hours")
-        logging.info("   • Exceptions: Active HCP jobs, recent check-ins, imminent checkouts")
+        logging.info("   • Exceptions: Active HCP jobs, imminent checkouts")
         logging.info("=" * 70)
     else:
         logging.info("⚠️  Removal safety module not available - using immediate removal")

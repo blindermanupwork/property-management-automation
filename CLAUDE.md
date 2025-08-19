@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.17** - Fix Unnecessary Last Updated Changes & ICS Sync Format
+**Current Version: 2.2.20** - ICS Removal Protection Fix
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -120,7 +120,11 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Error Handling Improvements**: Fixed double ❌❌ status icons, improved error messages with specific context instead of generic "Unknown error" (v2.2.14)
 - ✅ **Service Line Description Fix**: All flags now independent - OWNER ARRIVING, LONG TERM GUEST DEPARTING, and SAME DAY work correctly in all combinations (v2.2.15)
 - ✅ **iTrip Automation Fix**: find-next-guest-date.js now completely skips iTrip reservations - all iTrip fields handled exclusively by CSV processor (v2.2.16)
-- ✅ **Fix Unnecessary Last Updated Changes**: ICS processor no longer updates "Last Seen" field for records that were never missing, preventing unnecessary "Last Updated" field changes in Airtable (v2.2.17)
+- ✅ **ICS Sync Format & Last Updated Fix**: ICS processor outputs reservation/block breakdown format and prevents unnecessary "Last Seen" updates (v2.2.17)
+- ✅ **ICS Same-Day Turnover Fix**: Preserves existing same-day values when Next Guest Date is set to prevent hourly phantom updates (v2.2.18)
+- ✅ **ICS Old Record Protection**: Old records no longer get Last Updated field changed when other records with same UID are modified (v2.2.19)
+- ✅ **Evolve Reporting Fix**: Sync details now correctly show file download counts instead of misreporting as "new" records (v2.2.19)
+- ✅ **ICS Removal Protection Fix**: Removed 7-day check-in protection that was preventing proper 3x missing sync removal logic (v2.2.20)
 
 
 ## HCP Sync Script Locations
