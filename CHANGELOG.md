@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.20] - 2025-08-19
+
+### Fixed
+- **ICS Removal Protection Fix**
+  - Removed problematic 7-day check-in protection that was preventing proper 3x missing sync removal logic
+  - Issue: Reservations that disappeared from ICS feeds were protected from removal if they had recent check-ins (within 7 days)
+  - Problem: This protection overrode the normal 3x missing sync threshold entirely
+  - Example: Reservation at 7714 E Wilshire Dr was protected despite being missing from ICS feed multiple times
+  - Root Cause: 7-day check-in protection in should_skip_removal() function was too aggressive
+  - Solution: Removed the 7-day check-in protection while preserving legitimate protections (active HCP jobs, imminent checkouts)
+  - Result: 3x missing sync removal logic now works consistently regardless of check-in dates
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - should_skip_removal() function
+  - Impact: Reservations that truly disappear from feeds will be properly marked as "Removed" after 3 missing syncs
+
+## [2.2.19] - 2025-08-09
+
+### Fixed
+- **ICS Processor Updating Already-Old Records**
+  - Fixed issue where ICS processor was updating "Last Updated" field for records already marked as "Old"
+  - Issue: mark_all_as_old_and_clone() was updating ALL records including already-Old ones
+  - Example: Record 44723 (Status=Old) was getting Last Updated changed every hour
+  - Root Cause: Function was updating Last Updated timestamp for all records when marking as Old
+  - Solution: Only update Last Updated field for records that aren't already Old
+  - Result: Old records remain untouched, preventing phantom "Last Updated" changes
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - mark_all_as_old_and_clone() function
+
+- **Evolve Sync Details Misreporting**
+  - Fixed incorrect reporting of CSV row counts as "new" records in sync details
+  - Issue: Showed "new 219 (5 res, 214 block)" when actually 0 new records were created
+  - Problem: Evolve scraper was reporting total CSV row counts instead of actual processing results
+  - Solution: Changed message to report file download success with row counts
+  - New format: "2 files downloaded (5 reservation rows, 214 block rows)"
+  - Result: Accurate representation that files were downloaded but not yet processed
+  - Updated file: `src/automation/scripts/run_automation.py` - run_evolve() function
+
+## [2.2.18] - 2025-08-09
+
+### Fixed
+- **ICS Same-Day Turnover Detection for CSV-Processed Records**
+  - Fixed hourly phantom updates for reservations with Next Guest Date set by CSV processor
+  - Issue: ICS processor incorrectly detecting flag changes every hour for certain reservations
+  - Example: rec0cjasxi7spqdgw (Airbnb reservation) showing "Same-day: True -> False" every hour
+  - Root Cause: ICS can't detect same-day turnovers that aren't visible in ICS feeds (e.g., iTrip data)
+  - Solution: In has_changes(), if Next Guest Date exists, preserve existing same-day value
+  - This trusts CSV processor's same-day detection which has visibility to all reservation sources
+  - Result: Prevents unnecessary "Last Updated" changes for records with external same-day data
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - has_changes() function
+
 ## [2.2.17] - 2025-08-09
 
 ### Fixed
