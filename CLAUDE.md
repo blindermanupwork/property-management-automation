@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.20** - ICS Removal Protection Fix
+**Current Version: 2.2.21** - Hourly ICS Removal Logic Fix
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -125,6 +125,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **ICS Old Record Protection**: Old records no longer get Last Updated field changed when other records with same UID are modified (v2.2.19)
 - ✅ **Evolve Reporting Fix**: Sync details now correctly show file download counts instead of misreporting as "new" records (v2.2.19)
 - ✅ **ICS Removal Protection Fix**: Removed 7-day check-in protection that was preventing proper 3x missing sync removal logic (v2.2.20)
+- ✅ **Hourly ICS Removal Logic Fix**: Missing Count now increments every hour (not every 3 days), records removed at count 3, stopped updating "Old" records, simplified tracking fields (v2.2.21)
 
 
 ## HCP Sync Script Locations
