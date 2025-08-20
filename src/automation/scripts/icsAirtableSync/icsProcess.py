@@ -31,71 +31,60 @@ try:
     from .removal_safety import (
         should_mark_as_removed,
         check_removal_exceptions,
-        MISSING_SYNC_THRESHOLD,
-        GRACE_PERIOD_HOURS
+        MISSING_SYNC_THRESHOLD
     )
     SAFE_REMOVAL_ENABLED = True
 except ImportError:
     # Fallback if removal_safety module not available - define inline
     SAFE_REMOVAL_ENABLED = True  # Enable the feature with inline functions
     MISSING_SYNC_THRESHOLD = 3
-    GRACE_PERIOD_HOURS = 12
     
     def should_mark_as_removed(record, current_time, is_missing_from_feed):
         """
-        Fallback implementation of removal safety logic.
-        v2.2.17 Fix: Only update Last Seen when necessary to prevent unnecessary Last Updated changes.
+        v2.2.21 Updated removal logic:
+        - Increment Missing Count every hour when missing (no grace period)
+        - Remove at Missing Count = 3 (3 hours missing)
+        - Missing Since = last time actually seen in ICS feed
+        - Stop updating records with Status = "Old"
         """
         fields = record.get("fields", {})
         record_id = fields.get("ID")
+        status = fields.get("Status", "")
+        
+        # Stop updating records that are already marked as "Old"
+        if status == "Old":
+            return False, {}
+        
         missing_count = fields.get("Missing Count", 0)
-        missing_since = fields.get("Missing Since")
         
         updates = {}
         
         if is_missing_from_feed:
-            # Record is missing from current sync
-            if missing_count == 0:
-                # First time missing - start tracking
-                logging.info(f"Record {record_id} missing for first time, starting tracking")
-                updates["Missing Since"] = current_time.isoformat()
-                updates["Missing Count"] = 1
-                updates["Last Seen"] = None  # Clear last seen when starting to track as missing
-                return False, updates
+            # Record is missing from current sync - increment count every time
+            new_count = missing_count + 1
+            updates["Missing Count"] = new_count
+            
+            if new_count >= MISSING_SYNC_THRESHOLD:
+                # Threshold reached - mark for removal
+                logging.warning(f"Record {record_id} missing {new_count} times - marking as removed")
+                return True, updates
             else:
-                # Already being tracked
-                if isinstance(missing_since, str):
-                    missing_since = datetime.fromisoformat(missing_since.replace('Z', '+00:00'))
-                time_missing = current_time - missing_since if missing_since else timedelta(0)
-                
-                # Check if grace period has passed
-                if time_missing.total_seconds() < GRACE_PERIOD_HOURS * 3600:
-                    logging.info(f"Record {record_id} in grace period ({time_missing.total_seconds()/3600:.1f} hours)")
-                    return False, {}
-                
-                # Increment missing count
-                new_count = missing_count + 1
-                updates["Missing Count"] = new_count
-                
-                if new_count >= MISSING_SYNC_THRESHOLD:
-                    # Threshold reached - mark for removal
-                    logging.warning(f"Record {record_id} missing {new_count} times - marking as removed")
-                    return True, updates
-                else:
-                    logging.info(f"Record {record_id} missing {new_count} times (threshold: {MISSING_SYNC_THRESHOLD})")
-                    return False, updates
+                logging.info(f"Record {record_id} missing {new_count} times (threshold: {MISSING_SYNC_THRESHOLD})")
+                return False, updates
         else:
-            # Record found in feed - only update if it was previously missing
+            # Record found in feed
             if missing_count > 0:
-                # Was missing, now found - reset tracking
+                # Was missing, now found - reset tracking and update last seen
                 logging.info(f"Record {record_id} found again after being missing {missing_count} times")
                 updates["Missing Count"] = 0
-                updates["Missing Since"] = None
-                updates["Last Seen"] = current_time.isoformat()
+                updates["Missing Since"] = current_time.isoformat()  # This is now "last seen"
                 return False, updates
             else:
-                # v2.2.17 Fix: Don't update anything if record was never missing
-                # This prevents unnecessary "Last Updated" field changes
+                # Record found and was never missing - just update last seen if it's the first time
+                if not fields.get("Missing Since"):
+                    updates["Missing Since"] = current_time.isoformat()  # Set initial "last seen"
+                    return False, updates
+                # Otherwise don't update anything to prevent unnecessary Last Updated changes
                 return False, {}
     
     def check_removal_exceptions(fields):
@@ -1667,7 +1656,7 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                     f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
                     f"{stats.get('Resurrected', 0)} resurrected, {stats['Duplicate_Ignored']} duplicates ignored, "
                     f"{tracked_count} tracked, {reset_count} reset, {exception_count} exceptions")
-        logging.info(f"🛡️ Removal safety: {MISSING_SYNC_THRESHOLD} consecutive syncs required, {GRACE_PERIOD_HOURS}h grace period")
+        logging.info(f"🛡️ Removal safety: {MISSING_SYNC_THRESHOLD} consecutive syncs required")
     else:
         logging.info(f"Feed {url} completed: {stats['New']} new, {stats['Modified']} modified, "
                     f"{stats['Unchanged']} unchanged, {stats['Removed']} removed, "
@@ -1833,7 +1822,7 @@ async def main_async():
         logging.info("=" * 70)
         logging.info("🛡️  REMOVAL SAFETY ENABLED")
         logging.info(f"   • Consecutive missing syncs required: {MISSING_SYNC_THRESHOLD}")
-        logging.info(f"   • Grace period: {GRACE_PERIOD_HOURS} hours")
+        logging.info(f"   • Missing Count threshold: {MISSING_SYNC_THRESHOLD} syncs")
         logging.info("   • Exceptions: Active HCP jobs, imminent checkouts")
         logging.info("=" * 70)
     else:

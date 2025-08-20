@@ -1,6 +1,6 @@
 # Property Management Automation System
 
-**Version 2.2.20** - ICS Removal Protection Fix
+**Version 2.2.21** - Hourly ICS Removal Logic Fix
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
@@ -495,7 +495,13 @@ python3 -c "from src.automation.controller import AutomationController; print('O
 
 ## 📝 Version History
 
-### **Version 2.2.17** (Current)
+### **Version 2.2.21** (Current)
+- ✅ **Hourly ICS Removal Logic** - Missing Count increments every hour (not every 3 days)
+- ✅ **Remove at Count 3** - Records removed after 3 consecutive missing syncs (3 hours) 
+- ✅ **Stop Updating Removed Records** - Records with Status "Old" are completely ignored
+- ✅ **Simplified Tracking Fields** - Missing Since repurposed as "last seen" timestamp, removed Last Seen field
+
+### **Version 2.2.17**
 - ✅ **Fix Unnecessary Last Updated Changes** - ICS processor no longer updates "Last Seen" field for records that were never missing
 - ✅ **Prevents Phantom Updates** - Eliminates unnecessary Airtable API calls that were updating "Last Updated" field
 - ✅ **Better Change Tracking** - "Last Updated" now only changes when actual data modifications occur
