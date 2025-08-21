@@ -1,7 +1,7 @@
 // PRODUCTION Environment - Delete Job Schedule Script for Airtable
 // Use this script for button fields on individual records
 
-const API_URL = 'https://servativ.themomentcatchers.com/api/prod/jobs';
+const API_URL = `https://${process.env.API_DOMAIN || 'servativ.themomentcatchers.com'}/api/prod/jobs`;
 const API_KEY = 'airscripts-secure-key-2025';
 
 // Get the record from button field

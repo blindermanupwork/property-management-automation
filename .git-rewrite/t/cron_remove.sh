@@ -1,1 +1,0 @@
-src/automation/scripts/system/cron_remove.sh

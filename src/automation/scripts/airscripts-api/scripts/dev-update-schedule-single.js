@@ -1,7 +1,7 @@
 // DEV Environment - Update Single Schedule Script for Airtable
 // Use this script for button fields on individual records
 
-const API_URL = 'https://servativ.themomentcatchers.com/api/dev/schedules';
+const API_URL = `https://${process.env.API_DOMAIN || 'servativ.themomentcatchers.com'}/api/dev/schedules`;
 const API_KEY = 'airscripts-secure-key-2025';
 
 // Get the record from button field

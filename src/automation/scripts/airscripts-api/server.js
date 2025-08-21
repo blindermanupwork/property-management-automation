@@ -14,6 +14,7 @@ const rateLimit = require('express-rate-limit');
 const jobRoutes = require('./routes/jobs');
 const scheduleRoutes = require('./routes/schedules');
 const automationRoutes = require('./routes/automation');
+const attachmentRoutes = require('./routes/attachments');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,8 +62,10 @@ const { handleReconcileJobs } = require('./handlers/reconcile-jobs');
 // Routes - Environment-specific endpoints ONLY
 app.use('/api/dev/jobs', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, jobRoutes);
 app.use('/api/dev/schedules', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, scheduleRoutes);
+app.use('/api/dev/attachments', (req, res, next) => { req.forceEnvironment = 'development'; next(); }, attachmentRoutes);
 app.use('/api/prod/jobs', (req, res, next) => { req.forceEnvironment = 'production'; next(); }, jobRoutes);
 app.use('/api/prod/schedules', (req, res, next) => { req.forceEnvironment = 'production'; next(); }, scheduleRoutes);
+app.use('/api/prod/attachments', (req, res, next) => { req.forceEnvironment = 'production'; next(); }, attachmentRoutes);
 
 // Reconciliation endpoints
 app.post('/api/dev/reconcile-jobs', (req, res, next) => { req.body.environment = 'dev'; next(); }, handleReconcileJobs);

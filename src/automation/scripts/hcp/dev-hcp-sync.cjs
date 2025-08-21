@@ -464,7 +464,7 @@ async function syncMultipleJobs() {
         }
         
         const templateMap = {
-          'Turnover': propRec.fields['Turnover Job Template ID'],
+          'Turnover': propRec.fields['Master Job Template ID'],
           'Return Laundry': propRec.fields['Return Laundry Job Template ID'],
           'Inspection': propRec.fields['Inspection Job Template ID']
         };

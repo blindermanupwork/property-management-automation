@@ -1,5 +1,6 @@
 const Airtable = require('airtable');
 const fetch = require('node-fetch');
+const FormData = require('form-data');
 const { getArizonaTime, formatDate, formatTime } = require('../utils/datetime');
 const { getAirtableConfig, getHCPConfig } = require('../utils/config');
 
@@ -48,6 +49,91 @@ async function hcpFetch(hcpConfig, path, method = 'GET', body = null) {
 
 // Delay helper
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Copy attachments from source job to target job
+async function copyJobAttachments(hcpConfig, sourceJobId, targetJobId) {
+  try {
+    console.log(`Copying attachments from job ${sourceJobId} to job ${targetJobId}`);
+    
+    // Get source job with attachments
+    const sourceJob = await hcpFetch(hcpConfig, `/jobs/${sourceJobId}?expand[]=attachments`);
+    
+    if (!sourceJob.attachments || sourceJob.attachments.length === 0) {
+      console.log(`No attachments found in source job ${sourceJobId}`);
+      return { success: true, attachmentsCopied: 0 };
+    }
+    
+    console.log(`Found ${sourceJob.attachments.length} attachments to copy`);
+    let copiedCount = 0;
+    let errors = [];
+    
+    // Copy each attachment
+    for (const attachment of sourceJob.attachments) {
+      try {
+        console.log(`Downloading attachment: ${attachment.file_name}`);
+        
+        // Download the file from S3 URL
+        const downloadResponse = await fetch(attachment.url);
+        if (!downloadResponse.ok) {
+          throw new Error(`Failed to download ${attachment.file_name}: ${downloadResponse.status}`);
+        }
+        
+        const fileBuffer = await downloadResponse.buffer();
+        console.log(`Downloaded ${attachment.file_name} (${fileBuffer.length} bytes)`);
+        
+        // Create form data for upload
+        const formData = new FormData();
+        formData.append('file', fileBuffer, {
+          filename: attachment.file_name,
+          contentType: attachment.file_type || 'application/octet-stream'
+        });
+        
+        // Upload to target job
+        console.log(`Uploading ${attachment.file_name} to job ${targetJobId}`);
+        const uploadResponse = await fetch(`https://api.housecallpro.com/jobs/${targetJobId}/attachments`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${hcpConfig.token}`,
+            ...formData.getHeaders()
+          },
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(`Upload failed for ${attachment.file_name}: ${uploadResponse.status} - ${errorText}`);
+        }
+        
+        copiedCount++;
+        console.log(`✅ Successfully copied ${attachment.file_name}`);
+        
+        // Small delay between uploads to avoid rate limits
+        await delay(500);
+        
+      } catch (error) {
+        console.error(`❌ Failed to copy ${attachment.file_name}:`, error.message);
+        errors.push(`${attachment.file_name}: ${error.message}`);
+      }
+    }
+    
+    console.log(`Attachment copying completed: ${copiedCount}/${sourceJob.attachments.length} successful`);
+    
+    return {
+      success: true,
+      attachmentsCopied: copiedCount,
+      totalAttachments: sourceJob.attachments.length,
+      errors: errors.length > 0 ? errors : undefined
+    };
+    
+  } catch (error) {
+    console.error('Error in copyJobAttachments:', error.message);
+    return {
+      success: false,
+      error: error.message,
+      attachmentsCopied: 0
+    };
+  }
+}
 
 // Find next reservation for a property (matches original AirScript logic)
 async function findNextReservation(base, propertyId, checkOutDate) {
@@ -180,7 +266,7 @@ async function createJob(req, res) {
       templateId = property.get('Inspection Job Template ID');  
       jobTypeId = hcpConfig.jobTypes.inspection;
     } else {
-      templateId = property.get('Turnover Job Template ID');
+      templateId = property.get('Master Job Template ID');
       jobTypeId = hcpConfig.jobTypes.turnover;
     }
 
@@ -424,6 +510,22 @@ async function createJob(req, res) {
         }
       } catch (error) {
         console.log('Failed to copy line items:', error.message);
+      }
+
+      // Copy attachments from template job
+      try {
+        console.log(`Attempting to copy attachments from template job ${templateId} to new job ${jobId}`);
+        const attachmentResult = await copyJobAttachments(hcpConfig, templateId, jobId);
+        
+        if (attachmentResult.success && attachmentResult.attachmentsCopied > 0) {
+          console.log(`✅ Successfully copied ${attachmentResult.attachmentsCopied} attachments from template`);
+        } else if (attachmentResult.success) {
+          console.log('No attachments found in template job to copy');
+        } else {
+          console.error(`❌ Attachment copying failed: ${attachmentResult.error}`);
+        }
+      } catch (error) {
+        console.error('Failed to copy attachments:', error.message);
       }
     } else if (isJobCanceled) {
       // Job exists but is canceled - reschedule it
@@ -719,7 +821,66 @@ async function cancelJob(req, res) {
   }
 }
 
+// Get address ID from HCP job
+async function getAddressId(req, res) {
+  try {
+    const recordId = req.params.recordId;
+    const environment = req.forceEnvironment || process.env.ENVIRONMENT || 'development';
+    
+    console.log(`Getting address ID for record ${recordId} in ${environment}`);
+    
+    const airtableConfig = getAirtableConfig(environment);
+    const hcpConfig = getHCPConfig(environment);
+    
+    // Get the record from Airtable
+    const base = new Airtable({ apiKey: airtableConfig.apiKey }).base(airtableConfig.baseId);
+    const record = await base('Properties').find(recordId);
+    
+    const jobId = record.fields['Master Job Template ID'];
+    console.log(`Found job ID: ${jobId}`);
+    
+    if (!jobId) {
+      return res.json({ success: false, error: 'No Master Job Template ID found' });
+    }
+    
+    // Get job details from HCP
+    console.log(`Fetching job details from HCP for job: ${jobId}`);
+    const jobData = await hcpFetch(hcpConfig, `/jobs/${jobId}`);
+    
+    console.log('Job data structure:', {
+      hasCustomer: !!jobData.customer,
+      hasAddress: !!jobData.address,
+      addressKeys: jobData.address ? Object.keys(jobData.address) : [],
+      jobDataKeys: Object.keys(jobData)
+    });
+    
+    const addressId = jobData.address?.id;
+    console.log(`Extracted address ID: ${addressId}`);
+    
+    if (!addressId) {
+      return res.json({ 
+        success: false, 
+        error: 'Address ID not found in job',
+        debug: {
+          jobId,
+          hasCustomer: !!jobData.customer,
+          hasAddress: !!jobData.address,
+          addressKeys: jobData.address ? Object.keys(jobData.address) : [],
+          jobDataKeys: Object.keys(jobData)
+        }
+      });
+    }
+    
+    res.json({ success: true, addressId });
+    
+  } catch (error) {
+    console.error('Error getting address ID:', error);
+    res.json({ success: false, error: error.message, stack: error.stack });
+  }
+}
+
 module.exports = {
   createJob,
-  cancelJob
+  cancelJob,
+  getAddressId
 };

@@ -1,7 +1,7 @@
 // Production Environment - Create Job Script for Airtable
 // Use this script in your PRODUCTION Airtable base
 
-const API_URL = 'https://servativ.themomentcatchers.com/api/prod/jobs';
+const API_URL = `https://${process.env.API_DOMAIN || 'servativ.themomentcatchers.com'}/api/prod/jobs`;
 const API_KEY = 'airscripts-secure-key-2025';
 
 // Get the record from button field
@@ -107,7 +107,7 @@ try {
     if (error.message.includes('Failed to fetch')) {
         output.text('\n⚠️ Possible causes:');
         output.text('1. Check if the API server is running');
-        output.text('2. Verify the domain is correct: servativ.themomentcatchers.com');
+        output.text(`2. Verify the domain is correct: ${process.env.API_DOMAIN || 'servativ.themomentcatchers.com'}`);
         output.text('3. Ensure HTTPS certificate is valid');
         output.text('4. Check if port 443 is open in firewall');
     }

@@ -27,9 +27,9 @@ function getHCPConfig(forceEnvironment = null) {
       token: process.env.PROD_HCP_TOKEN,
       employeeId: process.env.PROD_HCP_EMPLOYEE_ID,
       jobTypes: {
-        returnLaundry: process.env.PROD_HCP_RETURN_LAUNDRY_JOB_TYPE,
-        inspection: process.env.PROD_HCP_INSPECTION_JOB_TYPE,
-        turnover: process.env.PROD_HCP_TURNOVER_JOB_TYPE
+        returnLaundry: process.env.PROD_HCP_JOB_TYPE_RETURN_LAUNDRY,
+        inspection: process.env.PROD_HCP_JOB_TYPE_INSPECTION,
+        turnover: process.env.PROD_HCP_JOB_TYPE_TURNOVER
       }
     };
   } else {

@@ -44,7 +44,7 @@ except ImportError:
         v2.2.21 Updated removal logic:
         - Increment Missing Count every hour when missing (no grace period)
         - Remove at Missing Count = 3 (3 hours missing)
-        - Missing Since = last time actually seen in ICS feed
+        - Only processes missing records - found records handled separately
         - Stop updating records with Status = "Old"
         """
         fields = record.get("fields", {})
@@ -55,37 +55,23 @@ except ImportError:
         if status == "Old":
             return False, {}
         
+        # This function only handles missing records
+        if not is_missing_from_feed:
+            return False, {}
+        
         missing_count = fields.get("Missing Count", 0)
         
-        updates = {}
+        # Record is missing from current sync - increment count every time
+        new_count = missing_count + 1
+        updates = {"Missing Count": new_count}
         
-        if is_missing_from_feed:
-            # Record is missing from current sync - increment count every time
-            new_count = missing_count + 1
-            updates["Missing Count"] = new_count
-            
-            if new_count >= MISSING_SYNC_THRESHOLD:
-                # Threshold reached - mark for removal
-                logging.warning(f"Record {record_id} missing {new_count} times - marking as removed")
-                return True, updates
-            else:
-                logging.info(f"Record {record_id} missing {new_count} times (threshold: {MISSING_SYNC_THRESHOLD})")
-                return False, updates
+        if new_count >= MISSING_SYNC_THRESHOLD:
+            # Threshold reached - mark for removal
+            logging.warning(f"Record {record_id} missing {new_count} times - marking as removed")
+            return True, updates
         else:
-            # Record found in feed
-            if missing_count > 0:
-                # Was missing, now found - reset tracking and update last seen
-                logging.info(f"Record {record_id} found again after being missing {missing_count} times")
-                updates["Missing Count"] = 0
-                updates["Missing Since"] = current_time.isoformat()  # This is now "last seen"
-                return False, updates
-            else:
-                # Record found and was never missing - just update last seen if it's the first time
-                if not fields.get("Missing Since"):
-                    updates["Missing Since"] = current_time.isoformat()  # Set initial "last seen"
-                    return False, updates
-                # Otherwise don't update anything to prevent unnecessary Last Updated changes
-                return False, {}
+            logging.info(f"Record {record_id} missing {new_count} times (threshold: {MISSING_SYNC_THRESHOLD})")
+            return False, updates
     
     def check_removal_exceptions(fields):
         """
@@ -1637,12 +1623,17 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
             
             for rec in active_records:
-                if rec["fields"].get("Missing Count", 0) > 0:
-                    _, updates = should_mark_as_removed(rec, now, is_missing_from_feed=False)
-                    if updates:
-                        logging.info(f"✅ Record {rec['fields'].get('ID')} found again - resetting tracking")
-                        table.update(rec["id"], updates)
-                        reset_count += 1
+                fields = rec["fields"]
+                if fields.get("Missing Count", 0) > 0:
+                    # Record was missing but now found - reset tracking
+                    record_id = fields.get("ID")
+                    updates = {
+                        "Missing Count": 0,
+                        "Missing Since": now.isoformat()  # Update last seen time
+                    }
+                    logging.info(f"✅ Record {record_id} found again - resetting tracking")
+                    table.update(rec["id"], updates)
+                    reset_count += 1
     
     # Return stats including removals and tracking
     stats["Removed"] = removed_count

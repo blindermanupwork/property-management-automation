@@ -76,7 +76,7 @@ class SystemCleaner:
                 
         self.log(f"Removed {removed_count} Chrome profiles older than {days_old} days")
         
-    def clean_old_csv_files(self, days_old=30):
+    def clean_old_csv_files(self, days_old=7):
         """Clean old CSV files from done directories"""
         self.log("=== Cleaning Old CSV Files ===")
         
@@ -100,7 +100,7 @@ class SystemCleaner:
                     
         self.log(f"Removed {removed_count} CSV files older than {days_old} days")
         
-    def clean_old_logs(self, days_old=30):
+    def clean_old_logs(self, days_old=7):
         """Clean old log files"""
         self.log("=== Cleaning Old Log Files ===")
         
@@ -236,8 +236,8 @@ class SystemCleaner:
         
         # Run cleanup tasks
         self.clean_chrome_profiles(days_old=1)
-        self.clean_old_csv_files(days_old=30)
-        self.clean_old_logs(days_old=30)
+        self.clean_old_csv_files(days_old=7)
+        self.clean_old_logs(days_old=7)
         self.clean_export_archives(days_old=60)
         self.clean_npm_cache()
         self.clean_pip_cache()
@@ -257,10 +257,10 @@ def main():
                        help='Show what would be cleaned without removing')
     parser.add_argument('--chrome-days', type=int, default=1,
                        help='Days to keep Chrome profiles (default: 1)')
-    parser.add_argument('--csv-days', type=int, default=30,
-                       help='Days to keep CSV files (default: 30)')
-    parser.add_argument('--log-days', type=int, default=30,
-                       help='Days to keep old logs (default: 30)')
+    parser.add_argument('--csv-days', type=int, default=7,
+                       help='Days to keep CSV files (default: 7)')
+    parser.add_argument('--log-days', type=int, default=7,
+                       help='Days to keep old logs (default: 7)')
     parser.add_argument('--export-days', type=int, default=60,
                        help='Days to keep export archives (default: 60)')
     

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createJob, cancelJob } = require('../handlers/jobs');
+const { createJob, cancelJob, getAddressId } = require('../handlers/jobs');
 
 // POST /api/jobs/:recordId - Create a single HCP job
 router.post('/:recordId', createJob);
@@ -26,5 +26,8 @@ router.post('/create-batch', async (req, res) => {
 
 // DELETE /api/jobs/:recordId - Cancel a single HCP job
 router.delete('/:recordId', cancelJob);
+
+// GET /api/jobs/:recordId/address-id - Get address ID from HCP job
+router.get('/:recordId/address-id', getAddressId);
 
 module.exports = router;
