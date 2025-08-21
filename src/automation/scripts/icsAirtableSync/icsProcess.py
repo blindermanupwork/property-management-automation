@@ -33,10 +33,10 @@ try:
         check_removal_exceptions,
         MISSING_SYNC_THRESHOLD
     )
-    SAFE_REMOVAL_ENABLED = True
+    SAFE_REMOVAL_ENABLED = False  # Disable safe removal - use immediate removal
 except ImportError:
     # Fallback if removal_safety module not available - define inline
-    SAFE_REMOVAL_ENABLED = True  # Enable the feature with inline functions
+    SAFE_REMOVAL_ENABLED = False  # Disable safe removal - use immediate removal
     MISSING_SYNC_THRESHOLD = 3
     
     def should_mark_as_removed(record, current_time, is_missing_from_feed):
@@ -1553,6 +1553,22 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             fields = rec["fields"]
             record_id = fields.get("ID")
             logging.info(f"🔍 DEBUG: Checking record {record_id} for removal conditions")
+            
+            # IMMEDIATE REMOVAL MODE: Skip all safety checks when disabled
+            if not SAFE_REMOVAL_ENABLED:
+                logging.warning(f"🚨 IMMEDIATE REMOVAL: Record {record_id} missing from feed - removing immediately (no safety checks)")
+                result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
+                logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
+                removed_count += 1
+                # Track by entry type
+                entry_type = fields.get("Entry Type", "Reservation")
+                if entry_type == "Block":
+                    removed_block_count += 1
+                else:
+                    removed_res_count += 1
+                continue
+                
+            # SAFE REMOVAL LOGIC (only when enabled)
             # Skip if the stay is fully past
             if fields.get("Check-out Date", "") < today_iso:
                 logging.info(f"🔍 DEBUG: Skipping record {record_id} - checkout date is in past")
@@ -1607,19 +1623,6 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                     for field_name, field_value in updates.items():
                         rec["fields"][field_name] = field_value
                     logging.info(f"🔄 Cache updated: Record {record_id} now has Missing Count = {rec['fields'].get('Missing Count', 0)} in cache")
-            else:
-                # Original immediate removal logic (fallback)
-                logging.info(f"🔍 DEBUG: About to call mark_all_as_old_and_clone for record {rec['fields'].get('ID')} (UID: {uid})")
-                logging.info(f"🔍 DEBUG: Records passed to function: {len(records)} records")
-                result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
-                logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
-                removed_count += 1
-                # Track by entry type
-                entry_type = fields.get("Entry Type", "Reservation")
-                if entry_type == "Block":
-                    removed_block_count += 1
-                else:
-                    removed_res_count += 1
     
     # Reset tracking for records that were found in this sync
     if SAFE_REMOVAL_ENABLED:
@@ -1830,7 +1833,7 @@ async def main_async():
         logging.info("   • Exceptions: Active HCP jobs, imminent checkouts")
         logging.info("=" * 70)
     else:
-        logging.info("⚠️  Removal safety module not available - using immediate removal")
+        logging.warning("🚨 IMMEDIATE REMOVAL MODE: Missing records will be removed INSTANTLY (no safety checks, no Missing Count thresholds)")
     
     try:
         # Declare globals
