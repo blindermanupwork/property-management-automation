@@ -1,0 +1,34 @@
+{
+  "name": "servativ-automation",
+  "version": "2.2.22",
+  "description": "Property management automation system",
+  "main": "src/run_automation_prod.js",
+  "scripts": {
+    "install-deps": "npm install",
+    "hcp-sync-dev": "node src/automation/scripts/hcp/dev-hcp-sync.cjs",
+    "hcp-sync-prod": "node src/automation/scripts/hcp/prod-hcp-sync.cjs",
+    "automation-dev": "python3 src/run_automation_dev.py",
+    "automation-prod": "python3 src/run_automation_prod.py",
+    "test": "python3 -m pytest testing/",
+    "postinstall": "echo '✅ Node.js dependencies installed successfully'"
+  },
+  "dependencies": {
+    "airtable": "^0.12.2",
+    "axios": "^1.11.0",
+    "dotenv": "^17.2.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "automation",
+    "property-management",
+    "airtable",
+    "housecallpro",
+    "ics",
+    "csv"
+  ],
+  "author": "Servativ Team",
+  "license": "MIT"
+}

@@ -1,10 +1,20 @@
 # Property Management Automation System
 
-**Version 2.2.21** - Hourly ICS Removal Logic Fix
+**Version 2.2.24** - ICS Removal Protection Fix + Dependency Management
 
 A comprehensive, enterprise-grade automation system for property management operations with complete development/production environment separation, enhanced security, and robust error handling.
 
 ## 🚀 Quick Start
+
+### Initial Setup (One-time)
+```bash
+# Install all dependencies (Node.js + Python packages)
+./setup_dependencies.sh
+
+# Or manually:
+npm install                    # Install Node.js dependencies
+pip3 install -r requirements.txt  # Install Python dependencies (if exists)
+```
 
 ### Development Environment
 ```bash

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.24] - 2025-08-21
+
+### Fixed
+- **ICS 7-Day Check-in Protection Logic Bug**
+  - Fixed backwards logic in `archive/icsAirtableSync/removal_safety.py` that incorrectly protected future reservations from removal
+  - Issue: Records with future check-in dates (e.g., 2025-08-29) were being protected when they should only protect past check-ins within 7 days
+  - Problem: `(datetime.now() - checkin).days < 7` was true for future dates (negative numbers are less than 7)
+  - Example: Reservation "1418fb94e984-eb77a0aa5aec6ff33fa01e20b305798b@airbnb.com" with check-in 2025-08-29 was exempt from removal
+  - Root Cause: Date comparison logic didn't account for future vs past dates
+  - Solution: Added condition `0 <= days_since_checkin < 7` to only protect recent past check-ins
+  - Result: Future reservations can now be properly removed after 3 missing syncs, past check-ins within 7 days still protected
+  - Updated file: `archive/icsAirtableSync/removal_safety.py` - check_removal_exceptions() function (lines 92-94)
+
+### Added
+- **Node.js Dependency Management**
+  - Created comprehensive `package.json` for HCP sync script dependencies
+  - Added `setup_dependencies.sh` script for automated environment setup
+  - Prevents "Cannot find module" errors in HCP sync operations
+  - Supports both development and production environments
+  - Dependencies: dotenv, airtable, axios for HCP sync scripts
+
 ## [2.2.20] - 2025-08-19
 
 ### Fixed
