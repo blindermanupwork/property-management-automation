@@ -1554,9 +1554,14 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             record_id = fields.get("ID")
             logging.info(f"🔍 DEBUG: Checking record {record_id} for removal conditions")
             
-            # IMMEDIATE REMOVAL MODE: Skip all safety checks when disabled
+            # Skip if the stay is fully past - KEEP THIS PROTECTION
+            if fields.get("Check-out Date", "") < today_iso:
+                logging.info(f"🔍 DEBUG: Skipping record {record_id} - checkout date is in past")
+                continue
+                
+            # IMMEDIATE REMOVAL MODE: Skip other safety checks when disabled (but keep past date protection)
             if not SAFE_REMOVAL_ENABLED:
-                logging.warning(f"🚨 IMMEDIATE REMOVAL: Record {record_id} missing from feed - removing immediately (no safety checks)")
+                logging.warning(f"🚨 IMMEDIATE REMOVAL: Record {record_id} missing from feed - removing immediately (past dates already protected)")
                 result = mark_all_as_old_and_clone(table, records, {}, now_iso, "Removed")
                 logging.info(f"🔍 DEBUG: mark_all_as_old_and_clone returned: {result}")
                 removed_count += 1
@@ -1569,10 +1574,6 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                 continue
                 
             # SAFE REMOVAL LOGIC (only when enabled)
-            # Skip if the stay is fully past
-            if fields.get("Check-out Date", "") < today_iso:
-                logging.info(f"🔍 DEBUG: Skipping record {record_id} - checkout date is in past")
-                continue
             
             # NEW: Check if this record matches a duplicate that was detected
             # If so, don't mark it as removed - it's the same reservation with a different UID
