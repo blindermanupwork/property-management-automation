@@ -1601,6 +1601,12 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                     logging.info(f"📊 Updating tracking for record {record_id}: Missing Count = {updates.get('Missing Count', 0)}")
                     table.update(rec["id"], updates)
                     tracked_count += 1
+                    
+                    # CACHE FIX: Update existing_records cache with new values
+                    # This prevents stale Missing Count values in subsequent processing
+                    for field_name, field_value in updates.items():
+                        rec["fields"][field_name] = field_value
+                    logging.info(f"🔄 Cache updated: Record {record_id} now has Missing Count = {rec['fields'].get('Missing Count', 0)} in cache")
             else:
                 # Original immediate removal logic (fallback)
                 logging.info(f"🔍 DEBUG: About to call mark_all_as_old_and_clone for record {rec['fields'].get('ID')} (UID: {uid})")
@@ -1617,7 +1623,9 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     
     # Reset tracking for records that were found in this sync
     if SAFE_REMOVAL_ENABLED:
-        found_keys = [pair for pair in feed_keys if pair in processed_uid_url_pairs]
+        # Only reset for UIDs that were actually found in the current ICS feed
+        # AND exist in our database (intersection)
+        found_keys = list(set(processed_uid_url_pairs) & set(feed_keys))
         for uid, feed_url in found_keys:
             records = existing_records.get((uid, feed_url), [])
             active_records = [r for r in records if r["fields"].get("Status") in ("New", "Modified")]
@@ -1634,6 +1642,11 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                     logging.info(f"✅ Record {record_id} found again - resetting tracking")
                     table.update(rec["id"], updates)
                     reset_count += 1
+                    
+                    # CACHE FIX: Update existing_records cache with reset values
+                    for field_name, field_value in updates.items():
+                        rec["fields"][field_name] = field_value
+                    logging.info(f"🔄 Cache updated: Record {record_id} reset to Missing Count = 0 in cache")
     
     # Return stats including removals and tracking
     stats["Removed"] = removed_count

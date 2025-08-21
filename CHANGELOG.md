@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.25] - 2025-08-21
+
+### Fixed
+- **ICS existing_records Cache Bug**
+  - Fixed critical cache bug where Missing Count increments weren't reflected in subsequent processing
+  - Issue: `existing_records` dictionary loaded once at start became stale after database updates during processing
+  - Problem: Record with Missing Count = 1 gets incremented to 2 in database, but cache still shows 1, so next processing cycle treats it as Missing Count = 1 again
+  - Example: Target record `1418fb94e984-eb77a0aa5aec6ff33fa01e20b305798b@airbnb.com` stuck in infinite Missing Count = 1 loop
+  - Root Cause: Database updates not reflected in memory cache used for subsequent record lookups within same processing run
+  - Solution: Update `existing_records` cache immediately after each database update with new field values
+  - Result: Missing Count now properly increments (1→2→3) and records get removed after 3 missing syncs as intended
+  - Updated file: `src/automation/scripts/icsAirtableSync/icsProcess.py` - Added cache updates after lines 1602 and 1643
+  - Added debug logs: "🔄 Cache updated: Record {id} now has Missing Count = {count} in cache"
+
 ## [2.2.24] - 2025-08-21
 
 ### Fixed
