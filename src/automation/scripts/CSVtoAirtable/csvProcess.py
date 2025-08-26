@@ -558,7 +558,7 @@ def process_csv_files(property_lookup, guest_overrides=None):
                             pid = property_lookup.get(res["property_name"].lower())
                     
                     if pid is None:
-                        missing_props.append(res["uid"])
+                        missing_props.append(res["property_name"])
                         continue
                     
                     # Check for property owner overrides
@@ -581,22 +581,27 @@ def process_csv_files(property_lookup, guest_overrides=None):
                     res["property_id"] = pid
                     parsed_reservations.append(res)
                 
-                # Report any missing property links
+                # Report any missing property links but continue processing
                 if missing_props:
-                    logging.error(
-                        f"❌ {os.path.basename(path)} – {len(missing_props)} reservation(s) missing Property mapping: "
-                        f"{', '.join(missing_props)}"
+                    logging.warning(
+                        f"⚠️ {os.path.basename(path)} – {len(missing_props)} reservation(s) missing Property mapping: "
+                        f"{', '.join(missing_props)} (SKIPPED)"
                     )
-                    raise ValueError(f"Missing property links for {len(missing_props)} reservations")
                 
                 # Count blocks and reservations
                 block_count = sum(1 for res in parsed_reservations if res["entry_type"] == "Block")
                 reservation_count = len(parsed_reservations) - block_count
+                skipped_count = len(missing_props) if missing_props else 0
                 
                 # File processed successfully
                 all_reservations.extend(parsed_reservations)
                 processed_files.append(path)
-                logging.info(f"Successfully processed {fname} ({reservation_count} reservations and {block_count} blocks)")
+                
+                # Log processing results with skipped count
+                if skipped_count > 0:
+                    logging.info(f"Successfully processed {fname} ({reservation_count} reservations and {block_count} blocks, {skipped_count} skipped)")
+                else:
+                    logging.info(f"Successfully processed {fname} ({reservation_count} reservations and {block_count} blocks)")
         
         except Exception as e:
             logging.error(f"Error processing {fname}: {e}", exc_info=True)
