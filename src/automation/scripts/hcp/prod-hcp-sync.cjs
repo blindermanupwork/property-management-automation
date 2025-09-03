@@ -240,20 +240,29 @@ async function syncMultipleJobs() {
         } else {
           syncStatus = dateMatch && timeMatch ? 'Synced' : (!dateMatch ? 'Wrong Date' : 'Wrong Time');
           if (!dateMatch) {
-            syncDetails = `Airtable shows ${azDate(schedExpected)} at ${azTime(schedExpected)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)} - ${getAzTimestamp()}`;
+            syncDetails = `Airtable shows ${azDate(schedExpected)} at ${azTime(schedExpected)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)}`;
           } else if (!timeMatch) {
-            syncDetails = `Airtable shows ${azTime(schedExpected)} but HCP shows ${azTime(schedLive)} - ${getAzTimestamp()}`;
+            syncDetails = `Airtable shows ${azTime(schedExpected)} but HCP shows ${azTime(schedLive)}`;
           } else {
             syncDetails = null; // No mismatch, don't update Schedule Sync Details
           }
         }
         
+        // Check if sync status has changed
+        const currentSyncStatus = rec.fields['Sync Status'];
+        const statusChanged = currentSyncStatus !== syncStatus;
+        const hasScheduleMismatch = syncDetails !== null;
+        
         // Update Airtable with verification results
         const updateFields = {
           'Sync Status': syncStatus,
-          'Sync Date and Time': new Date().toISOString(),
           'Scheduled Service Time': schedLive.toISOString()
         };
+        
+        // Only update timestamp if status changed OR there's a schedule mismatch
+        if (statusChanged || hasScheduleMismatch) {
+          updateFields['Sync Date and Time'] = new Date().toISOString();
+        }
         
         // Only update Schedule Sync Details if there's a mismatch
         if (syncDetails) {
@@ -629,9 +638,9 @@ async function syncMultipleJobs() {
           // Fallback for prod environment
           syncStatus = dateMatch && timeMatch ? 'Synced' : (!dateMatch ? 'Wrong Date' : 'Wrong Time');
           if (!dateMatch) {
-            syncDetails = `Created job ${jobId} - Airtable shows ${azDate(schedExpected)} at ${azTime(schedExpected)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)} - ${getAzTimestamp()}`;
+            syncDetails = `Created job ${jobId} - Airtable shows ${azDate(schedExpected)} at ${azTime(schedExpected)} but HCP shows ${azDate(schedLive)} at ${azTime(schedLive)}`;
           } else if (!timeMatch) {
-            syncDetails = `Created job ${jobId} - Airtable shows ${azTime(schedExpected)} but HCP shows ${azTime(schedLive)} - ${getAzTimestamp()}`;
+            syncDetails = `Created job ${jobId} - Airtable shows ${azTime(schedExpected)} but HCP shows ${azTime(schedLive)}`;
           } else {
             syncDetails = null; // No mismatch, don't update Schedule Sync Details
           }

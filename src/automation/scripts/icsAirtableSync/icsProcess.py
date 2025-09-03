@@ -77,11 +77,8 @@ except ImportError:
         """
         Fallback implementation to check if a record should never be removed.
         Returns reason if removal should be blocked, None otherwise.
+        Note: Active HCP job check is now handled before immediate removal.
         """
-        # Don't remove if there's an active HCP job
-        if fields.get("Service Job ID") and fields.get("Job Status") in ["Scheduled", "In Progress"]:
-            return "Active HCP job exists"
-        
         # Don't remove if checkout is today or tomorrow
         checkout_date = fields.get("Check-out Date")
         if checkout_date:
@@ -1166,6 +1163,39 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
         
     return False
 
+def get_duplicate_records(table, property_id, checkin_date, checkout_date, entry_type):
+    """
+    Get all records with the same property, dates, and type.
+    Returns list of matching records.
+    """
+    if not property_id:
+        return []
+    
+    try:
+        # Get all records with matching dates and entry type
+        date_formula = (
+            f"AND("
+            f"DATESTR({{Check-in Date}}) = '{checkin_date}', "
+            f"DATESTR({{Check-out Date}}) = '{checkout_date}', "
+            f"{{Entry Type}} = '{entry_type}'"
+            f")"
+        )
+        
+        existing = table.all(formula=date_formula)
+        
+        # Filter for matching property ID in Python
+        matching_records = []
+        for record in existing:
+            record_property_ids = record["fields"].get("Property ID", [])
+            if isinstance(record_property_ids, list) and property_id in record_property_ids:
+                matching_records.append(record)
+        
+        return matching_records
+            
+    except Exception as e:
+        logging.error(f"Error getting duplicate records: {e}")
+        return []
+
 def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, update_batch, session_tracker=None):
     """
     Synchronize a single ICS event with Airtable.
@@ -1341,8 +1371,47 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                 return "Duplicate_Ignored"
         else:
             # No records with this UID, but duplicate exists with different UID
-            logging.info(f"Ignoring duplicate event: {original_uid} for property {property_id} (different UID, same dates)")
-            return "Duplicate_Ignored"
+            # Check if duplicate records are all inactive (Old/Removed)
+            duplicate_records = get_duplicate_records(table, property_id, event["dtstart"], event["dtend"], event["entry_type"])
+            active_duplicates = [r for r in duplicate_records if r["fields"].get("Status") in ("New", "Modified")]
+            
+            if active_duplicates:
+                # Active records exist - true duplicate, ignore
+                logging.info(f"Ignoring duplicate event: {original_uid} (active records exist)")
+                return "Duplicate_Ignored"
+            else:
+                # Only inactive records exist - resurrect latest one with new UID
+                latest_inactive = max(duplicate_records, key=lambda r: r["fields"].get("Last Updated", ""))
+                record_id = latest_inactive["fields"].get("ID")
+                logging.info(f"🔄 Resurrecting inactive record {record_id} with new UID: {original_uid}")
+                
+                # Update with new event data
+                new_fields = {
+                    "Check-in Date": event["dtstart"],
+                    "Check-out Date": event["dtend"],
+                    "Entry Type": event["entry_type"],
+                    "Service Type": event["service_type"],
+                    "Entry Source": event["entry_source"],
+                    "Overlapping Dates": event["overlapping"],
+                    "Same-day Turnover": event["same_day_turnover"],
+                    "Reservation UID": composite_uid,
+                    "ICS URL": feed_url,
+                    "Property ID": [property_id] if property_id else [],
+                    "Status": "Modified",
+                    "Last Updated": now_iso,
+                    "Missing Count": 0,
+                    "Missing Since": None,
+                    "Last Seen": now_iso
+                }
+                
+                # Add Block Type if it exists
+                if event["block_type"]:
+                    new_fields["Block Type"] = event["block_type"]
+                
+                # Update the record
+                table.update(latest_inactive["id"], new_fields)
+                logging.info(f"✅ Resurrected record {record_id} with new UID {original_uid}")
+                return "Resurrected"
     
     # No duplicates found, proceed with normal logic
     if active_records:
@@ -1558,6 +1627,25 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
             if fields.get("Check-out Date", "") < today_iso:
                 logging.info(f"🔍 DEBUG: Skipping record {record_id} - checkout date is in past")
                 continue
+            
+            # Check if this record matches a duplicate that was detected
+            # If so, don't mark it as removed - it's the same reservation with a different UID
+            property_ids = fields.get("Property ID", [])
+            if property_ids:
+                record_property_id = property_ids[0]
+                record_checkin = fields.get("Check-in Date", "")
+                record_checkout = fields.get("Check-out Date", "")
+                record_entry_type = fields.get("Entry Type", "")
+                
+                duplicate_key = (record_property_id, record_checkin, record_checkout, record_entry_type)
+                if duplicate_key in duplicate_detected_dates:
+                    logging.info(f"Skipping removal of {uid} - same reservation detected with different UID")
+                    continue
+            
+            # Don't remove if there's an active HCP job
+            if fields.get("Service Job ID") and fields.get("Job Status") in ["Scheduled", "In Progress"]:
+                logging.info(f"Record {record_id} exempted from removal: Active HCP job exists")
+                continue
                 
             # IMMEDIATE REMOVAL MODE: Skip other safety checks when disabled (but keep past date protection)
             if not SAFE_REMOVAL_ENABLED:
@@ -1574,22 +1662,6 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
                 continue
                 
             # SAFE REMOVAL LOGIC (only when enabled)
-            
-            # NEW: Check if this record matches a duplicate that was detected
-            # If so, don't mark it as removed - it's the same reservation with a different UID
-            property_ids = fields.get("Property ID", [])
-            if property_ids:
-                record_property_id = property_ids[0]
-                record_checkin = fields.get("Check-in Date", "")
-                record_checkout = fields.get("Check-out Date", "")
-                record_entry_type = fields.get("Entry Type", "")
-                
-                duplicate_key = (record_property_id, record_checkin, record_checkout, record_entry_type)
-                if duplicate_key in duplicate_detected_dates:
-                    logging.info(f"Skipping removal of {uid} - same reservation detected with different UID")
-                    continue
-            
-            # SAFE REMOVAL LOGIC
             if SAFE_REMOVAL_ENABLED:
                 # Check for removal exceptions (active jobs, imminent checkouts)
                 exception_reason = check_removal_exceptions(fields)

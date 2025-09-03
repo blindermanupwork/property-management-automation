@@ -181,6 +181,11 @@ nano config/environments/prod/.env
 - Processes iTrip and Evolve CSV files to Airtable
 - Complete change tracking and history preservation
 - Environment-specific processing workflows
+- **Resilient Error Handling** (August 26, 2025):
+  - Processing continues even when properties are missing from Airtable
+  - Skips unmapped properties instead of failing entire batch
+  - Improved error reporting shows property names instead of reservation IDs
+  - Detailed logging of skipped reservations for easy property identification
 - **Duplicate Detection Fix** (June 23, 2025):
   - Fixed composite UID vs base UID lookup mismatch
   - Now correctly indexes by both composite and base UIDs

@@ -56,69 +56,6 @@ class HCPServiceLineUpdater:
             'Accept': 'application/json'
         }
         
-    def detect_owner_arrival(self, reservation, all_records):
-        """
-        Detect if an owner is arriving after this reservation checkout.
-        Returns True if a block is checking in same day or next day.
-        """
-        check_out_date = reservation.get('Check-out Date')
-        property_id = reservation.get('Property ID', [])
-        
-        if not check_out_date or not property_id:
-            return False
-            
-        property_id_val = property_id[0] if isinstance(property_id, list) else property_id
-        check_out = datetime.fromisoformat(check_out_date.replace('Z', '+00:00'))
-        
-        # Find all blocks at the same property
-        blocks_at_property = []
-        for record in all_records:
-            # Skip if it's the same record or not a block
-            if record['id'] == reservation['id']:
-                continue
-                
-            entry_type = record.get('Entry Type')
-            if entry_type != 'Block':
-                continue
-                
-            # Check if same property
-            rec_property_id = record.get('Property ID', [])
-            if not rec_property_id:
-                continue
-                
-            rec_property_id_val = rec_property_id[0] if isinstance(rec_property_id, list) else rec_property_id
-            if rec_property_id_val != property_id_val:
-                continue
-                
-            # Skip old/removed blocks
-            status = record.get('Status', '')
-            if status in ['Old', 'Removed']:
-                continue
-                
-            check_in_date = record.get('Check-in Date')
-            if check_in_date:
-                blocks_at_property.append({
-                    'check_in': datetime.fromisoformat(check_in_date.replace('Z', '+00:00')),
-                    'record': record
-                })
-        
-        # Sort blocks by check-in date
-        blocks_at_property.sort(key=lambda x: x['check_in'])
-        
-        # Find the next block after checkout
-        for block in blocks_at_property:
-            if block['check_in'] >= check_out:
-                # Calculate days between checkout and block check-in
-                days_between = (block['check_in'].date() - check_out.date()).days
-                
-                if days_between <= 1:
-                    print(f"   🏠 Owner arriving: Block checking in {days_between} day(s) after checkout")
-                    return True
-                else:
-                    print(f"   📅 Block found but checking in {days_between} days later (not owner arriving)")
-                    return False
-        
-        return False
     
     async def update_service_line(self, session, job_id, service_line_description):
         """Update a single HCP job's service line description"""
@@ -325,24 +262,9 @@ class HCPServiceLineUpdater:
         print(f"📊 Found {len(records)} active jobs to check")
         
         updates_needed = []
-        owner_arrival_updates = []
         
         # Check which records need updates
         for record in records:
-            # Detect owner arrival
-            detected_owner_arriving = self.detect_owner_arrival(record, all_records)
-            current_owner_arriving = record.get('Owner Arriving', False)
-            
-            # If owner arrival status changed, we need to update Airtable
-            if detected_owner_arriving != current_owner_arriving:
-                owner_arrival_updates.append({
-                    'record_id': record['id'],
-                    'property': record.get('Property ID', ['Unknown'])[0],
-                    'owner_arriving': detected_owner_arriving
-                })
-                # Update the record dict so build_service_line_description uses the new value
-                record['Owner Arriving'] = detected_owner_arriving
-            
             current_description = record.get('Service Line Description', '')
             expected_description = self.build_service_line_description(record)
             
@@ -354,16 +276,6 @@ class HCPServiceLineUpdater:
                     'expected': expected_description,
                     'property': record.get('Property ID', ['Unknown'])[0]
                 })
-        
-        # Update Owner Arriving fields in Airtable
-        if owner_arrival_updates:
-            print(f"\n🏠 Updating {len(owner_arrival_updates)} Owner Arriving fields in Airtable...")
-            for update in owner_arrival_updates:
-                print(f"   Property {update['property']}: Owner Arriving = {update['owner_arriving']}")
-                self.table.update(
-                    update['record_id'],
-                    {'Owner Arriving': update['owner_arriving']}
-                )
         
         print(f"\n🔍 Found {len(updates_needed)} jobs needing service line updates")
         
@@ -402,12 +314,11 @@ class HCPServiceLineUpdater:
             )
         
         print(f"\n✅ Service line update complete!")
-        print(f"   - Updated {len(owner_arrival_updates)} Owner Arriving fields")
         print(f"   - Updated {len(updates_needed)} service line descriptions")
         
         # Output structured summary for automation controller
         total_count = len(records)  # Total jobs checked
-        print(f"SERVICE_LINE_SUMMARY: OwnerArriving={len(owner_arrival_updates)}, ServiceLines={len(updates_needed)}, Total={total_count}")
+        print(f"SERVICE_LINE_SUMMARY: ServiceLines={len(updates_needed)}, Total={total_count}")
 
 async def main():
     parser = argparse.ArgumentParser(description='Update HCP service line descriptions with owner detection')

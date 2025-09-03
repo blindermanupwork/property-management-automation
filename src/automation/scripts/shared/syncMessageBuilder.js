@@ -49,32 +49,30 @@ function getArizonaTimestamp() {
  * @returns {string} Clear sync status message
  */
 function buildSyncMessage(status, data) {
-  const timestamp = ` - ${getArizonaTimestamp()}`;
-  
   switch (status) {
     case 'SYNCED':
-      return `Schedules in sync: ${formatArizonaDateTime(data.airtableValue)}${timestamp}`;
+      return `Schedules in sync: ${formatArizonaDateTime(data.airtableValue)}`;
     
     case 'WRONG_DATE':
-      return `Airtable shows ${formatArizonaDate(data.airtableValue)} but HCP shows ${formatArizonaDate(data.hcpValue)}${timestamp}`;
+      return `Airtable shows ${formatArizonaDate(data.airtableValue)} but HCP shows ${formatArizonaDate(data.hcpValue)}`;
     
     case 'WRONG_TIME':
-      return `Airtable shows ${formatArizonaTime(data.airtableValue)} but HCP shows ${formatArizonaTime(data.hcpValue)}${timestamp}`;
+      return `Airtable shows ${formatArizonaTime(data.airtableValue)} but HCP shows ${formatArizonaTime(data.hcpValue)}`;
     
     case 'JOB_CANCELED':
-      return `Job canceled on ${formatArizonaDateTime(data.canceledAt)}${timestamp}`;
+      return `Job canceled on ${formatArizonaDateTime(data.canceledAt)}`;
     
     case 'SCHEDULE_UPDATED':
-      return `✅ Schedule updated successfully. HCP now shows ${formatArizonaDateTime(data.newValue)}${timestamp}`;
+      return `✅ Schedule updated successfully. HCP now shows ${formatArizonaDateTime(data.newValue)}`;
     
     case 'SCHEDULE_UPDATE_FAILED':
-      return `❌ Failed to update schedule: ${data.error}${timestamp}`;
+      return `❌ Failed to update schedule: ${data.error}`;
     
     case 'NO_JOB':
-      return `⚠️ No HCP job exists for this reservation${timestamp}`;
+      return `⚠️ No HCP job exists for this reservation`;
     
     case 'NO_APPOINTMENT':
-      return `⚠️ HCP job exists but has no appointment scheduled${timestamp}`;
+      return `⚠️ HCP job exists but has no appointment scheduled`;
     
     case 'WEBHOOK_UPDATE':
       return `🔄 Updated from HCP webhook - ${data.details || 'Status change'} - ${formatArizonaDateTime(data.timestamp)}`;

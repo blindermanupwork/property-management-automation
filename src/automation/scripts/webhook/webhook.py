@@ -401,11 +401,9 @@ def update_service_sync_info(record_id, details):
     try:
         # Get current UTC time for Airtable (it expects UTC)
         now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        # Add timestamp to details
-        timestamped_details = f"**{get_az_timestamp()}** - {details}"
         return reservations_table.update(record_id, {
             "Sync Date and Time": now,
-            "Service Sync Details": timestamped_details
+            "Service Sync Details": details
         })
     except Exception as e:
         logger.error(f"Error updating service sync info for record {record_id}: {e}")
@@ -415,11 +413,9 @@ def update_schedule_sync_info(record_id, details):
     try:
         # Get current UTC time for Airtable (it expects UTC)
         now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        # Add timestamp to details
-        timestamped_details = f"**{get_az_timestamp()}** - {details}"
         return reservations_table.update(record_id, {
             "Sync Date and Time": now,
-            "Schedule Sync Details": timestamped_details
+            "Schedule Sync Details": details
         })
     except Exception as e:
         logger.error(f"Error updating schedule sync info for record {record_id}: {e}")

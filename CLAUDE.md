@@ -35,7 +35,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── logs/                # All system logs
 │       └── scripts/
 │           ├── CSVtoAirtable/   # CSV processing
-│           │   ├── csvProcess.py         # Main stable CSV processor
+│           │   ├── csvProcess.py         # Main stable CSV processor with resilient error handling
 │           │   ├── csvProcess_enhanced.py # Wrapper for main processor
 │           │   └── csvProcess_best.py    # Backup of best working version
 │           ├── icsAirtableSync/ # ICS processing (with hybrid detection)
@@ -108,6 +108,7 @@ This is a comprehensive property management automation system with complete deve
   - Webhook processing: `webhook_development.log` / `webhook.log`
   - Automation runners: `automation_dev*.log` / `automation_prod*.log`
 - ✅ **CSV Duplicate Detection Fix**: Fixed composite UID vs base UID lookup mismatch (June 23, 2025)
+- ✅ **CSV Resilient Error Handling**: Processing now continues when properties are missing from Airtable, skipping unmapped properties instead of failing entire batch with improved property name error reporting (August 26, 2025)
 - ✅ **Duplicate Cleanup Script**: Script to mark old duplicates as "Old" status
 - ✅ **HCP Job Reconciliation (Optimized)**: High-performance automatic matching of unlinked HCP jobs to Airtable reservations with parallel processing
 - ✅ **Reservation Duplicate Detection**: Scripts to find and fix duplicate active UIDs and property/date conflicts (June 30, 2025)
@@ -471,6 +472,19 @@ analyze_towel_usage()  // Calls analyze_service_items("towel")
   - Consistent property identification across all log entries
 - **Implementation**: Comprehensive property mapping loaded at initialization using Property Name and Address fields
 - **Coverage**: All property references in logging statements
+
+### **CSV Resilient Processing (August 26, 2025)**
+- **Feature**: CSV processor now continues processing even when properties are missing from Airtable
+- **Behavior**: 
+  - Skips reservations for unmapped properties instead of failing entire batch
+  - Logs detailed warnings for missing properties with property names (not reservation IDs)
+  - Processes all valid reservations successfully while tracking skipped items
+- **Benefits**:
+  - Prevents processing backlog from growing due to missing properties
+  - Provides clear actionable error messages showing which properties need to be added
+  - Maintains processing continuity for properties that exist in Airtable
+- **Implementation**: Enhanced error handling in `csvProcess.py` with property name resolution
+- **Monitoring**: Missing properties tracked in iTrip Processing Monitor automation entry
 
 ### **Airtable Automation Scripts (v2.2.16)**
 - **Location**: `/home/opc/automation/src/automation/scripts/airtable-automations/`

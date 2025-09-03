@@ -879,20 +879,16 @@ def run_service_line_updates(config):
                     sync_summary = line.split("SERVICE_LINE_SUMMARY:")[1].strip()
                     # Parse the key=value pairs
                     parts = sync_summary.split(', ')
-                    owner_arriving = service_lines = total = 0
+                    service_lines = total = 0
                     for part in parts:
                         if '=' in part:
                             key, value = part.split('=')
-                            if key == 'OwnerArriving':
-                                owner_arriving = int(value)
-                            elif key == 'ServiceLines':
+                            if key == 'ServiceLines':
                                 service_lines = int(value)
                             elif key == 'Total':
                                 total = int(value)
                     
                     message = f"updated {service_lines}/{total} service lines"
-                    if owner_arriving > 0:
-                        message += f" — {owner_arriving} owner arrivals"
                     return {"success": True, "message": message}
             
             # Fallback to legacy parsing
@@ -1000,6 +996,115 @@ def run_job_reconciliation(config, execute=False):
             else:
                 error_msg = "Process failed with no error output"
             return {"success": False, "message": f"Reconciliation failed: {error_msg}"}
-            
+    
     except Exception as e:
         return {"success": False, "message": f"Job reconciliation error: {str(e)}"}
+
+
+def run_itrip_monitor_automation(config):
+    """Monitor iTrip CSV processing for missing properties and other issues
+    
+    Args:
+        config: DevConfig or ProdConfig instance
+    """
+    try:
+        print("🔍 Monitoring iTrip CSV processing status...")
+        
+        # Check CSV processing log for recent errors
+        log_file = config.get_log_path(f'csv_sync_{config.environment_name}.log')
+        
+        if not log_file.exists():
+            return {"success": False, "message": "CSV sync log file not found"}
+        
+        # Read the last 500 lines to catch recent processing
+        with open(log_file, 'r') as f:
+            lines = f.readlines()[-500:]
+        
+        # Look for missing property warnings and processing summaries
+        missing_properties = set()
+        skipped_count = 0
+        last_processing_time = None
+        processing_summary = None
+        
+        for line in lines:
+            # Look for missing property warnings
+            if "Missing property links for" in line and "reservations:" in line:
+                # Extract property names from warning messages
+                try:
+                    # Example: "Missing property links for 2 reservations: Arrowhead Lakes #21614509, Another Property"
+                    parts = line.split("reservations:")
+                    if len(parts) > 1:
+                        props = parts[1].strip().split(", ")
+                        for prop in props:
+                            missing_properties.add(prop.strip())
+                except Exception:
+                    continue
+            
+            # Look for skipped count
+            if "skipped" in line.lower() and "property" in line.lower():
+                try:
+                    # Extract skipped count
+                    words = line.split()
+                    for i, word in enumerate(words):
+                        if word == "skipped" and i > 0:
+                            prev_word = words[i-1]
+                            if prev_word.isdigit():
+                                skipped_count += int(prev_word)
+                except Exception:
+                    continue
+            
+            # Look for processing completion messages
+            if "Processing complete" in line or "files processed" in line:
+                processing_summary = line.strip()
+                # Extract timestamp if available
+                if " - " in line:
+                    timestamp_part = line.split(" - ")[0]
+                    try:
+                        # Try to parse timestamp
+                        last_processing_time = timestamp_part.strip()
+                    except Exception:
+                        pass
+        
+        # Generate status report
+        current_time = datetime.now(pytz.timezone('US/Pacific')).strftime('%Y-%m-%d %H:%M:%S PST')
+        
+        if missing_properties:
+            missing_list = ", ".join(sorted(missing_properties))
+            status = f"⚠️ **Missing Properties**: {missing_list}\n\n"
+            status += f"**Status**: Processing continues with {len(missing_properties)} property(ies) skipped\n\n"
+        else:
+            status = "✅ **No Missing Properties**: All properties mapped successfully\n\n"
+        
+        if processing_summary:
+            status += f"**Last Processing**: {processing_summary}\n"
+        
+        if last_processing_time:
+            status += f"**Last Run**: {last_processing_time}\n"
+        
+        status += f"**Monitor Updated**: {current_time}\n"
+        
+        # Check CSV process directory for pending files
+        csv_dir = config.get_csv_process_dir()
+        if csv_dir.exists():
+            csv_files = list(csv_dir.glob("*.csv"))
+            if csv_files:
+                status += f"\n📁 **Pending Files**: {len(csv_files)} CSV files awaiting processing"
+            else:
+                status += f"\n📁 **Pending Files**: No CSV files awaiting processing"
+        
+        print(f"  📊 Found {len(missing_properties)} missing properties")
+        if csv_dir.exists():
+            csv_files = list(csv_dir.glob("*.csv"))
+            print(f"  📁 {len(csv_files)} CSV files pending")
+        
+        success = len(missing_properties) == 0  # Success if no missing properties
+        message = f"Monitor updated: {len(missing_properties)} missing properties found" if missing_properties else "All properties mapped successfully"
+        
+        return {"success": success, "message": message, "details": status}
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"iTrip monitor error: {str(e)}"
+        print(f"  ❌ {error_msg}")
+        print(f"  🔍 Traceback: {traceback.format_exc()}")
+        return {"success": False, "message": error_msg}

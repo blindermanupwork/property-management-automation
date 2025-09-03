@@ -314,11 +314,12 @@ class AutomationController:
         
         # Import automation functions based on environment
         # These will be imported dynamically based on the config
-        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_add_jobs_automation, run_sync_jobs_automation, run_job_reconciliation, run_service_line_updates
+        from .scripts.run_automation import run_gmail_automation, run_evolve_automation, run_csv_automation, run_ics_automation, run_hcp_automation, run_add_jobs_automation, run_sync_jobs_automation, run_job_reconciliation, run_service_line_updates, run_itrip_monitor_automation
         
         # Define automation mappings
         automations = [
             ("iTrip CSV Gmail", run_gmail_automation),
+            ("iTrip Processing Monitor", run_itrip_monitor_automation),
             ("Evolve", run_evolve_automation),
             ("CSV Files", run_csv_automation),
             ("ICS Calendar", run_ics_automation),
