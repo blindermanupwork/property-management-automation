@@ -12,6 +12,10 @@
 
 import sys, io                                              #  add these imports ↑ with the others
 import csv, logging, os, shutil
+import smtplib
+import socket
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from collections import defaultdict
 from datetime import datetime, date
 from dateutil.parser import parse
@@ -21,6 +25,33 @@ from pyairtable import Api
 import glob
 from pathlib import Path
 import pytz
+
+# ---------------------------------------------------------------------------
+# Email Alert Configuration (via Resend)
+# ---------------------------------------------------------------------------
+ALERT_EMAIL = "blindermanupwork@gmail.com"
+RESEND_API_KEY = "re_VLUHdZkM_Bt4tp7NiUX4SmFtwjtjuUchM"
+
+def send_error_alert(subject, message):
+    """Send email alert for critical errors via Resend"""
+    import resend
+    try:
+        resend.api_key = RESEND_API_KEY
+        full_message = f"""CSV Processing Error
+Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Environment: {os.environ.get('ENVIRONMENT', 'unknown')}
+
+{message}
+"""
+        resend.Emails.send({
+            "from": "CSV Processor <onboarding@resend.dev>",
+            "to": [ALERT_EMAIL],
+            "subject": f"[CSV Processor] {subject}",
+            "text": full_message,
+        })
+        logging.info(f"Alert email sent to {ALERT_EMAIL}")
+    except Exception as e:
+        logging.error(f"Failed to send alert email: {e}")
 
 # Import the automation config
 script_dir = Path(__file__).parent.absolute()
@@ -79,9 +110,9 @@ ENTRY_TYPE_KEYWORDS = {
 DEFAULT_ENTRY_TYPE = "Reservation"
 
 SERVICE_TYPE_KEYWORDS = {
-    'owner arrival': 'Owner Arrival',
-    'owner stay': 'Owner Arrival',
-    'owner arriving': 'Owner Arrival',
+    'owner arrival': 'Turnover',
+    'owner stay': 'Turnover',
+    'owner arriving': 'Turnover',
 }
 DEFAULT_SERVICE_TYPE = "Turnover"  # Default for reservations
 
@@ -154,12 +185,13 @@ logging.info("=== CSV sync run started ===")
 # BatchCollector – collects 10-row chunks for batch_update / batch_create
 # ---------------------------------------------------------------------------
 class BatchCollector:
-    def __init__(self, table, batch_size=10, op="update"):
+    def __init__(self, table, batch_size=10, op="update", property_map=None):
         self.table   = table
         self.size    = batch_size
         self.op      = op            # "update" or "create"
         self.records = []
         self.count   = 0
+        self.property_map = property_map or {}  # Maps property_id -> {name, address}
 
     def add(self, record):
         self.records.append(record)
@@ -187,6 +219,22 @@ class BatchCollector:
                 self.count += len(self.records)
         except Exception as e:
             logging.error(f"Batch {self.op} error: {e}", exc_info=True)
+            # Send email alert for batch errors (422, etc.)
+            record_lines = []
+            for r in self.records:
+                fields = r.get('fields', {})
+                uid = fields.get('Reservation UID', 'unknown')
+                prop_id = fields.get('Property ID', ['unknown'])[0] if fields.get('Property ID') else 'unknown'
+                checkout = fields.get('Check-out Date', 'unknown')
+                # Get address from property mapping
+                prop_info = self.property_map.get(prop_id, {})
+                address = prop_info.get('address', prop_id)
+                record_lines.append(f"  - UID: {uid}\n    Address: {address}\n    Check-out: {checkout}")
+            record_summary = "\n".join(record_lines)
+            send_error_alert(
+                f"Batch {self.op} failed - {len(self.records)} records",
+                f"Error: {e}\n\nFailed records:\n{record_summary}"
+            )
         finally:
             self.records = []
 
@@ -919,7 +967,7 @@ def check_for_duplicate(table, property_id, checkin_date, checkout_date, entry_t
         logging.warning(f"Error checking for duplicate: {e}")
         return False
 
-def sync_reservations(csv_reservations, all_reservation_records, table, session_tracker=None, evolve_csv_failed=False, property_id_to_name=None):
+def sync_reservations(csv_reservations, all_reservation_records, table, session_tracker=None, evolve_csv_failed=False, property_id_to_name=None, property_map=None):
     """Synchronize CSV data with Airtable following a simple logical approach:
     1. Pull all active records from iTrip/Evolve with checkin >= today
     2. Process CSV files to identify new/modified/removed reservations
@@ -1067,8 +1115,8 @@ def sync_reservations(csv_reservations, all_reservation_records, table, session_
                     res["same_day_turnover"] = False
     
     # STEP 5: Process each reservation
-    create_batch = BatchCollector(table, op="create")
-    update_batch = BatchCollector(table, op="update")
+    create_batch = BatchCollector(table, op="create", property_map=property_map)
+    update_batch = BatchCollector(table, op="update", property_map=property_map)
     
     processed_uids = set()
     summary = defaultdict(list)
@@ -2082,21 +2130,25 @@ def main():
         session_tracker = set()
         logging.info("Initialized session-wide duplicate tracker")
         
-        # Build comprehensive property ID to name mapping for better logging
+        # Build comprehensive property ID to name/address mapping for better logging and error alerts
         property_id_to_name = {}
+        property_map = {}  # For BatchCollector error alerts - includes address
         try:
-            # Try to get both fields if they exist
-            all_properties = properties_table.all(fields=["Property Name"])
+            # Get both Property Name and HCP Address fields
+            all_properties = properties_table.all(fields=["Property Name", "HCP Address"])
             for prop in all_properties:
                 prop_id = prop["id"]
                 prop_name = prop["fields"].get("Property Name", "")
+                prop_address = prop["fields"].get("HCP Address", "")
                 # Use property name if available
                 display_name = prop_name if prop_name else f"Property {prop_id}"
                 property_id_to_name[prop_id] = display_name
+                property_map[prop_id] = {"name": display_name, "address": prop_address or display_name}
             logging.info(f"Loaded {len(property_id_to_name)} property mappings")
         except Exception as e:
             logging.warning(f"Could not load property mappings: {e}")
             property_id_to_name = {}
+            property_map = {}
         
         # Try to load guest overrides table (may not exist in all environments)
         guest_overrides = {}
@@ -2201,7 +2253,7 @@ def main():
         all_records = fetch_all_reservations(reservations_table, feed_urls)
         
         # 6. Sync reservations - properly marking ALL records as Old when creating Modified/Removed
-        results = sync_reservations(filtered_reservations, all_records, reservations_table, session_tracker, evolve_csv_failed, property_id_to_name)
+        results = sync_reservations(filtered_reservations, all_records, reservations_table, session_tracker, evolve_csv_failed, property_id_to_name, property_map)
         
         # 7. Generate report
         generate_report(results, id_to_name)
