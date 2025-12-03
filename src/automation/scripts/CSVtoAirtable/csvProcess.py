@@ -117,9 +117,9 @@ SERVICE_TYPE_KEYWORDS = {
 DEFAULT_SERVICE_TYPE = "Turnover"  # Default for reservations
 
 BLOCK_TYPE_KEYWORDS = {
-    'owner arrival': 'Owner Arrival',
-    'owner stay': 'Owner Arrival',
-    'owner arriving': 'Owner Arrival',
+    'owner arrival': 'Owner Stay',
+    'owner stay': 'Owner Stay',
+    'owner arriving': 'Owner Stay',
 }
 DEFAULT_BLOCK_TYPE = ""  # Default for blocks
 # --- LOGGING -----------------------------------------------------------
