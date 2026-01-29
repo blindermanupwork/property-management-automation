@@ -135,30 +135,40 @@ async function copyJobAttachments(hcpConfig, sourceJobId, targetJobId) {
   }
 }
 
-// Find next reservation for a property (matches original AirScript logic)
+// Find next reservation for a property (optimized with filter)
 async function findNextReservation(base, propertyId, checkOutDate) {
-  const query = await base('Reservations').select({
-    sorts: [{ field: 'Check-in Date', direction: 'asc' }]
-  }).all();
-  
-  const potentialNext = query.filter(record => {
-    if (!record.get('Property ID')) return false;
-    const propLinks = record.get('Property ID');
-    if (!propLinks.length || propLinks[0] !== propertyId) return false;
-    
-    const entryType = record.get('Entry Type');
-    if (!entryType || entryType.name !== 'Reservation') return false;
-    
-    const status = record.get('Status');
-    if (status && status.name === 'Old') return false;
-    
-    const checkInDate = record.get('Check-in Date');
-    if (!checkInDate || new Date(checkInDate) <= new Date(checkOutDate)) return false;
-    
-    return true;
-  });
-  
-  return potentialNext.length > 0 ? potentialNext[0] : null;
+  console.log(`Finding next reservation for property ${propertyId} after ${checkOutDate}`);
+
+  // Use filterByFormula to only fetch relevant records - much faster than .all()
+  // Only get Reservations (not blocks) that check in after the current checkout
+  const filterFormula = `AND(
+    {Entry Type} = 'Reservation',
+    {Status} != 'Old',
+    {Check-in Date} > '${checkOutDate}',
+    FIND('${propertyId}', ARRAYJOIN({Property ID}))
+  )`;
+
+  try {
+    const query = await base('Reservations').select({
+      filterByFormula: filterFormula,
+      sort: [{ field: 'Check-in Date', direction: 'asc' }],
+      maxRecords: 5  // We only need the first one
+    }).firstPage();
+
+    // Additional property ID verification (in case filter was too broad)
+    const potentialNext = query.filter(record => {
+      const propLinks = record.get('Property ID');
+      return propLinks && propLinks.length > 0 && propLinks[0] === propertyId;
+    });
+
+    console.log(`Found ${potentialNext.length} potential next reservations`);
+    return potentialNext.length > 0 ? potentialNext[0] : null;
+
+  } catch (error) {
+    console.error(`Error finding next reservation: ${error.message}`);
+    // Fallback: return null rather than crashing
+    return null;
+  }
 }
 
 // Create job from reservation - COMPLETE implementation matching original
@@ -465,47 +475,51 @@ async function createJob(req, res) {
       // Copy template line items (like original script)
       try {
         const templateItems = await hcpFetch(hcpConfig, `/jobs/${templateId}/line_items`);
-        const lineItems = (templateItems.data || []).map((item, index) => ({
-          name: index === 0 ? serviceName : item.name,
-          description: item.description || '',
-          unit_price: item.unit_price,
-          unit_cost: item.unit_cost,
-          quantity: item.quantity,
-          kind: item.kind,
-          taxable: item.taxable,
-          service_item_id: item.service_item_id || null,
-          service_item_type: item.service_item_type || null
-        }));
+
+        // Helper to truncate names to HCP's 255 char limit
+        const truncateName = (name, maxLen = 255) => {
+          if (!name || name.length <= maxLen) return name || '';
+          return name.substring(0, maxLen - 3) + '...';
+        };
+
+        const lineItems = (templateItems.data || []).map((item, index) => {
+          // First item gets the service name, others keep template names
+          let itemName = index === 0 ? serviceName : item.name;
+
+          // Truncate ALL names to 255 chars (HCP limit)
+          itemName = truncateName(itemName);
+
+          return {
+            name: itemName,
+            description: item.description || '',
+            unit_price: item.unit_price,
+            unit_cost: item.unit_cost,
+            quantity: item.quantity,
+            kind: item.kind,
+            taxable: item.taxable,
+            service_item_id: item.service_item_id || null,
+            service_item_type: item.service_item_type || null
+          };
+        });
 
         if (lineItems.length > 0) {
           console.log(`DEBUG: Updating ${lineItems.length} line items for job ${jobId}`);
-          console.log(`DEBUG: First line item name length: ${lineItems[0].name.length} characters`);
-          console.log(`DEBUG: First line item name: "${lineItems[0].name.substring(0, 100)}${lineItems[0].name.length > 100 ? '...' : ''}"`);
-          
+          console.log(`DEBUG: First line item name: "${lineItems[0].name}" (${lineItems[0].name.length} chars)`);
+
+          // Log any truncated items
+          lineItems.forEach((item, idx) => {
+            if (item.name.endsWith('...')) {
+              console.log(`DEBUG: Line item ${idx} was truncated: "${item.name.substring(0, 50)}..."`);
+            }
+          });
+
           try {
-            const updateResp = await hcpFetch(hcpConfig, `/jobs/${jobId}/line_items/bulk_update`, 'PUT', {
+            await hcpFetch(hcpConfig, `/jobs/${jobId}/line_items/bulk_update`, 'PUT', {
               line_items: lineItems
             });
             console.log('Successfully copied', lineItems.length, 'line items from template');
           } catch (updateError) {
             console.error(`ERROR updating line items: ${updateError.message}`);
-            // Check if it's a length issue
-            if (lineItems[0].name.length > 255) {
-              console.log(`WARNING: Service name is ${lineItems[0].name.length} characters, may exceed HCP limit`);
-              // Try with truncated name
-              const truncatedName = lineItems[0].name.substring(0, 250) + '...';
-              lineItems[0].name = truncatedName;
-              console.log(`Retrying with truncated name: "${truncatedName}"`);
-              
-              try {
-                await hcpFetch(hcpConfig, `/jobs/${jobId}/line_items/bulk_update`, 'PUT', {
-                  line_items: lineItems
-                });
-                console.log('Successfully updated line items with truncated name');
-              } catch (retryError) {
-                console.error(`ERROR on retry: ${retryError.message}`);
-              }
-            }
           }
         }
       } catch (error) {

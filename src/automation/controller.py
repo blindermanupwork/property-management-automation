@@ -186,24 +186,31 @@ class AutomationController:
             duration = end_time - start_time
             
             # Determine success based on result
+            skip_sync_update = False
             if isinstance(result, bool):
                 success = result
                 details = f"Completed in {duration.total_seconds():.1f}s"
             elif isinstance(result, dict) and "success" in result:
                 success = result["success"]
                 details = result.get("message", f"Completed in {duration.total_seconds():.1f}s")
-                logger.info(f"Automation '{automation_name}' result: success={success}, details='{details}'")
+                skip_sync_update = result.get("skip_sync_update", False)
+                logger.info(f"Automation '{automation_name}' result: success={success}, details='{details}', skip_sync_update={skip_sync_update}")
             else:
                 success = True
                 details = f"Completed in {duration.total_seconds():.1f}s"
                 logger.info(f"Automation '{automation_name}' completed with default success")
-            
+
             if success:
                 print(f"✅ '{automation_name}' completed successfully in {duration.total_seconds():.1f}s")
             else:
                 print(f"❌ '{automation_name}' failed: {details}")
-            
-            # Update status in Airtable
+
+            # Update status in Airtable (skip if flagged)
+            if skip_sync_update:
+                logger.info(f"Skipping Airtable sync update for '{automation_name}' - no files processed")
+                print(f"⏭️  Skipping sync update for '{automation_name}' - no files to process")
+                return success
+
             logger.info(f"Updating Airtable status for '{automation_name}'")
             update_result = self.update_automation_status(automation_name, success, details, start_time)
             if not update_result:
@@ -321,7 +328,7 @@ class AutomationController:
             ("iTrip CSV Gmail", run_gmail_automation),
             ("iTrip Processing Monitor", run_itrip_monitor_automation),
             ("Evolve", run_evolve_automation),
-            ("CSV Files", run_csv_automation),
+            ("iTrip CSV File", run_csv_automation),
             ("ICS Calendar", run_ics_automation),
             ("Add Service Jobs", run_add_jobs_automation),
             ("Sync Service Jobs", run_sync_jobs_automation),
@@ -399,7 +406,7 @@ class AutomationController:
         automation_map = {
             "iTrip CSV Gmail": run_gmail_automation,
             "Evolve": run_evolve_automation,
-            "CSV Files": run_csv_automation,
+            "iTrip CSV File": run_csv_automation,
             "ICS Calendar": run_ics_automation,
             "Add/Sync Service Jobs": run_hcp_automation,  # Legacy support
             "Add Service Jobs": run_add_jobs_automation,
@@ -447,7 +454,7 @@ def test_automation_controller():
         
         # Test individual automation check
         print("🔍 Testing individual automation checks:")
-        test_automations = ["iTrip CSV", "Gmail", "Evolve", "CSV Files", "ICS Calendar", "Add/Sync Service Jobs"]
+        test_automations = ["iTrip CSV", "Gmail", "Evolve", "iTrip CSV File", "ICS Calendar", "Add/Sync Service Jobs"]
         
         for automation in test_automations:
             is_active = controller.get_automation_status(automation)

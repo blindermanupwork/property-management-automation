@@ -458,40 +458,90 @@ export class HCPService {
     }
     async getJobsByAddress(addressId, params = {}) {
         try {
-            const jobParams = {
-                ...params,
-                address_id: addressId,
-                page_size: 200 // Get max results
-            };
-            // Remove address_id from params since it's not a valid filter for list_jobs
-            const { address_id, ...listJobsParams } = jobParams;
-            // We need to search through jobs to find ones matching the address
+            // Strategy: Find the customer who owns this address, then filter their jobs
+            // This is MUCH faster than iterating through all 60k+ jobs
+            // Step 1: Find which customer owns this address
+            let customerId = null;
+            const customersResponse = await this.listCustomers({ page: 1, page_size: 200 });
+            let customers = [];
+            if ('_cached' in customersResponse) {
+                const cacheResults = await this.cacheService.searchCache(customersResponse._filePath, addressId, 'addresses.*.id');
+                if (cacheResults.length > 0) {
+                    customerId = cacheResults[0].id;
+                }
+            }
+            else {
+                // HCP returns customers in .customers array, not .data
+                customers = customersResponse.customers || [];
+            }
+            // Search through customers to find one with this address
+            if (!customerId && customers.length > 0) {
+                for (const customer of customers) {
+                    if (customer.addresses?.some((addr) => addr.id === addressId)) {
+                        customerId = customer.id;
+                        break;
+                    }
+                }
+            }
+            // If still not found, paginate through all customers
+            if (!customerId && !('_cached' in customersResponse)) {
+                let page = 2;
+                let hasMore = customers.length === 200;
+                while (hasMore && !customerId) {
+                    const moreCustomers = await this.listCustomers({ page, page_size: 200 });
+                    if ('_cached' in moreCustomers) {
+                        const cacheResults = await this.cacheService.searchCache(moreCustomers._filePath, addressId, 'addresses.*.id');
+                        if (cacheResults.length > 0) {
+                            customerId = cacheResults[0].id;
+                        }
+                        hasMore = false;
+                    }
+                    else {
+                        // HCP returns customers in .customers array
+                        const customerList = moreCustomers.customers || [];
+                        for (const customer of customerList) {
+                            if (customer.addresses?.some((addr) => addr.id === addressId)) {
+                                customerId = customer.id;
+                                break;
+                            }
+                        }
+                        hasMore = customerList.length === 200;
+                        page++;
+                    }
+                }
+            }
+            if (!customerId) {
+                console.log(`[${this.environment}] No customer found for address ${addressId}`);
+                return [];
+            }
+            console.log(`[${this.environment}] Found customer ${customerId} for address ${addressId}`);
+            // Step 2: Get jobs for this customer using API-level filtering
             const results = [];
             let page = 1;
             let hasMore = true;
             while (hasMore) {
                 const jobsResponse = await this.listJobs({
-                    ...listJobsParams,
+                    ...params,
+                    customer_id: customerId,
                     page,
                     page_size: 200
                 });
                 let jobs = [];
                 if ('_cached' in jobsResponse) {
-                    const cacheResults = await this.cacheService.searchCache(jobsResponse._filePath, addressId, 'address_id');
+                    const cacheResults = await this.cacheService.searchCache(jobsResponse._filePath, addressId, 'address.id');
                     jobs = cacheResults;
-                }
-                else {
-                    jobs = (jobsResponse.data || []).filter((job) => job.address_id === addressId);
-                }
-                results.push(...jobs);
-                // Check if we have more pages
-                if ('_cached' in jobsResponse) {
                     hasMore = false;
                 }
                 else {
-                    hasMore = (jobsResponse.data || []).length === 200;
+                    // HCP returns jobs in .jobs array, not .data
+                    const jobsList = jobsResponse.jobs || [];
+                    // Filter by address.id (customer may have multiple addresses)
+                    jobs = jobsList.filter((job) => job.address?.id === addressId);
+                    hasMore = jobsList.length === 200;
                     page++;
                 }
+                // Apply slim transformation to reduce token usage (~80% reduction)
+                results.push(...jobs.map(job => this.slimJob(job)));
             }
             return results;
         }
@@ -506,6 +556,61 @@ export class HCPService {
         error.context = context;
         error.suggestion = suggestion;
         return error;
+    }
+    // Slim down job objects to reduce token usage (~80% reduction)
+    slimJob(job) {
+        return {
+            id: job.id,
+            work_status: job.work_status,
+            description: job.description,
+            total_amount: job.total_amount,
+            // Slim schedule
+            schedule: job.schedule ? {
+                scheduled_start: job.schedule.scheduled_start,
+                scheduled_end: job.schedule.scheduled_end
+            } : null,
+            // Slim customer (just id and name)
+            customer: job.customer ? {
+                id: job.customer.id,
+                name: `${job.customer.first_name || ''} ${job.customer.last_name || ''}`.trim() || job.customer.company
+            } : null,
+            // Slim address (just id and street)
+            address: job.address ? {
+                id: job.address.id,
+                street: job.address.street,
+                city: job.address.city
+            } : null,
+            // Employee count instead of full objects
+            assigned_employees_count: job.assigned_employees?.length || 0,
+            // Line item count instead of full objects
+            line_items_count: job.line_items?.length || 0,
+            // Keep job type
+            job_type: job.job_type ? {
+                id: job.job_type.id,
+                name: job.job_type.name
+            } : null
+        };
+    }
+    // Slim down customer objects to reduce token usage
+    slimCustomer(customer) {
+        return {
+            id: customer.id,
+            first_name: customer.first_name,
+            last_name: customer.last_name,
+            company: customer.company,
+            email: customer.email,
+            mobile_number: customer.mobile_number,
+            // Slim addresses (just essential fields)
+            addresses: customer.addresses?.map((addr) => ({
+                id: addr.id,
+                street: addr.street,
+                city: addr.city,
+                state: addr.state,
+                zip: addr.zip
+            })) || [],
+            // Counts instead of full objects
+            tags_count: customer.tags?.length || 0
+        };
     }
     matchesAddressFilter(address, params) {
         if (params.street && !address.street?.toLowerCase().includes(params.street.toLowerCase())) {

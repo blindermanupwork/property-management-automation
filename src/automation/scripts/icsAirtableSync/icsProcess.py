@@ -15,7 +15,7 @@ import aiohttp
 import csv, logging, os, shutil
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from itertools import combinations
@@ -347,7 +347,28 @@ class BatchCollector:
                 self.table.batch_create([r["fields"] for r in self.records])
                 self.count += len(self.records)
         except Exception as e:
-            logging.error(f"Batch {self.op} error: {e}", exc_info=True)
+            error_str = str(e)
+            # v2.2.23: Handle deleted records gracefully - retry one by one
+            if "ROW_DOES_NOT_EXIST" in error_str and self.op == "update":
+                logging.warning(f"Some records were deleted, retrying individually...")
+                seen = set()
+                unique = []
+                for r in self.records:
+                    rid = r.get("id") or r.get("record_id")
+                    if rid not in seen:
+                        seen.add(rid)
+                        unique.append(r)
+                for r in unique:
+                    try:
+                        self.table.update(r["id"], r["fields"])
+                        self.count += 1
+                    except Exception as inner_e:
+                        if "ROW_DOES_NOT_EXIST" in str(inner_e):
+                            logging.info(f"⏭️ Skipping deleted record {r['id']}")
+                        else:
+                            logging.error(f"Failed to update {r['id']}: {inner_e}")
+            else:
+                logging.error(f"Batch {self.op} error: {e}", exc_info=True)
         finally:
             self.records = []
 
@@ -437,37 +458,47 @@ def mark_all_as_old_and_clone(table, records, field_to_change, now_iso, status="
 # Keyword Mappings for ICS Parsing
 # ---------------------------------------------------------------------------
 # Ensure these values EXACTLY match your Airtable Single Select options
-ENTRY_TYPE_KEYWORDS = {
-    'reserved': 'Reservation',
-    'reservation': 'Reservation',
-    'blocked': 'Block',
-    'block': 'Block',
-    'maintenance': 'Block',
-    'owner stay': 'Owner Stay',
-    'Service': 'Block',
-    'not available': 'Block'
-}
+
+# Block keywords - if any of these are found, entry is a Block; otherwise Reservation
+# This mirrors the CSV processor approach: only check for block indicators
+BLOCK_KEYWORDS = [
+    'owner block',   # Evolve uses "Owner Block" for blocked dates
+    'blocked',
+    'block',
+    'maintenance',
+    'owner stay',
+    'not available',
+]
 DEFAULT_ENTRY_TYPE = "Reservation"
 
 SERVICE_TYPE_KEYWORDS = {
-    'clean': 'Service',
-    'maintenance': 'Maintenance',
-    'repair': 'Maintenance',
-    'inspection': 'Inspection',
+    # Reservations get Turnover
+    'reservation': 'Turnover',
+    'booked': 'Turnover',
+    'booking': 'Turnover',
+    # Blocks get Needs Review
+    'maintenance': 'Needs Review',
+    'repair': 'Needs Review',
+    'inspection': 'Needs Review',
+    'owner': 'Needs Review',
+    'block': 'Needs Review',
+    'unavailable': 'Needs Review',
 }
-DEFAULT_SERVICE_TYPE = None
+DEFAULT_SERVICE_TYPE = 'Turnover'  # Default to Turnover if no keywords match
 
 BLOCK_TYPE_KEYWORDS = {
-    'owner': 'Owner Block',
-    'maintenance': 'Maintenance Block',
-    'Service': 'Service Block',
-    'prep': 'Prep Block',
-    'buffer': 'Buffer Block',
+    'owner': 'Owner Stay',        # Airtable option is "Owner Stay", not "Owner Block"
+    'maintenance': 'Maintenance',  # Airtable option is "Maintenance", not "Maintenance Block"
+    'unavailable': 'Unavailable',
+    'Service': 'Other',           # Map service blocks to "Other"
+    'prep': 'Other',              # Map prep blocks to "Other"
+    'buffer': 'Other',            # Map buffer blocks to "Other"
 }
 DEFAULT_BLOCK_TYPE = None
 
 ENTRY_SOURCE_KEYWORDS = {
     'airbnb': 'Airbnb',
+    'evolve': 'Evolve',  # Must be before 'booking' - Evolve PRODID contains "Evolve Bookings Calendar"
     'booking.com': 'Booking.com',
     'booking': 'Booking.com',
     'guesty': 'Guesty',
@@ -490,7 +521,7 @@ DEFAULT_ENTRY_SOURCE = None
 def detect_entry_source_from_url(url):
     """Extract source platform from ICS URL"""
     url_lower = url.lower()
-    
+
     # Common patterns
     if 'airbnb' in url_lower:
         return 'Airbnb'
@@ -504,8 +535,21 @@ def detect_entry_source_from_url(url):
         return 'HostTools'
     elif 'lodgify.com' in url_lower:
         return 'Lodgify'
-    
+    elif 'evolve.com' in url_lower or 'partner.evolve.com' in url_lower:
+        return 'Evolve'
+
     return None
+
+
+def normalize_evolve_uid(uid):
+    """
+    Extract the booking ID from Evolve UIDs.
+    Evolve UIDs have format: gid://Evolve/Booking/a0APl00000E9vrrMAB
+    We want just: a0APl00000E9vrrMAB
+    """
+    if uid.startswith('gid://Evolve/Booking/'):
+        return uid.replace('gid://Evolve/Booking/', '')
+    return uid
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -808,10 +852,11 @@ def parse_ics(ics_text: str, feed_url: str):
                         entry_source = v
                         break
                         
-            # Entry Type
-            for k, v in ENTRY_TYPE_KEYWORDS.items():
-                if k in text:
-                    entry_type = v
+            # Entry Type - check for block keywords only, default to Reservation
+            entry_type = DEFAULT_ENTRY_TYPE  # "Reservation"
+            for keyword in BLOCK_KEYWORDS:
+                if keyword in text:
+                    entry_type = "Block"
                     break
             # Block Type
             if entry_type == "Block":
@@ -840,10 +885,11 @@ def parse_ics(ics_text: str, feed_url: str):
                             entry_source = v
                             break
                             
-                if entry_type is None:
-                    for k, v in ENTRY_TYPE_KEYWORDS.items():
-                        if k in raw_vevent_content:
-                            entry_type = v
+                # Entry type fallback - check raw VEVENT for block keywords
+                if entry_type == DEFAULT_ENTRY_TYPE:  # Still default, check raw content
+                    for keyword in BLOCK_KEYWORDS:
+                        if keyword in raw_vevent_content:
+                            entry_type = "Block"
                             break
                             
                 if entry_type == "Block" and block_type is None:
@@ -882,11 +928,18 @@ def parse_ics(ics_text: str, feed_url: str):
             if entry_type == "Block" and service_type is None:
                 service_type = "Needs Review"
 
-            # 9) collect
+            # 9) Evolve DTEND adjustment: Evolve uses exclusive DTEND (day after checkout)
+            # Subtract 1 day to get actual checkout/cleaning date
+            adjusted_dtend = dtend
+            if entry_source == 'Evolve':
+                adjusted_dtend = dtend - timedelta(days=1)
+                logging.debug(f"Evolve DTEND adjusted: {dtend} -> {adjusted_dtend} for uid={uid}")
+
+            # 10) collect
             processed_events.append({
                 "uid": uid,
                 "dtstart": extract_date_only(dtstart),
-                "dtend": extract_date_only(dtend),
+                "dtend": extract_date_only(adjusted_dtend),
                 "ics_url": feed_url,
                 "summary_raw": summary,
                 "description_raw": description,
@@ -962,7 +1015,8 @@ def get_records_by_uid_feed(table):
     fields_to_fetch = [
         "Reservation UID", "ICS URL", "Check-in Date", "Check-out Date",
         "Status", "Entry Type", "Service Type", "Block Type", "Entry Source",
-        "Property ID", "Last Updated", "Overlapping Dates", "Same-day Turnover"
+        "Property ID", "Last Updated", "Overlapping Dates", "Same-day Turnover",
+        "Next Guest Date"  # v2.2.22: Required for v2.2.18 same-day preservation fix
     ] + HCP_FIELDS
     
     try:
@@ -1001,18 +1055,27 @@ def calculate_flags(events, url_to_prop):
         reservation_events = [event for event in property_events if event["entry_type"] == "Reservation"]
         
         # Find overlaps (only between reservations)
+        # Note: In iCal, DTEND is exclusive for DATE values, meaning:
+        # - DTEND = checkout date (guest leaves that morning)
+        # - DTSTART = check-in date (guest arrives that afternoon)
+        # So DTEND of A == DTSTART of B + 1 day = same-day turnover (NOT an overlap)
         for a, b in combinations(reservation_events, 2):
             # Skip if same UID (same reservation appearing multiple times)
             if a.get("uid") == b.get("uid"):
                 continue
-                
+
             a_start = parse(a["dtstart"]).date()
             a_end = parse(a["dtend"]).date()
             b_start = parse(b["dtstart"]).date()
             b_end = parse(b["dtend"]).date()
-            
-            # Check for overlap: a starts before b ends AND a ends after b starts
-            if a_start < b_end and a_end > b_start:
+
+            # Check for TRUE overlap (excludes same-day turnovers)
+            # Same-day turnover: a_end == b_start + 1 day (A checks out, B checks in same day)
+            # True overlap: a_end > b_start + 1 day (more than 1 day of overlap)
+            if a_start < b_end and a_end > b_start + timedelta(days=1):
+                a["overlapping"] = True
+                b["overlapping"] = True
+            elif b_start < a_end and b_end > a_start + timedelta(days=1):
                 a["overlapping"] = True
                 b["overlapping"] = True
         
@@ -1206,12 +1269,15 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
     feed_url = event["ics_url"]
     property_id = url_to_prop.get(feed_url)
     now_iso = datetime.now(arizona_tz).isoformat(sep=" ", timespec="seconds")
-    
+
+    # Normalize Evolve UIDs (extract ID after gid://Evolve/Booking/)
+    normalized_uid = normalize_evolve_uid(original_uid)
+
     # Create composite UID
     if property_id:
-        composite_uid = f"{original_uid}_{property_id}"
+        composite_uid = f"{normalized_uid}_{property_id}"
     else:
-        composite_uid = original_uid
+        composite_uid = normalized_uid
         logging.warning(f"No property_id for feed {feed_url}, using original UID")
     
     # Use composite UID for lookups
@@ -1233,6 +1299,7 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             "Entry Source": event["entry_source"],
             "Overlapping Dates": event["overlapping"],
             "Same-day Turnover": event["same_day_turnover"],
+            "Block Type": event["block_type"],  # v2.2.22: Fix Block Type not being updated
             "Reservation UID": composite_uid,
             "ICS URL": feed_url,
             "Property ID": [property_id] if property_id else [],
@@ -1267,11 +1334,7 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
         for field in fields_to_preserve:
             if field in latest_removed["fields"] and latest_removed["fields"][field]:
                 new_fields[field] = latest_removed["fields"][field]
-        
-        # Add Block Type if it exists
-        if event["block_type"]:
-            new_fields["Block Type"] = event["block_type"]
-        
+
         # Reset removal tracking fields
         new_fields["Missing Count"] = 0
         new_fields["Missing Since"] = None
@@ -1318,8 +1381,9 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                         "Entry Source": event["entry_source"],
                         "Overlapping Dates": event["overlapping"],
                         "Same-day Turnover": event["same_day_turnover"],
+                        "Block Type": event["block_type"],  # v2.2.22: Fix Block Type not being updated
                     }
-                    
+
                     # Preserve important fields from existing record
                     fields_to_preserve = [
                         "Custom Service Time",
@@ -1349,18 +1413,14 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                     for field in fields_to_preserve:
                         if field in latest_active["fields"] and latest_active["fields"][field]:
                             new_fields[field] = latest_active["fields"][field]
-                    
-                    # Add Block Type if it exists
-                    if event["block_type"]:
-                        new_fields["Block Type"] = event["block_type"]
-                    
+
                     # Add Property ID if it exists
                     if property_id:
                         new_fields["Property ID"] = [property_id]
-                    
+
                     # Mark ALL existing records as Old and create one new Modified record
                     mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
-                    
+
                     return "Modified"
                 else:
                     # No changes - don't update Airtable at all
@@ -1394,6 +1454,7 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                     "Entry Source": event["entry_source"],
                     "Overlapping Dates": event["overlapping"],
                     "Same-day Turnover": event["same_day_turnover"],
+                    "Block Type": event["block_type"],  # v2.2.22: Fix Block Type not being updated
                     "Reservation UID": composite_uid,
                     "ICS URL": feed_url,
                     "Property ID": [property_id] if property_id else [],
@@ -1403,11 +1464,7 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                     "Missing Since": None,
                     "Last Seen": now_iso
                 }
-                
-                # Add Block Type if it exists
-                if event["block_type"]:
-                    new_fields["Block Type"] = event["block_type"]
-                
+
                 # Update the record
                 table.update(latest_inactive["id"], new_fields)
                 logging.info(f"✅ Resurrected record {record_id} with new UID {original_uid}")
@@ -1429,8 +1486,9 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
                 "Entry Source": event["entry_source"],
                 "Overlapping Dates": event["overlapping"],
                 "Same-day Turnover": event["same_day_turnover"],
+                "Block Type": event["block_type"],  # v2.2.22: Fix Block Type not being updated
             }
-            
+
             # Preserve important fields from existing record
             fields_to_preserve = [
                 "Custom Service Time",
@@ -1460,18 +1518,14 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             for field in fields_to_preserve:
                 if field in latest_active["fields"] and latest_active["fields"][field]:
                     new_fields[field] = latest_active["fields"][field]
-            
-            # Add Block Type if it exists
-            if event["block_type"]:
-                new_fields["Block Type"] = event["block_type"]
-            
+
             # Add Property ID if it exists
             if property_id:
                 new_fields["Property ID"] = [property_id]
-            
+
             # Mark ALL existing records as Old and create one new Modified record
             mark_all_as_old_and_clone(table, all_records, new_fields, now_iso, "Modified")
-            
+
             return "Modified"
         else:
             # No changes - don't update Airtable at all
@@ -1499,17 +1553,14 @@ def sync_ics_event(event, existing_records, url_to_prop, table, create_batch, up
             "Last Updated": now_iso,
             "Overlapping Dates": event["overlapping"],
             "Same-day Turnover": event["same_day_turnover"],
+            "Block Type": event["block_type"],  # v2.2.22: Fix Block Type not being updated
             "Sync Status": "Not Created",  # Set default explicitly for API
         }
-        
-        # Add Block Type if it exists
-        if event["block_type"]:
-            new_fields["Block Type"] = event["block_type"]
-        
+
         # Add Property ID if it exists
         if property_id:
             new_fields["Property ID"] = [property_id]
-        
+
         # First mark any existing non-active records as Old
         if all_records:
             for record in all_records:
@@ -1558,12 +1609,13 @@ def process_ics_feed(url, events, existing_records, url_to_prop, table, create_b
     for event in events:
         uid = event["uid"]
         property_id = url_to_prop.get(url)
-        
-        # Create composite UID for tracking
+
+        # Normalize Evolve UIDs and create composite UID for tracking
+        normalized_uid = normalize_evolve_uid(uid)
         if property_id:
-            composite_uid = f"{uid}_{property_id}"
+            composite_uid = f"{normalized_uid}_{property_id}"
         else:
-            composite_uid = uid
+            composite_uid = normalized_uid
             
         processed_uid_url_pairs.add((composite_uid, url))
         
@@ -1945,6 +1997,7 @@ async def main_async():
         properties_table = api.table(AIRTABLE_BASE_ID, PROPERTIES_TABLE_NAME)
         ics_feeds_table = api.table(AIRTABLE_BASE_ID, ICS_FEEDS_TABLE_NAME)
         ics_cron_table = api.table(AIRTABLE_BASE_ID, ICS_CRON_TABLE_NAME)
+        automation_table = api.table(AIRTABLE_BASE_ID, 'Automation')
         
         # ═══════════════════════════════════════════════════════════════════════════
         # 1) INITIALIZE DATE FILTERING THRESHOLDS
@@ -2203,7 +2256,60 @@ async def main_async():
               f"Removed={total_removed} ({removed_res} res, {removed_block} block), "
               f"Unchanged={total_unchanged} ({unchanged_res} res, {unchanged_block} block), "
               f"Errors={failed_feeds}")
-        
+
+        # ═══════════════════════════════════════════════════════════════════════════
+        # 10. Update Evolve Automation record with Evolve-specific stats
+        # ═══════════════════════════════════════════════════════════════════════════
+        try:
+            # Filter stats for Evolve feeds only (URLs containing 'evolve.com')
+            evolve_stats = {url: stats for url, stats in overall_stats.items()
+                          if 'evolve.com' in url.lower()}
+
+            if evolve_stats:
+                # Calculate Evolve-specific totals
+                evolve_feeds = len(evolve_stats)
+                evolve_new = sum(stats.get("New", 0) for stats in evolve_stats.values())
+                evolve_modified = sum(stats.get("Modified", 0) for stats in evolve_stats.values())
+                evolve_unchanged = sum(stats.get("Unchanged", 0) for stats in evolve_stats.values())
+                evolve_removed = sum(stats.get("Removed", 0) for stats in evolve_stats.values())
+
+                # Calculate reservation/block breakdowns for Evolve
+                evolve_new_res = sum(stats.get("New_res", 0) for stats in evolve_stats.values())
+                evolve_new_block = sum(stats.get("New_block", 0) for stats in evolve_stats.values())
+                evolve_mod_res = sum(stats.get("Modified_res", 0) for stats in evolve_stats.values())
+                evolve_mod_block = sum(stats.get("Modified_block", 0) for stats in evolve_stats.values())
+                evolve_unch_res = sum(stats.get("Unchanged_res", 0) for stats in evolve_stats.values())
+                evolve_unch_block = sum(stats.get("Unchanged_block", 0) for stats in evolve_stats.values())
+                evolve_rem_res = sum(stats.get("Removed_res", 0) for stats in evolve_stats.values())
+                evolve_rem_block = sum(stats.get("Removed_block", 0) for stats in evolve_stats.values())
+
+                # Format Evolve sync details like ICS Calendar format
+                evolve_sync_details = (
+                    f"✅ {evolve_feeds} feeds — "
+                    f"new {evolve_new} ({evolve_new_res} res, {evolve_new_block} block) — "
+                    f"modified {evolve_modified} ({evolve_mod_res} res, {evolve_mod_block} block) — "
+                    f"removed {evolve_removed} ({evolve_rem_res} res, {evolve_rem_block} block) — "
+                    f"unchanged {evolve_unchanged} ({evolve_unch_res} res, {evolve_unch_block} block)"
+                )
+
+                # Find and update the Evolve automation record
+                evolve_records = automation_table.all(formula="{Name}='Evolve'")
+                if evolve_records:
+                    evolve_record_id = evolve_records[0]['id']
+                    automation_table.update(evolve_record_id, {
+                        'Sync Details': evolve_sync_details,
+                        'Last Ran Time': datetime.now().isoformat(),
+                        'Active': True
+                    })
+                    logging.info(f"Updated Evolve automation record: {evolve_sync_details}")
+                else:
+                    logging.warning("Evolve automation record not found in Automation table")
+            else:
+                logging.info("No Evolve feeds processed in this run")
+
+        except Exception as evolve_err:
+            logging.error(f"Failed to update Evolve automation record: {evolve_err}")
+
     except Exception as e:
         logging.critical(f"Unhandled exception: {e}", exc_info=True)
         # Print error summary for automation capture

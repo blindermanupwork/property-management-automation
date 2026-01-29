@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.25** - ICS Cache Bug Fix + Removal Protection Logic Bug Fix
+**Current Version: 2.2.29** - Simplified ICS Block Detection + Evolve Integration Improvements
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -90,7 +90,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.17)
+### Current System State (v2.2.29)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
@@ -127,6 +127,14 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Evolve Reporting Fix**: Sync details now correctly show file download counts instead of misreporting as "new" records (v2.2.19)
 - ✅ **ICS Removal Protection Fix**: Removed 7-day check-in protection that was preventing proper 3x missing sync removal logic (v2.2.20)
 - ✅ **Hourly ICS Removal Logic Fix**: Missing Count now increments every hour (not every 3 days), records removed at count 3, stopped updating "Old" records, simplified tracking fields (v2.2.21)
+- ✅ **ICS Block Type Fix**: Block Type field now properly included in all update paths, Next Guest Date fetched for same-day preservation (v2.2.22)
+- ✅ **Deleted Records Handling**: Batch updates now retry individually when ROW_DOES_NOT_EXIST errors occur, skipping deleted records gracefully (v2.2.23)
+- ✅ **Evolve Integration**: Added Evolve source detection, UID normalization (gid://Evolve/Booking/ prefix removal), DTEND adjustment for exclusive dates (v2.2.24)
+- ✅ **Evolve Automation Stats**: ICS processor now updates Evolve automation record with separate Evolve-specific sync statistics (v2.2.25)
+- ✅ **ICS UID Change Protection**: Enhanced protection for UID changes with inactive record resurrection support (v2.2.26)
+- ✅ **Service Type Mapping**: SERVICE_TYPE_KEYWORDS now maps to Turnover (reservations) and Needs Review (blocks) (v2.2.27)
+- ✅ **BLOCK_TYPE_KEYWORDS Fix**: Maps to valid Airtable options (Owner Stay, Maintenance, Other) instead of invalid values (v2.2.28)
+- ✅ **Simplified ICS Block Detection**: Entry type detection now mirrors CSV processor - only checks for block keywords, defaults to Reservation (v2.2.29)
 
 
 ## HCP Sync Script Locations

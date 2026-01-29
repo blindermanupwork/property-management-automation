@@ -79,11 +79,11 @@ function extractSyncDetails(output) {
     
     // Try to detect the automation type from output and extract relevant details
     
-    // CSV Files automation
+    // iTrip CSV File automation (formerly "CSV Files")
     if (output.includes('CSV processing') || output.includes('CSV files to process') || output.includes('CSV Processor') || output.includes("📊 Processing iTrip and Evolve CSV files")) {
-        // First look for the status message from controller  
-        // Pattern: "📝 Updated status for 'CSV Files': ✅ ✅ No valid reservations found in CSV files"
-        const statusMatch = output.match(/📝 Updated status for 'CSV Files': ✅ (.+)/);
+        // First look for the status message from controller
+        // Pattern: "📝 Updated status for 'iTrip CSV File': ✅ ✅ No valid reservations found in CSV files"
+        const statusMatch = output.match(/📝 Updated status for 'iTrip CSV File': ✅ (.+)/);
         if (statusMatch) {
             const status = statusMatch[1].trim();
             // Remove any double ✅ that might have been added

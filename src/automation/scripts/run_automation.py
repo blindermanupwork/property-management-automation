@@ -251,11 +251,11 @@ def run_csv_automation(config):
                         sync_summary = match
                         break
                     elif "No CSV files to process" in line:
-                        sync_summary = "No CSV files to process"
-                        break
+                        # Skip sync update when no files to process
+                        return {"success": True, "message": "No CSV files to process", "skip_sync_update": True}
                     elif "No valid reservations found" in line:
-                        sync_summary = "No valid reservations found in CSV files"
-                        break
+                        # Skip sync update when no valid reservations
+                        return {"success": True, "message": "No valid reservations found", "skip_sync_update": True}
             except Exception as e:
                 print(f"⚠️ Could not read CSV sync log: {e}")
         

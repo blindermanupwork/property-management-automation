@@ -58,16 +58,16 @@ async function testGetStatus(env, automationName) {
 }
 
 async function main() {
-  // Test CSV Files automation
-  await testGetStatus('prod', 'CSV Files');
-  await testRunAutomation('prod', 'CSV Files');
-  
+  // Test iTrip CSV File automation (formerly "CSV Files")
+  await testGetStatus('prod', 'iTrip CSV File');
+  await testRunAutomation('prod', 'iTrip CSV File');
+
   // Wait a bit for processing
   console.log('\n⏳ Waiting 10 seconds for processing...');
   await new Promise(resolve => setTimeout(resolve, 10000));
-  
+
   // Check status again
-  await testGetStatus('prod', 'CSV Files');
+  await testGetStatus('prod', 'iTrip CSV File');
   
   // Test ICS Calendar automation
   console.log('\n' + '='.repeat(50) + '\n');

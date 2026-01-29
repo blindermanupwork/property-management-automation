@@ -62,6 +62,8 @@ export declare class HCPService {
         scheduled_start_max?: string;
     }): Promise<any[]>;
     private createDetailedError;
+    private slimJob;
+    private slimCustomer;
     private matchesAddressFilter;
     searchCache(filePath: string, searchTerm: string, fieldPath?: string): Promise<any[]>;
     listCacheFiles(operation?: string): Promise<any[]>;
