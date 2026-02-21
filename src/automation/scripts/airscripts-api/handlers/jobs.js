@@ -208,6 +208,13 @@ async function createJob(req, res) {
     }
     
     const schedStart = new Date(finalServiceTime);
+    if (isNaN(schedStart.getTime())) {
+      throw new Error(`Invalid Final Service Time: "${finalServiceTime}" could not be parsed as a date`);
+    }
+    const schedYear = schedStart.getFullYear();
+    if (schedYear < 2020 || schedYear > 2035) {
+      throw new Error(`Final Service Time year ${schedYear} is out of range (2020-2035). Got: "${finalServiceTime}"`);
+    }
     const schedEnd = new Date(schedStart.getTime() + 60 * 60 * 1000); // +1 hour
     const isoStart = schedStart.toISOString();
     const isoEnd = schedEnd.toISOString();
@@ -282,6 +289,10 @@ async function createJob(req, res) {
 
     if (!templateId) {
       throw new Error(`No ${serviceType} template ID found for property`);
+    }
+
+    if (!templateId.startsWith('job_')) {
+      throw new Error(`Invalid ${templateServiceType} template ID "${templateId}" - expected job_xxx format. Check property's template field in Airtable.`);
     }
 
     // Determine service name based on next reservation
@@ -411,6 +422,19 @@ async function createJob(req, res) {
     let currentJobStatus = reservation.get('Job Status');
     let isJobCanceled = currentJobStatus && currentJobStatus.name === 'Canceled';
 
+    // Handle canceled job - clear old references so we create a fresh one
+    if (jobId && isJobCanceled) {
+      console.log(`Job ${jobId} is canceled. Clearing old reference and creating new job.`);
+
+      await base('Reservations').update(recordId, {
+        'Service Job ID': '',
+        'Service Appointment ID': ''
+      });
+
+      jobId = null;
+      appointmentId = null;
+    }
+
     if (!jobId) {
       // Create new job with COMPLETE data like original script
       const jobData = {
@@ -519,11 +543,11 @@ async function createJob(req, res) {
             });
             console.log('Successfully copied', lineItems.length, 'line items from template');
           } catch (updateError) {
-            console.error(`ERROR updating line items: ${updateError.message}`);
+            throw new Error(`Job ${jobId} created but line items failed to copy: ${updateError.message}. Check template ID.`);
           }
         }
       } catch (error) {
-        console.log('Failed to copy line items:', error.message);
+        throw new Error(`Job ${jobId} created but template line items could not be fetched: ${error.message}. Check template ID.`);
       }
 
       // Copy attachments from template job
@@ -541,60 +565,16 @@ async function createJob(req, res) {
       } catch (error) {
         console.error('Failed to copy attachments:', error.message);
       }
-    } else if (isJobCanceled) {
-      // Job exists but is canceled - reschedule it
-      console.log(`Rescheduling canceled job ${jobId}`);
-      
-      // Update the job to scheduled status with new schedule
-      const updateData = {
-        work_status: 'scheduled',
-        schedule: {
-          scheduled_start: isoStart,
-          scheduled_end: isoEnd,
-          arrival_window: 0
-        },
-        assigned_employee_ids: [hcpConfig.employeeId]
-      };
-      
-      console.log('Updating canceled job with new schedule:', JSON.stringify(updateData, null, 2));
-      await hcpFetch(hcpConfig, `/jobs/${jobId}`, 'PATCH', updateData);
-      
-      // Give HCP time to process the update
-      await delay(700);
-      
-      // Try to get appointment ID for the rescheduled job
-      try {
-        const jobDetails = await hcpFetch(hcpConfig, `/jobs/${jobId}`);
-        
-        if (jobDetails.appointments && jobDetails.appointments.length > 0) {
-          appointmentId = jobDetails.appointments[0].id;
-          console.log('Found appointment ID after rescheduling:', appointmentId);
-        } else {
-          console.log('No appointments found after rescheduling, fetching separately...');
-          await delay(500);
-          const appointmentsResponse = await hcpFetch(hcpConfig, `/jobs/${jobId}/appointments`);
-          
-          if (appointmentsResponse.appointments && appointmentsResponse.appointments.length > 0) {
-            appointmentId = appointmentsResponse.appointments[0].id;
-            console.log('Found appointment ID via separate fetch after reschedule:', appointmentId);
-          }
-        }
-      } catch (error) {
-        console.log('Failed to fetch appointment ID after reschedule:', error.message);
-      }
-      
-      // Update appointment ID if found
-      if (appointmentId && !reservation.get('Service Appointment ID')) {
-        await base('Reservations').update(recordId, {
-          'Service Appointment ID': appointmentId
-        });
-      }
     }
 
     // Fetch live job and sync Airtable (like original)
     await delay(700);
     const liveJob = await hcpFetch(hcpConfig, `/jobs/${jobId}`);
-    const schedLive = new Date(liveJob.schedule.scheduled_start);
+    const schedLive = new Date(liveJob.schedule?.scheduled_start);
+    if (isNaN(schedLive.getTime()) || schedLive.getFullYear() < 2020) {
+      console.error(`HCP returned invalid schedule: ${liveJob.schedule?.scheduled_start}`);
+      throw new Error(`Job ${jobId} created but HCP returned invalid schedule date. The job may need manual scheduling in HCP.`);
+    }
 
     // Try to capture appointment ID if still missing
     if (!appointmentId) {

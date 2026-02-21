@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.29** - Simplified ICS Block Detection + Evolve Integration Improvements
+**Current Version: 2.2.30** - Job Creation Defensive Validations
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -135,6 +135,7 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **Service Type Mapping**: SERVICE_TYPE_KEYWORDS now maps to Turnover (reservations) and Needs Review (blocks) (v2.2.27)
 - ✅ **BLOCK_TYPE_KEYWORDS Fix**: Maps to valid Airtable options (Owner Stay, Maintenance, Other) instead of invalid values (v2.2.28)
 - ✅ **Simplified ICS Block Detection**: Entry type detection now mirrors CSV processor - only checks for block keywords, defaults to Reservation (v2.2.29)
+- ✅ **Job Creation Defensive Validations**: Template ID format validation, date sanity checks (no epoch 0), loud failure on line item copy errors, HCP schedule validation, canceled jobs now create fresh instead of rescheduling (v2.2.30)
 
 
 ## HCP Sync Script Locations
