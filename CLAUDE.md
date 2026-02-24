@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Current Version: 2.2.30** - Job Creation Defensive Validations
+**Current Version: 2.2.31** - CSV Dialect Fix, Failure Alerts, Evolve Disabled
 
 **📚 IMPORTANT: Always read `/home/opc/automation/README.md` for comprehensive system documentation, features, and operational guides.**
 
@@ -90,7 +90,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive property management automation system with complete development/production environment separation. The system processes hundreds of reservations daily from multiple sources (iTrip emails, Evolve portal, ICS feeds) and integrates with Airtable and HousecallPro for job management.
 
-### Current System State (v2.2.29)
+### Current System State (v2.2.31)
 - ✅ **Complete environment separation**: Dev/prod isolation fully implemented
 - ✅ **ICS processor fixes**: All critical configuration issues resolved  
 - ✅ **Optimized cron scheduling**: Production runs hourly, development every 4 hours
@@ -136,6 +136,9 @@ This is a comprehensive property management automation system with complete deve
 - ✅ **BLOCK_TYPE_KEYWORDS Fix**: Maps to valid Airtable options (Owner Stay, Maintenance, Other) instead of invalid values (v2.2.28)
 - ✅ **Simplified ICS Block Detection**: Entry type detection now mirrors CSV processor - only checks for block keywords, defaults to Reservation (v2.2.29)
 - ✅ **Job Creation Defensive Validations**: Template ID format validation, date sanity checks (no epoch 0), loud failure on line item copy errors, HCP schedule validation, canceled jobs now create fresh instead of rescheduling (v2.2.30)
+- ✅ **CSV Dialect Fix**: Forced `doublequote=True` after Sniffer detection — fixes crash when Contractor Info contains literal quotes (e.g. "spray mode"). Added per-row error handling so one bad row never kills an entire file (v2.2.31)
+- ✅ **Failure Alert Notifications**: Push notifications + email via ntfy.sh when any automation fails. Alerts include which steps failed, results count, duration, and environment (v2.2.31)
+- ✅ **Evolve Scraper Disabled**: Evolve properties now handled via ICS feeds. Scraper marked inactive in both prod and dev Airtable (v2.2.31)
 
 
 ## HCP Sync Script Locations

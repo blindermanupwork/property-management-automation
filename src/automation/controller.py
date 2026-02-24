@@ -31,6 +31,41 @@ class AutomationController:
         if not self.airtable_api_key:
             raise ValueError(f"{config.environment_name} Airtable API key not set")
     
+    def send_failure_alert(self, failed_names, successful, total, duration_seconds):
+        """Send push notification + email via ntfy.sh when automations fail"""
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            env = self.config.environment_name
+            alert_email = os.environ.get('ALERT_EMAIL', '')
+            topic = "airscripts-api-monitor-liveitup278"
+
+            failed_list = "\n".join(f"  - {name}" for name in failed_names)
+            body = (
+                f"Failed automations:\n{failed_list}\n\n"
+                f"Results: {successful}/{total} successful\n"
+                f"Duration: {duration_seconds:.0f}s\n"
+                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            )
+
+            payload = {
+                "topic": topic,
+                "title": f"Automation Alert: {len(failed_names)} of {total} failed ({env})",
+                "message": body,
+                "priority": "high",
+                "tags": ["warning"],
+            }
+            if alert_email:
+                payload["email"] = alert_email
+
+            resp = requests.post("https://ntfy.sh/", json=payload, timeout=10)
+            if resp.status_code == 200:
+                logger.info(f"Alert sent via ntfy.sh (email: {alert_email or 'none'})")
+            else:
+                logger.warning(f"ntfy.sh returned {resp.status_code}: {resp.text}")
+        except Exception as e:
+            logger.warning(f"Failed to send failure alert: {e}")
+
     def get_headers(self):
         """Get Airtable API headers"""
         return {
@@ -46,7 +81,7 @@ class AutomationController:
         }
         
         try:
-            response = requests.get(url, headers=self.get_headers(), params=params)
+            response = requests.get(url, headers=self.get_headers(), params=params, timeout=30)
             response.raise_for_status()
             
             data = response.json()
@@ -82,7 +117,7 @@ class AutomationController:
         
         try:
             logger.debug(f"Fetching record ID for '{automation_name}'")
-            response = requests.get(url, headers=self.get_headers(), params=params)
+            response = requests.get(url, headers=self.get_headers(), params=params, timeout=30)
             response.raise_for_status()
             
             data = response.json()
@@ -143,7 +178,7 @@ class AutomationController:
             logger.debug(f"Updating Airtable record at: {update_url}")
             logger.debug(f"Update data: {update_data}")
             
-            response = requests.patch(update_url, headers=self.get_headers(), json=update_data)
+            response = requests.patch(update_url, headers=self.get_headers(), json=update_data, timeout=30)
             response.raise_for_status()
             
             logger.info(f"✅ Successfully updated status for '{automation_name}': {sync_details}")
@@ -242,7 +277,7 @@ class AutomationController:
         url = f"https://api.airtable.com/v0/{self.base_id}/{self.automation_table}"
         
         try:
-            response = requests.get(url, headers=self.get_headers())
+            response = requests.get(url, headers=self.get_headers(), timeout=30)
             response.raise_for_status()
             
             data = response.json()
@@ -275,7 +310,7 @@ class AutomationController:
         
         try:
             url = f"https://api.airtable.com/v0/{self.base_id}/{self.automation_table}"
-            response = requests.get(url, headers=self.get_headers())
+            response = requests.get(url, headers=self.get_headers(), timeout=30)
             response.raise_for_status()
             
             data = response.json()
@@ -391,7 +426,13 @@ class AutomationController:
         
         print(f"⏱️  Total duration: {duration.total_seconds():.1f}s")
         print(f"🕐 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
+        # Send alert if any automations failed
+        if not dry_run:
+            failed_names = [name for name, success in results if not success]
+            if failed_names:
+                self.send_failure_alert(failed_names, successful, total, duration.total_seconds())
+
     def run_specific(self, automation_id, execute=False):
         """Run a specific automation by ID
         

@@ -135,7 +135,8 @@ for h in logger.handlers[:]:                    # remove old handlers
     logger.removeHandler(h)
 
 # 1️⃣  FILE LOGGER with PST timezone
-file_handler   = logging.FileHandler(LOG_PATH, encoding="utf-8")
+from logging.handlers import RotatingFileHandler
+file_handler   = RotatingFileHandler(LOG_PATH, maxBytes=50*1024*1024, backupCount=5, encoding="utf-8")
 file_handler.setLevel(logging.INFO)
 
 # Configure timezones: MST for logging, Arizona for Airtable data
@@ -564,6 +565,7 @@ def process_csv_files(property_lookup, guest_overrides=None):
                 
                 try:
                     dialect = csv.Sniffer().sniff(sample, delimiters=[",", "\t"])
+                    dialect.doublequote = True  # iTrip CSVs use "" for embedded quotes
                 except csv.Error:
                     dialect = csv.get_dialect("excel")
 
@@ -588,7 +590,11 @@ def process_csv_files(property_lookup, guest_overrides=None):
                 missing_props = []
                 
                 for raw in reader:
-                    res = parse_row(raw, hdr_map)
+                    try:
+                        res = parse_row(raw, hdr_map)
+                    except Exception as e:
+                        logging.warning(f"Skipping row due to parse error: {e}")
+                        continue
                     if res is None:
                         continue
                     
