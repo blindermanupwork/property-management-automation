@@ -203,7 +203,7 @@ class AutomationController:
         if not self.get_automation_status(automation_name):
             logger.info(f"Skipping '{automation_name}' - marked as inactive")
             print(f"⏭️  Skipping '{automation_name}' - not active")
-            return False
+            return None  # None = skipped (inactive), distinct from True/False
         
         arizona_tz = pytz.timezone('America/Phoenix')
         start_time = datetime.now(arizona_tz)
@@ -413,24 +413,30 @@ class AutomationController:
         print("=" * 50)
         
         if not dry_run:
-            successful = sum(1 for _, success in results if success)
-            total = len(results)
-            
+            ran = [(name, success) for name, success in results if success is not None]
+            skipped = [name for name, success in results if success is None]
+            successful = sum(1 for _, s in ran if s)
+            total_ran = len(ran)
+
             for name, success in results:
-                icon = "✅" if success else "❌"
-                print(f"{icon} {name}")
-            
+                if success is None:
+                    print(f"⏭️  {name} (inactive)")
+                elif success:
+                    print(f"✅ {name}")
+                else:
+                    print(f"❌ {name}")
+
             print()
-            print(f"📊 Results: {successful}/{total} successful")
-        
+            print(f"📊 Results: {successful}/{total_ran} successful" + (f", {len(skipped)} skipped" if skipped else ""))
+
         print(f"⏱️  Total duration: {duration.total_seconds():.1f}s")
         print(f"🕐 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-        # Send alert if any automations failed
+        # Send alert only for automations that actually ran and failed (not skipped/inactive)
         if not dry_run:
-            failed_names = [name for name, success in results if not success]
+            failed_names = [name for name, success in results if success is False]
             if failed_names:
-                self.send_failure_alert(failed_names, successful, total, duration.total_seconds())
+                self.send_failure_alert(failed_names, successful, total_ran, duration.total_seconds())
 
     def run_specific(self, automation_id, execute=False):
         """Run a specific automation by ID
