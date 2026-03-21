@@ -2162,7 +2162,7 @@ def main():
             overrides_table = api.table(base_id, "Property Guest Overrides")
             guest_overrides = build_guest_overrides(overrides_table)
         except Exception as e:
-            logging.info("Property Guest Overrides table not found or accessible - proceeding without overrides")
+            logging.debug("Property Guest Overrides table not found or accessible - proceeding without overrides")
         
         # ————— Evolve “Tab 2” CSV exports —————
         guest_to_prop = build_guest_to_property_map(properties_table)
@@ -2202,7 +2202,7 @@ def main():
                     evolve_status = json.load(f)
                 
                 if not evolve_status.get("overall_success", True):
-                    logging.warning(f"⚠️  Evolve CSV download failed: {evolve_status.get('message', 'Unknown error')}")
+                    logging.debug(f"Evolve CSV download status: {evolve_status.get('message', 'Unknown error')}")
                     evolve_csv_failed = True
                     
                     # Update sync details in Airtable for the Evolve automation

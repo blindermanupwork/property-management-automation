@@ -48,17 +48,16 @@ class AutomationController:
                 f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             )
 
-            payload = {
-                "topic": topic,
-                "title": f"Automation Alert: {len(failed_names)} of {total} failed ({env})",
-                "message": body,
-                "priority": "high",
-                "tags": ["warning"],
+            url = f"https://ntfy.sh/{topic}"
+            headers = {
+                "Title": f"Automation Alert: {len(failed_names)} of {total} failed ({env})",
+                "Priority": "high",
+                "Tags": "warning",
             }
             if alert_email:
-                payload["email"] = alert_email
+                headers["Email"] = alert_email
 
-            resp = requests.post("https://ntfy.sh/", json=payload, timeout=10)
+            resp = requests.post(url, data=body.encode('utf-8'), headers=headers, timeout=10)
             if resp.status_code == 200:
                 logger.info(f"Alert sent via ntfy.sh (email: {alert_email or 'none'})")
             else:
